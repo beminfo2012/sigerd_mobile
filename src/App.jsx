@@ -71,6 +71,7 @@ const RotinaAbrigoPrint = lazy(() => import('./pages/Abrigos/RotinaAbrigoPrint')
 
 // User Management (Lazy)
 const UserManagement = lazy(() => import('./pages/UserManagement'))
+const ProfileManagement = lazy(() => import('./pages/ProfileManagement'))
 
 // Configurações do Sistema (Lazy)
 const ConfiguracoesPage = lazy(() => import('./pages/Configuracoes'))
@@ -357,6 +358,11 @@ const AppContent = ({
                                 <Route path="/usuarios" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil']}>
                                         <UserManagement />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/perfis" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil']}>
+                                        <ProfileManagement />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/configuracoes" element={
@@ -812,14 +818,31 @@ function App() {
         supabase.auth.getUser().then(({ data }) => {
             if (!data?.user) return;
             return supabase.from('profiles').select('*').eq('id', data.user.id).single();
-        }).then(result => {
+        }).then(async result => {
             if (result?.data) {
                 if (result.data.is_active === false) {
                     console.warn('[Profile] Usuário inativo detectado no background, deslogando...');
                     handleLogout();
                     return;
                 }
-                const fresh = { ...result.data, role: result.data.role || 'Agente de Defesa Civil' };
+                let permissions = {};
+                try {
+                    const { data: roleDef } = await supabase
+                        .from('role_definitions')
+                        .select('permissions')
+                        .eq('role_key', result.data.role)
+                        .single();
+                    if (roleDef) {
+                        permissions = roleDef.permissions;
+                    }
+                } catch (e) {
+                    console.warn('[Profile] Failed to fetch role permissions from role_definitions:', e);
+                }
+                const fresh = { 
+                    ...result.data, 
+                    role: result.data.role || 'Agente de Defesa Civil',
+                    permissions: permissions 
+                };
                 setUserProfile(fresh);
                 localStorage.setItem('userProfile', JSON.stringify(fresh));
                 // console.log('[Profile] Refreshed from server:', fresh.full_name);

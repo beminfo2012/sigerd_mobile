@@ -340,6 +340,65 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                     </div>
                 )}
 
+                {/* ASSISTÊNCIA HUMANITÁRIA — seção dedicada para perfis sociais */}
+                {(['Assistente Social', 'Humanitario_Total', 'Humanitario_Leitura'].includes(userProfile?.role)) && (
+                    <div className="md:hidden">
+                        <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.15em] mb-3 ml-2 flex items-center gap-2">
+                            <HeartHandshake size={12} /> Assistência Humanitária
+                        </h3>
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl overflow-hidden flex flex-col">
+                            <button
+                                onClick={() => navigate('/assisthumanitaria')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl mr-4">
+                                        <HeartHandshake size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Central Humanitária</span>
+                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-tight">Abrigos, Censo e Logística</span>
+                                    </div>
+                                </div>
+                                <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Acessar</div>
+                            </button>
+
+                            {userProfile?.role !== 'Humanitario_Leitura' && (
+                                <button
+                                    onClick={() => navigate('/assisthumanitaria/lista')}
+                                    className="w-full p-5 flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                                >
+                                    <div className="flex items-center">
+                                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl mr-4">
+                                            <ClipboardList size={22} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Lista de Abrigos</span>
+                                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-tight">Gestão de Abrigos Ativos</span>
+                                        </div>
+                                    </div>
+                                </button>
+                            )}
+
+                            <button
+                                onClick={() => navigate('/assisthumanitaria/estoque')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-left"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl mr-4">
+                                        <Database size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Estoque e Doações</span>
+                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-tight">Gestão de Insumos</span>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+
                 {/* ESTRATÉGICO & LOGÍSTICA */}
                 <div className="md:hidden">
                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 ml-2 flex items-center gap-2">
@@ -485,6 +544,21 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                                     <div className="flex-1">
                                         <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Usuários</span>
                                         <span className="text-[10px] font-black text-fuchsia-500 uppercase tracking-widest leading-tight">Painel de Administração</span>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/perfis')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-fuchsia-50 dark:bg-fuchsia-950/30 text-fuchsia-600 rounded-2xl mr-4">
+                                        <Shield size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Perfis</span>
+                                        <span className="text-[10px] font-black text-fuchsia-500 uppercase tracking-widest leading-tight">Atribuições e Permissões</span>
                                     </div>
                                 </div>
                             </button>

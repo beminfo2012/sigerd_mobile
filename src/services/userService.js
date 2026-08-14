@@ -25,7 +25,8 @@ export const listUsers = async () => {
                 is_active,
                 created_at,
                 updated_at,
-                email
+                email,
+                permissions
             `)
             .order('created_at', { ascending: false })
 
@@ -96,6 +97,7 @@ export const createUser = async (userData) => {
                 matricula: matricula || null,
                 cargo: cargo || null,
                 role,
+                permissions: userData.permissions || null,
                 is_active: true,
                 created_by: currentUser?.id,
                 updated_at: new Date().toISOString()
@@ -111,6 +113,7 @@ export const createUser = async (userData) => {
                 full_name,
                 matricula: matricula || null,
                 cargo: cargo || null,
+                permissions: userData.permissions || null,
                 is_active: true,
                 updated_at: new Date().toISOString()
             })

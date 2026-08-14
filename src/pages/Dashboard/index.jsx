@@ -317,7 +317,7 @@ const EventLogCard = ({ data, rainfall, cemadenAlerts }) => {
 const TvModeDashboardView = ({
     data, weather, cemadenAlerts, rainfall, statusInfo,
     viewMode, setViewMode, mapFilter, mapStyle,
-    navigate, activeContingencyPlan, load, getWeatherIcon,
+    navigate, activeContingencyPlan, load, refreshRainfall, getWeatherIcon,
     limiteSMJ
 }) => {
     const [currentView, setCurrentView] = useState('menu');
@@ -353,6 +353,18 @@ const TvModeDashboardView = ({
         return () => clearInterval(timer);
     }, [load]);
 
+    // 1-minute auto-refresh for rainfall only when in Climate Center view
+    useEffect(() => {
+        if (currentView !== 'chuva' || !refreshRainfall) return;
+
+        const timer = setInterval(() => {
+            refreshRainfall();
+            setLastRefresh(new Date());
+        }, 60000); // 1 minute
+
+        return () => clearInterval(timer);
+    }, [currentView, refreshRainfall]);
+
     const panelOptions = [
         { id: 'resumo', label: 'Monitor Estratégico', icon: Activity, desc: 'Indicadores e map de calor' },
         { id: 'chuva', label: 'Centro Climático', icon: Droplets, desc: 'Pluviometria e Previsão' },
@@ -363,32 +375,32 @@ const TvModeDashboardView = ({
 
     if (currentView === 'menu') {
         return (
-            <div className="h-screen w-screen bg-slate-50 flex flex-col p-12 3xl:p-24 4xl:p-32 overflow-hidden justify-center items-center">
-                <div className="text-center mb-16 3xl:mb-24 4xl:mb-32 space-y-6 3xl:space-y-10">
-                    <img src="/logo_header.png" alt="Logo" className="h-32 3xl:h-48 4xl:h-64 mx-auto mb-12 3xl:mb-20 object-contain" />
-                    <h1 className="text-5xl 3xl:text-7xl 4xl:text-8xl font-black text-slate-800 tracking-[16px] 3xl:tracking-[24px] uppercase">MODO TV ESTRATÉGICO</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-[6px] 3xl:text-2xl 4xl:text-3xl">Selecione o painel de monitoramento para transmissão em Videowall</p>
+            <div className="h-screen w-screen bg-gradient-to-br from-slate-50 via-slate-100 to-blue-50/30 flex flex-col p-6 md:p-8 lg:p-10 xl:p-12 3xl:p-20 4xl:p-28 tv:p-36 overflow-hidden justify-center items-center">
+                <div className="text-center mb-8 lg:mb-10 xl:mb-12 3xl:mb-20 4xl:mb-28 tv:mb-36 space-y-3 lg:space-y-4 3xl:space-y-8 tv:space-y-12">
+                    <img src="/logo_header.png" alt="Logo" className="h-16 md:h-20 lg:h-24 xl:h-28 3xl:h-40 4xl:h-56 tv:h-72 mx-auto mb-4 lg:mb-6 xl:mb-8 3xl:mb-16 tv:mb-24 object-contain" />
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 3xl:text-7xl 4xl:text-8xl tv:text-9xl font-black text-slate-800 tracking-[6px] md:tracking-[8px] lg:tracking-[10px] xl:tracking-[14px] 3xl:tracking-[20px] tv:tracking-[28px] uppercase">MODO TV ESTRATÉGICO</h1>
+                    <p className="text-slate-500 font-bold uppercase tracking-[3px] md:tracking-[4px] lg:tracking-[5px] xl:tracking-[6px] 3xl:tracking-[8px] text-[10px] md:text-xs lg:text-sm xl:text-base 3xl:text-xl 4xl:text-2xl tv:text-3xl">Selecione o painel de monitoramento para transmissão em Videowall</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 3xl:gap-16 4xl:gap-20 max-w-[1700px] 3xl:max-w-[2400px] 4xl:max-w-[3200px] w-full">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5 lg:gap-6 xl:gap-8 3xl:gap-12 4xl:gap-16 tv:gap-20 max-w-[900px] lg:max-w-[1100px] xl:max-w-[1400px] 3xl:max-w-[2200px] 4xl:max-w-[3000px] tv:max-w-[3600px] w-full">
                     {panelOptions.map((opt) => (
                         <button
                             key={opt.id}
                             onClick={() => setCurrentView(opt.id)}
-                            className="bg-white border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-12 3xl:p-16 4xl:p-20 rounded-[56px] transition-all flex flex-col items-center gap-10 3xl:gap-14 group shadow-xl hover:shadow-2xl hover:scale-105"
+                            className="bg-white border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 md:p-8 lg:p-10 xl:p-12 3xl:p-16 4xl:p-20 tv:p-24 rounded-[24px] md:rounded-[32px] lg:rounded-[40px] xl:rounded-[48px] 3xl:rounded-[56px] transition-all flex flex-col items-center gap-4 md:gap-5 lg:gap-6 xl:gap-8 3xl:gap-12 4xl:gap-14 tv:gap-16 group shadow-lg hover:shadow-2xl hover:scale-105"
                         >
-                            <div className="p-10 3xl:p-14 4xl:p-20 rounded-full bg-slate-100 group-hover:bg-blue-600 transition-all shadow-md flex items-center justify-center">
-                                <opt.icon className="w-20 h-20 3xl:w-28 3xl:h-28 4xl:w-36 4xl:h-36 text-slate-600 group-hover:text-white" />
+                            <div className="p-5 md:p-6 lg:p-8 xl:p-10 3xl:p-14 4xl:p-18 tv:p-22 rounded-full bg-slate-100 group-hover:bg-blue-600 transition-all shadow-md flex items-center justify-center">
+                                <opt.icon className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 3xl:w-24 3xl:h-24 4xl:w-32 4xl:h-32 tv:w-40 tv:h-40 text-slate-600 group-hover:text-white" />
                             </div>
-                            <div className="text-center space-y-3 3xl:space-y-6">
-                                <h3 className="text-2xl 3xl:text-4xl 4xl:text-5xl font-black text-slate-800 uppercase tracking-tight">{opt.label}</h3>
-                                <p className="text-[10px] 3xl:text-sm 4xl:text-base text-slate-400 font-black uppercase tracking-widest">{opt.desc}</p>
+                            <div className="text-center space-y-1 lg:space-y-2 3xl:space-y-4 tv:space-y-6">
+                                <h3 className="text-xs md:text-sm lg:text-base xl:text-lg 3xl:text-3xl 4xl:text-4xl tv:text-5xl font-black text-slate-800 uppercase tracking-tight">{opt.label}</h3>
+                                <p className="text-[8px] md:text-[9px] lg:text-[10px] xl:text-xs 3xl:text-sm 4xl:text-base tv:text-lg text-slate-400 font-black uppercase tracking-widest">{opt.desc}</p>
                             </div>
                         </button>
                     ))}
                 </div>
 
-                <div className="mt-24 3xl:mt-32 flex gap-8 3xl:gap-12 italic text-slate-400 font-black uppercase tracking-widest text-xs 3xl:text-lg 4xl:text-xl">
+                <div className="mt-10 lg:mt-12 xl:mt-16 3xl:mt-24 4xl:mt-32 tv:mt-40 flex gap-4 lg:gap-6 xl:gap-8 3xl:gap-12 italic text-slate-400 font-black uppercase tracking-widest text-[9px] md:text-[10px] lg:text-xs xl:text-sm 3xl:text-lg 4xl:text-xl tv:text-2xl">
                     <span>SALA DE SITUAÇÃO - DEFESA CIVIL</span>
                     <span className="opacity-30">|</span>
                     <span>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -398,43 +410,43 @@ const TvModeDashboardView = ({
     }
 
     return (
-        <div className="h-screen w-screen bg-slate-100 flex flex-col p-6 3xl:p-10 4xl:p-16 gap-6 3xl:gap-10 4xl:gap-16 overflow-hidden">
+        <div className="h-screen w-screen bg-slate-100 flex flex-col p-3 md:p-4 lg:p-5 xl:p-6 3xl:p-8 4xl:p-12 tv:p-16 gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16 overflow-hidden">
             {/* White TV Header */}
-            <div className="flex justify-between items-center bg-white border border-slate-200 p-8 3xl:p-12 4xl:p-16 rounded-[40px] shadow-xl">
-                <div className="flex gap-10 3xl:gap-16 items-center">
-                    <button onClick={() => setCurrentView('menu')} className="bg-slate-100 p-5 3xl:p-8 rounded-2xl text-slate-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center">
-                        <Layers className="w-7 h-7 3xl:w-12 3xl:h-12 4xl:w-16 4xl:h-16" />
+            <div className="flex justify-between items-center bg-white border border-slate-200 p-3 md:p-4 lg:p-5 xl:p-6 3xl:p-10 4xl:p-14 tv:p-16 rounded-[20px] md:rounded-[24px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] shadow-lg xl:shadow-xl shrink-0">
+                <div className="flex gap-4 lg:gap-6 xl:gap-8 3xl:gap-14 tv:gap-20 items-center">
+                    <button onClick={() => setCurrentView('menu')} className="bg-slate-100 p-2.5 lg:p-3 xl:p-4 3xl:p-6 4xl:p-8 tv:p-10 rounded-xl lg:rounded-2xl text-slate-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center">
+                        <Layers className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10 4xl:w-14 4xl:h-14 tv:w-16 tv:h-16" />
                     </button>
-                    <div className="h-14 3xl:h-20 w-px bg-slate-200" />
+                    <div className="h-8 lg:h-10 xl:h-12 3xl:h-16 4xl:h-20 w-px bg-slate-200" />
                     <div>
-                        <h1 className="text-3xl 3xl:text-5xl 4xl:text-6xl font-black text-slate-800 tracking-[8px] uppercase leading-none mb-3 3xl:mb-5">
+                        <h1 className="text-base md:text-lg lg:text-xl xl:text-2xl 3xl:text-4xl 4xl:text-5xl tv:text-6xl font-black text-slate-800 tracking-[3px] lg:tracking-[5px] xl:tracking-[7px] 3xl:tracking-[10px] uppercase leading-none mb-1.5 lg:mb-2 xl:mb-3 3xl:mb-4">
                             {panelOptions.find(p => p.id === currentView)?.label}
                         </h1>
-                        <div className="flex items-center gap-4 3xl:gap-6">
-                            <span className="flex items-center gap-2 px-4 py-1.5 3xl:px-6 3xl:py-2.5 bg-blue-600 rounded-xl text-white text-[11px] 3xl:text-base 4xl:text-lg font-black uppercase tracking-widest animate-pulse shadow-lg shadow-blue-600/20">Monitoramento Ativo</span>
-                            <span className="text-[11px] 3xl:text-base 4xl:text-lg font-black text-slate-400 uppercase tracking-[4px] leading-none">SANTA MARIA DE JETIBÁ</span>
+                        <div className="flex items-center gap-2 lg:gap-3 xl:gap-4 3xl:gap-6">
+                            <span className="flex items-center gap-1.5 px-2 py-1 lg:px-3 lg:py-1.5 xl:px-4 xl:py-1.5 3xl:px-6 3xl:py-2.5 4xl:px-8 4xl:py-3 tv:px-10 tv:py-4 bg-blue-600 rounded-lg lg:rounded-xl text-white text-[8px] lg:text-[9px] xl:text-[10px] 3xl:text-sm 4xl:text-base tv:text-lg font-black uppercase tracking-widest animate-pulse shadow-lg shadow-blue-600/20">Monitoramento Ativo</span>
+                            <span className="text-[8px] lg:text-[9px] xl:text-[10px] 3xl:text-sm 4xl:text-base tv:text-lg font-black text-slate-400 uppercase tracking-[2px] lg:tracking-[3px] xl:tracking-[4px] leading-none">SANTA MARIA DE JETIBÁ</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex gap-16 3xl:gap-24 items-center">
+                <div className="flex gap-6 lg:gap-8 xl:gap-12 3xl:gap-20 4xl:gap-24 tv:gap-28 items-center">
                     {weather?.current && (
-                        <div className="flex items-center gap-6 3xl:gap-10 bg-slate-50 px-8 py-4 3xl:px-12 3xl:py-6 rounded-3xl border border-slate-100">
-                            <span className="text-4xl 3xl:text-6xl 4xl:text-7xl">{getWeatherIcon(weather.current.code)}</span>
+                        <div className="flex items-center gap-3 lg:gap-4 xl:gap-5 3xl:gap-8 4xl:gap-10 bg-slate-50 px-4 py-2 lg:px-5 lg:py-2.5 xl:px-6 xl:py-3 3xl:px-10 3xl:py-5 4xl:px-14 4xl:py-7 tv:px-16 tv:py-8 rounded-xl lg:rounded-2xl xl:rounded-3xl border border-slate-100">
+                            <span className="text-xl lg:text-2xl xl:text-3xl 3xl:text-5xl 4xl:text-6xl tv:text-7xl">{getWeatherIcon(weather.current.code)}</span>
                             <div className="flex flex-col">
-                                <span className="text-3xl 3xl:text-5xl 4xl:text-6xl font-black text-slate-800 tabular-nums leading-none mb-2">{Math.round(weather.current.temp)}°C</span>
-                                <span className="text-[10px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest">Tempo Real</span>
+                                <span className="text-lg lg:text-xl xl:text-2xl 3xl:text-4xl 4xl:text-5xl tv:text-6xl font-black text-slate-800 tabular-nums leading-none mb-0.5 lg:mb-1 3xl:mb-2">{Math.round(weather.current.temp)}°C</span>
+                                <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-xs 4xl:text-sm tv:text-base font-black text-slate-400 uppercase tracking-widest">Tempo Real</span>
                             </div>
                         </div>
                     )}
 
-                    <div className="text-right flex items-center gap-10 3xl:gap-16 border-l border-slate-200 pl-10 3xl:pl-16">
+                    <div className="text-right flex items-center gap-4 lg:gap-6 xl:gap-8 3xl:gap-14 4xl:gap-16 tv:gap-20 border-l border-slate-200 pl-4 lg:pl-6 xl:pl-8 3xl:pl-14 4xl:pl-16">
                         <div className="flex flex-col items-end">
-                            <span className="text-6xl 3xl:text-8xl 4xl:text-9xl font-black text-slate-800 leading-none tracking-tighter tabular-nums mb-2 3xl:mb-4">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                            <span className="text-[10px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest leading-none">Último Refresh: {lastRefresh.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-7xl 4xl:text-8xl tv:text-9xl font-black text-slate-800 leading-none tracking-tighter tabular-nums mb-0.5 lg:mb-1 3xl:mb-3">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-xs 4xl:text-sm tv:text-base font-black text-slate-400 uppercase tracking-widest leading-none">Último Refresh: {lastRefresh.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        <button onClick={() => window.close()} className="p-5 3xl:p-8 bg-slate-100 hover:bg-red-500 hover:text-white text-slate-400 rounded-2xl transition-all shadow-sm flex items-center justify-center">
-                            <X className="w-7 h-7 3xl:w-12 3xl:h-12 4xl:w-16 4xl:h-16" />
+                        <button onClick={() => window.close()} className="p-2.5 lg:p-3 xl:p-4 3xl:p-6 4xl:p-8 tv:p-10 bg-slate-100 hover:bg-red-500 hover:text-white text-slate-400 rounded-xl lg:rounded-2xl transition-all shadow-sm flex items-center justify-center">
+                            <X className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10 4xl:w-14 4xl:h-14 tv:w-16 tv:h-16" />
                         </button>
                     </div>
                 </div>
@@ -452,55 +464,55 @@ const TvModeDashboardView = ({
     );
 };// --- 1. TV STRATEGIC OVERVIEW (Dashboard Consolidado) ---
 const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIcon, limiteSMJ }) => (
-    <div className="grid grid-cols-12 gap-6 3xl:gap-10 4xl:gap-16 h-full">
+    <div className="grid grid-cols-12 gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16 h-full">
         {/* Left Column: Alerts & Stats */}
-        <div className="col-span-4 flex flex-col gap-6 3xl:gap-10 4xl:gap-16">
-            <div className="bg-white border border-slate-200 p-10 3xl:p-16 4xl:p-24 flex-1 flex flex-col justify-center items-center text-center shadow-md rounded-[40px]">
-                <div className={`w-32 h-32 3xl:w-48 3xl:h-48 4xl:w-64 4xl:h-64 rounded-full ${statusInfo.bg || 'bg-blue-600'} flex items-center justify-center text-white shadow-2xl mb-8 3xl:mb-12 4xl:mb-16 animate-pulse`}>
-                    <ShieldAlert className="w-16 h-16 3xl:w-24 3xl:h-24 4xl:w-32 4xl:h-32" />
+        <div className="col-span-4 flex flex-col gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16">
+            <div className="bg-white border border-slate-200 p-5 lg:p-6 xl:p-8 3xl:p-14 4xl:p-20 tv:p-24 flex-1 flex flex-col justify-center items-center text-center shadow-md rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px]">
+                <div className={`w-16 h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 3xl:w-40 3xl:h-40 4xl:w-56 4xl:h-56 tv:w-64 tv:h-64 rounded-full ${statusInfo.bg || 'bg-blue-600'} flex items-center justify-center text-white shadow-2xl mb-4 lg:mb-5 xl:mb-6 3xl:mb-10 4xl:mb-14 tv:mb-16 animate-pulse`}>
+                    <ShieldAlert className="w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28 tv:w-32 tv:h-32" />
                 </div>
-                <h3 className="text-xl 3xl:text-3xl 4xl:text-4xl font-black text-slate-400 uppercase tracking-[4px] 3xl:tracking-[6px] mb-4 3xl:mb-8">Nível de Contingência</h3>
-                <h2 className={`text-7xl 3xl:text-9xl 4xl:text-[10rem] font-black uppercase tracking-tight mb-8 3xl:mb-12 4xl:mb-16 ${statusInfo.text}`}>{statusInfo.label}</h2>
-                <div className="w-full h-4 3xl:h-8 4xl:h-12 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
+                <h3 className="text-xs lg:text-sm xl:text-base 3xl:text-2xl 4xl:text-3xl tv:text-4xl font-black text-slate-400 uppercase tracking-[2px] lg:tracking-[3px] xl:tracking-[4px] 3xl:tracking-[6px] mb-2 lg:mb-3 xl:mb-4 3xl:mb-6 4xl:mb-8">Nível de Contingência</h3>
+                <h2 className={`text-3xl lg:text-4xl xl:text-5xl 3xl:text-8xl 4xl:text-9xl tv:text-[10rem] font-black uppercase tracking-tight mb-4 lg:mb-5 xl:mb-6 3xl:mb-10 4xl:mb-14 tv:mb-16 ${statusInfo.text}`}>{statusInfo.label}</h2>
+                <div className="w-full h-2 lg:h-3 xl:h-4 3xl:h-6 4xl:h-8 tv:h-12 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
                     <div className={`h-full ${statusInfo.color}`} style={{ width: '100%' }} />
                 </div>
-                <p className="mt-8 3xl:mt-12 4xl:mt-16 text-xs 3xl:text-xl 4xl:text-2xl font-bold text-slate-400 uppercase tracking-[3px] 3xl:tracking-[5px]">Protocolo de Monitoramento Ativo</p>
+                <p className="mt-4 lg:mt-5 xl:mt-6 3xl:mt-10 4xl:mt-14 tv:mt-16 text-[8px] lg:text-[9px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl font-bold text-slate-400 uppercase tracking-[2px] lg:tracking-[3px] xl:tracking-[3px] 3xl:tracking-[5px]">Protocolo de Monitoramento Ativo</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 3xl:gap-10 4xl:gap-16">
-                <div className="bg-white border border-slate-200 p-8 3xl:p-14 4xl:p-20 flex flex-col justify-center shadow-md rounded-[40px]">
-                    <div className="flex items-center gap-4 3xl:gap-6 4xl:gap-8 mb-4 3xl:mb-8">
-                        <div className="w-14 h-14 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
-                            <AlertTriangle className="w-8 h-8 3xl:w-12 3xl:h-12 4xl:w-16 4xl:h-16" />
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16">
+                <div className="bg-white border border-slate-200 p-4 lg:p-5 xl:p-6 3xl:p-12 4xl:p-16 tv:p-20 flex flex-col justify-center shadow-md rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px]">
+                    <div className="flex items-center gap-2 lg:gap-3 xl:gap-4 3xl:gap-6 4xl:gap-8 mb-2 lg:mb-3 xl:mb-4 3xl:mb-6 4xl:mb-8">
+                        <div className="w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 3xl:w-16 3xl:h-16 4xl:w-24 4xl:h-24 tv:w-28 tv:h-28 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+                            <AlertTriangle className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10 4xl:w-14 4xl:h-14 tv:w-16 tv:h-16" />
                         </div>
-                        <span className="text-[10px] 3xl:text-base 4xl:text-xl font-black uppercase tracking-widest text-slate-400">Ocorrências</span>
+                        <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base tv:text-xl font-black uppercase tracking-widest text-slate-400">Ocorrências</span>
                     </div>
-                    <div className="flex items-baseline gap-2 3xl:gap-4">
-                        <span className="text-7xl 3xl:text-9xl 4xl:text-[10rem] font-black text-slate-800 tabular-nums leading-none tracking-tighter">{data.stats.activeOccurrences}</span>
-                        <span className="text-xs 3xl:text-xl 4xl:text-2xl font-bold text-slate-400 uppercase">Hoje</span>
+                    <div className="flex items-baseline gap-1 lg:gap-2 3xl:gap-4">
+                        <span className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-8xl 4xl:text-9xl tv:text-[10rem] font-black text-slate-800 tabular-nums leading-none tracking-tighter">{data.stats.activeOccurrences}</span>
+                        <span className="text-[8px] lg:text-[9px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl font-bold text-slate-400 uppercase">Hoje</span>
                     </div>
                 </div>
-                <div className="bg-white border border-slate-200 p-8 3xl:p-14 4xl:p-20 flex flex-col justify-center shadow-md rounded-[40px]">
-                    <div className="flex items-center gap-4 3xl:gap-6 4xl:gap-8 mb-4 3xl:mb-8">
-                        <div className="w-14 h-14 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                            <Droplets className="w-8 h-8 3xl:w-12 3xl:h-12 4xl:w-16 4xl:h-16" />
+                <div className="bg-white border border-slate-200 p-4 lg:p-5 xl:p-6 3xl:p-12 4xl:p-16 tv:p-20 flex flex-col justify-center shadow-md rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px]">
+                    <div className="flex items-center gap-2 lg:gap-3 xl:gap-4 3xl:gap-6 4xl:gap-8 mb-2 lg:mb-3 xl:mb-4 3xl:mb-6 4xl:mb-8">
+                        <div className="w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 3xl:w-16 3xl:h-16 4xl:w-24 4xl:h-24 tv:w-28 tv:h-28 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                            <Droplets className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10 4xl:w-14 4xl:h-14 tv:w-16 tv:h-16" />
                         </div>
-                        <span className="text-[10px] 3xl:text-base 4xl:text-xl font-black uppercase tracking-widest text-slate-400">Média Chuva</span>
+                        <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base tv:text-xl font-black uppercase tracking-widest text-slate-400">Média Chuva</span>
                     </div>
-                    <div className="flex items-baseline gap-2 3xl:gap-4">
-                        <span className="text-7xl 3xl:text-9xl 4xl:text-[10rem] font-black text-slate-800 tabular-nums leading-none tracking-tighter">
+                    <div className="flex items-baseline gap-1 lg:gap-2 3xl:gap-4">
+                        <span className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-8xl 4xl:text-9xl tv:text-[10rem] font-black text-slate-800 tabular-nums leading-none tracking-tighter">
                             {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : '0.0'}
                         </span>
-                        <span className="text-xl 3xl:text-3xl 4xl:text-4xl font-bold text-slate-400 uppercase">mm</span>
+                        <span className="text-sm lg:text-base xl:text-lg 3xl:text-2xl 4xl:text-3xl tv:text-4xl font-bold text-slate-400 uppercase">mm</span>
                     </div>
                 </div>
             </div>
         </div>
 
         {/* Right Column: Heatmap Map */}
-        <div className="col-span-8 bg-white border border-slate-200 shadow-xl overflow-hidden relative rounded-[40px]">
-            <div className="absolute top-8 left-8 3xl:top-12 3xl:left-12 4xl:top-16 4xl:left-16 z-[1000] bg-white/90 backdrop-blur-md px-6 py-3 3xl:px-10 3xl:py-5 4xl:px-14 4xl:py-7 rounded-2xl border border-slate-200 shadow-xl">
-                <span className="text-xs 3xl:text-xl 4xl:text-2xl font-black text-slate-800 uppercase tracking-[3px] 3xl:tracking-[5px]">Mancha de Calor Geral</span>
+        <div className="col-span-8 bg-white border border-slate-200 shadow-xl overflow-hidden relative rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px]">
+            <div className="absolute top-4 left-4 lg:top-6 lg:left-6 xl:top-8 xl:left-8 3xl:top-12 3xl:left-12 4xl:top-16 4xl:left-16 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 lg:px-4 lg:py-2 xl:px-6 xl:py-3 3xl:px-10 3xl:py-5 4xl:px-14 4xl:py-7 rounded-xl lg:rounded-2xl border border-slate-200 shadow-xl">
+                <span className="text-[9px] lg:text-[10px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl font-black text-slate-800 uppercase tracking-[2px] lg:tracking-[3px] 3xl:tracking-[5px]">Mancha de Calor Geral</span>
             </div>
             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <MapAutoBounds locations={data.ocorrencias?.locations || []} />
@@ -508,8 +520,8 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
                 <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
                 <LimiteSMJLayer keyId="limite-smj-strategic" />
             </MapContainer>
-            <div className="absolute bottom-8 right-8 3xl:bottom-12 3xl:right-12 4xl:bottom-16 4xl:right-16 z-[1000] bg-white/95 backdrop-blur-md p-6 3xl:p-10 4xl:p-14 rounded-2xl border border-slate-200 text-[9px] 3xl:text-base 4xl:text-xl font-black text-slate-700 uppercase tracking-widest shadow-lg">
-                <div className="flex items-center gap-3 3xl:gap-5"><div className="w-3 h-3 3xl:w-5 3xl:h-5 4xl:w-6 4xl:h-6 rounded-full bg-red-600 animate-pulse" /> Zonas de Maior Concentração</div>
+            <div className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 xl:bottom-8 xl:right-8 3xl:bottom-12 3xl:right-12 4xl:bottom-16 4xl:right-16 z-[1000] bg-white/95 backdrop-blur-md p-3 lg:p-4 xl:p-6 3xl:p-10 4xl:p-14 rounded-xl lg:rounded-2xl border border-slate-200 text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-base 4xl:text-lg tv:text-xl font-black text-slate-700 uppercase tracking-widest shadow-lg">
+                <div className="flex items-center gap-1.5 lg:gap-2 xl:gap-3 3xl:gap-5"><div className="w-2 h-2 lg:w-2.5 lg:h-2.5 xl:w-3 xl:h-3 3xl:w-5 3xl:h-5 4xl:w-6 4xl:h-6 rounded-full bg-red-600 animate-pulse" /> Zonas de Maior Concentração</div>
             </div>
         </div>
     </div>
@@ -525,7 +537,7 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
     const validStations = (rainfall || []).filter(s => s.lat && (s.lon || s.lng));
 
     return (
-        <div className="relative h-full w-full rounded-[40px] overflow-hidden border border-slate-200 shadow-2xl bg-slate-100 flex flex-col">
+        <div className="relative h-full w-full rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] overflow-hidden border border-slate-200 shadow-2xl bg-slate-100 flex flex-col">
             {/* Full-Screen Map Container */}
             <div className="absolute inset-0 z-0">
                 <MapContainer center={[-20.0246, -40.7464]} zoom={12} style={{ height: '100%', width: '100%' }} zoomControl={false}>
@@ -556,18 +568,18 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
             </div>
 
             {/* Top-Right Map Controls Toolbar (Videowall Context) */}
-            <div className="absolute top-6 right-6 3xl:top-10 3xl:right-10 4xl:top-16 4xl:right-16 z-[1000] flex items-center gap-3 3xl:gap-5">
+            <div className="absolute top-3 right-3 lg:top-4 lg:right-4 xl:top-6 xl:right-6 3xl:top-10 3xl:right-10 4xl:top-16 4xl:right-16 z-[1000] flex items-center gap-2 lg:gap-3 3xl:gap-5">
                 <button
                     onClick={() => setShowBacias(prev => !prev)}
-                    className={`flex items-center gap-2 3xl:gap-4 px-5 py-3 3xl:px-8 3xl:py-5 4xl:px-12 4xl:py-7 rounded-2xl text-xs 3xl:text-lg 4xl:text-2xl font-black uppercase tracking-widest transition-all shadow-xl backdrop-blur-md border ${showBacias ? 'bg-blue-600 text-white border-blue-500 shadow-blue-600/30' : 'bg-white/90 text-slate-700 hover:bg-white border-slate-200'}`}
+                    className={`flex items-center gap-1.5 lg:gap-2 3xl:gap-4 px-3 py-2 lg:px-4 lg:py-2.5 xl:px-5 xl:py-3 3xl:px-8 3xl:py-5 4xl:px-12 4xl:py-7 rounded-xl lg:rounded-2xl text-[9px] lg:text-[10px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl font-black uppercase tracking-widest transition-all shadow-xl backdrop-blur-md border ${showBacias ? 'bg-blue-600 text-white border-blue-500 shadow-blue-600/30' : 'bg-white/90 text-slate-700 hover:bg-white border-slate-200'}`}
                 >
-                    <Waves className="w-4 h-4 3xl:w-6 3xl:h-6 4xl:w-8 4xl:h-8" /> Bacias
+                    <Waves className="w-3 h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 3xl:w-6 3xl:h-6 4xl:w-8 4xl:h-8" /> Bacias
                 </button>
 
                 <select
                     value={mapStyle}
                     onChange={(e) => setMapStyle(e.target.value)}
-                    className="bg-white/90 backdrop-blur-md text-slate-800 text-xs 3xl:text-lg 4xl:text-2xl px-5 py-3 3xl:px-8 3xl:py-5 4xl:px-12 4xl:py-7 rounded-2xl border border-slate-200 font-black uppercase tracking-wider focus:outline-none cursor-pointer shadow-xl"
+                    className="bg-white/90 backdrop-blur-md text-slate-800 text-[9px] lg:text-[10px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl px-3 py-2 lg:px-4 lg:py-2.5 xl:px-5 xl:py-3 3xl:px-8 3xl:py-5 4xl:px-12 4xl:py-7 rounded-xl lg:rounded-2xl border border-slate-200 font-black uppercase tracking-wider focus:outline-none cursor-pointer shadow-xl"
                 >
                     <option value="carto">CartoDB Light</option>
                     <option value="satellite">Satélite</option>
@@ -576,33 +588,33 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
             </div>
 
             {/* Top-Left Floating Overlay: Top Estações (24h) */}
-            <div className="absolute top-6 left-6 3xl:top-10 3xl:left-10 4xl:top-16 4xl:left-16 z-[1000] w-96 3xl:w-[32rem] 4xl:w-[40rem] max-h-[52vh] 3xl:max-h-[60vh] bg-white/95 backdrop-blur-md rounded-[32px] p-6 3xl:p-10 4xl:p-14 border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
-                <div className="flex items-center justify-between pb-4 3xl:pb-6 mb-4 3xl:mb-6 border-b border-slate-100">
-                    <h3 className="text-sm 3xl:text-xl 4xl:text-3xl font-black text-slate-800 uppercase tracking-[3px] flex items-center gap-3">
-                        <BarChart3 className="text-blue-600 w-5 h-5 3xl:w-8 3xl:h-8 4xl:w-10 4xl:h-10" /> TOP ESTAÇÕES
+            <div className="absolute top-3 left-3 lg:top-4 lg:left-4 xl:top-6 xl:left-6 3xl:top-10 3xl:left-10 4xl:top-16 4xl:left-16 z-[1000] w-64 lg:w-72 xl:w-80 3xl:w-[28rem] 4xl:w-[36rem] tv:w-[44rem] max-h-[48vh] lg:max-h-[50vh] xl:max-h-[52vh] 3xl:max-h-[60vh] bg-white/95 backdrop-blur-md rounded-[16px] lg:rounded-[20px] xl:rounded-[24px] 3xl:rounded-[32px] p-3 lg:p-4 xl:p-5 3xl:p-8 4xl:p-12 tv:p-14 border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between pb-2 lg:pb-3 xl:pb-4 3xl:pb-6 mb-2 lg:mb-3 xl:mb-4 3xl:mb-6 border-b border-slate-100">
+                    <h3 className="text-[10px] lg:text-xs xl:text-sm 3xl:text-xl 4xl:text-2xl tv:text-3xl font-black text-slate-800 uppercase tracking-[2px] lg:tracking-[3px] flex items-center gap-2 lg:gap-3">
+                        <BarChart3 className="text-blue-600 w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-5 xl:h-5 3xl:w-8 3xl:h-8 4xl:w-10 4xl:h-10" /> TOP ESTAÇÕES
                     </h3>
-                    <span className="text-[9px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2.5 py-1 3xl:px-4 3xl:py-2 rounded-full">{sortedRain.length} ESTAÇÕES</span>
+                    <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-1.5 py-0.5 lg:px-2 lg:py-1 3xl:px-4 3xl:py-2 rounded-full">{sortedRain.length} ESTAÇÕES</span>
                 </div>
-                <div className="space-y-3 3xl:space-y-5 overflow-y-auto pr-1 custom-scrollbar flex-1">
+                <div className="space-y-1.5 lg:space-y-2 xl:space-y-3 3xl:space-y-5 overflow-y-auto pr-1 custom-scrollbar flex-1">
                     {sortedRain.length === 0 ? (
-                        <div className="text-center py-6 3xl:py-10 text-slate-400 text-xs 3xl:text-base font-bold uppercase tracking-widest">Sem dados pluviométricos</div>
+                        <div className="text-center py-4 lg:py-6 text-slate-400 text-[9px] lg:text-[10px] xl:text-xs 3xl:text-base font-bold uppercase tracking-widest">Sem dados pluviométricos</div>
                     ) : (
                         sortedRain.map((s, idx) => (
                             <div
                                 key={idx}
                                 onClick={() => setSelectedStation(s)}
-                                className={`p-4 3xl:p-6 4xl:p-8 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${selectedStation?.name === s.name ? 'bg-blue-50/90 border-blue-300 shadow-sm' : 'bg-slate-50/80 border-slate-100 hover:bg-white hover:border-blue-200'}`}
+                                className={`p-2 lg:p-3 xl:p-4 3xl:p-6 4xl:p-8 rounded-xl lg:rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${selectedStation?.name === s.name ? 'bg-blue-50/90 border-blue-300 shadow-sm' : 'bg-slate-50/80 border-slate-100 hover:bg-white hover:border-blue-200'}`}
                             >
-                                <div className="flex gap-3 3xl:gap-5 items-center min-w-0 pr-2">
-                                    <div className={`w-3 h-3 3xl:w-5 3xl:h-5 4xl:w-6 4xl:h-6 rounded-full shrink-0 shadow-sm ${getPluvioColor(s.level)}`} />
+                                <div className="flex gap-2 lg:gap-3 3xl:gap-5 items-center min-w-0 pr-2">
+                                    <div className={`w-2 h-2 lg:w-2.5 lg:h-2.5 xl:w-3 xl:h-3 3xl:w-5 3xl:h-5 4xl:w-6 4xl:h-6 rounded-full shrink-0 shadow-sm ${getPluvioColor(s.level)}`} />
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-xs 3xl:text-xl 4xl:text-2xl font-black text-slate-800 uppercase tracking-tight truncate">{s.name}</span>
-                                        <span className="text-[8px] 3xl:text-sm 4xl:text-base font-bold text-slate-400 uppercase tracking-widest">{s.level || 'Normal'}</span>
+                                        <span className="text-[9px] lg:text-[10px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl font-black text-slate-800 uppercase tracking-tight truncate">{s.name}</span>
+                                        <span className="text-[7px] lg:text-[8px] 3xl:text-sm 4xl:text-base font-bold text-slate-400 uppercase tracking-widest">{s.level || 'Normal'}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-baseline gap-1 3xl:gap-2 shrink-0">
-                                    <span className="text-2xl 3xl:text-4xl 4xl:text-5xl font-black text-slate-800 tabular-nums">{(s.rainRaw || 0).toFixed(1)}</span>
-                                    <span className="text-[10px] 3xl:text-sm 4xl:text-base text-slate-400 font-bold uppercase">mm</span>
+                                <div className="flex items-baseline gap-0.5 lg:gap-1 3xl:gap-2 shrink-0">
+                                    <span className="text-base lg:text-lg xl:text-xl 3xl:text-3xl 4xl:text-4xl tv:text-5xl font-black text-slate-800 tabular-nums">{(s.rainRaw || 0).toFixed(1)}</span>
+                                    <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base text-slate-400 font-bold uppercase">mm</span>
                                 </div>
                             </div>
                         ))
@@ -611,47 +623,47 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
             </div>
 
             {/* Bottom-Left Floating Overlay: Previsão Local */}
-            <div className="absolute bottom-6 left-6 3xl:bottom-10 3xl:left-10 4xl:bottom-16 4xl:left-16 z-[1000] w-96 3xl:w-[32rem] 4xl:w-[40rem] bg-white/95 backdrop-blur-md rounded-[32px] p-6 3xl:p-10 4xl:p-14 border border-slate-200 shadow-2xl flex flex-col gap-4 3xl:gap-8">
-                <div className="flex justify-between items-center pb-2 3xl:pb-4 border-b border-slate-100">
-                    <div className="flex items-center gap-3 3xl:gap-5">
-                        <span className="text-3xl 3xl:text-5xl 4xl:text-6xl">{getWeatherIcon(weather?.current?.code)}</span>
+            <div className="absolute bottom-3 left-3 lg:bottom-4 lg:left-4 xl:bottom-6 xl:left-6 3xl:bottom-10 3xl:left-10 4xl:bottom-16 4xl:left-16 z-[1000] w-64 lg:w-72 xl:w-80 3xl:w-[28rem] 4xl:w-[36rem] tv:w-[44rem] bg-white/95 backdrop-blur-md rounded-[16px] lg:rounded-[20px] xl:rounded-[24px] 3xl:rounded-[32px] p-3 lg:p-4 xl:p-5 3xl:p-8 4xl:p-12 tv:p-14 border border-slate-200 shadow-2xl flex flex-col gap-2 lg:gap-3 xl:gap-4 3xl:gap-8">
+                <div className="flex justify-between items-center pb-1.5 lg:pb-2 xl:pb-2 3xl:pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-2 lg:gap-3 3xl:gap-5">
+                        <span className="text-xl lg:text-2xl xl:text-3xl 3xl:text-5xl 4xl:text-6xl tv:text-7xl">{getWeatherIcon(weather?.current?.code)}</span>
                         <div>
-                            <span className="text-2xl 3xl:text-4xl 4xl:text-5xl font-black text-slate-800 tabular-nums leading-none block">{Math.round(weather?.current?.temp || 0)}°C</span>
-                            <span className="text-[9px] 3xl:text-sm 4xl:text-base font-bold text-slate-400 uppercase tracking-widest">Santa Maria de Jetibá</span>
+                            <span className="text-base lg:text-lg xl:text-xl 3xl:text-3xl 4xl:text-4xl tv:text-5xl font-black text-slate-800 tabular-nums leading-none block">{Math.round(weather?.current?.temp || 0)}°C</span>
+                            <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base font-bold text-slate-400 uppercase tracking-widest">Santa Maria de Jetibá</span>
                         </div>
                     </div>
-                    <span className="text-[9px] 3xl:text-sm 4xl:text-base font-black uppercase tracking-widest border border-slate-200 px-3 py-1 3xl:px-5 3xl:py-2 rounded-full bg-slate-50 text-slate-500">Previsão Local</span>
+                    <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base font-black uppercase tracking-widest border border-slate-200 px-2 py-0.5 lg:px-3 lg:py-1 3xl:px-5 3xl:py-2 rounded-full bg-slate-50 text-slate-500">Previsão Local</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 3xl:gap-4">
-                    <div className="bg-slate-50 p-3 3xl:p-5 rounded-2xl text-center border border-slate-100">
-                        <span className="block text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Umidade</span>
-                        <span className="text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{weather?.current?.humidity || 0}%</span>
+                <div className="grid grid-cols-3 gap-1.5 lg:gap-2 3xl:gap-4">
+                    <div className="bg-slate-50 p-2 lg:p-2.5 xl:p-3 3xl:p-5 rounded-xl lg:rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[7px] lg:text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Umidade</span>
+                        <span className="text-xs lg:text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{weather?.current?.humidity || 0}%</span>
                     </div>
-                    <div className="bg-slate-50 p-3 3xl:p-5 rounded-2xl text-center border border-slate-100">
-                        <span className="block text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Vento</span>
-                        <span className="text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{Math.round(weather?.current?.wind || 0)} km/h</span>
+                    <div className="bg-slate-50 p-2 lg:p-2.5 xl:p-3 3xl:p-5 rounded-xl lg:rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[7px] lg:text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Vento</span>
+                        <span className="text-xs lg:text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{Math.round(weather?.current?.wind || 0)} km/h</span>
                     </div>
-                    <div className="bg-slate-50 p-3 3xl:p-5 rounded-2xl text-center border border-slate-100">
-                        <span className="block text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Prob. Chuva</span>
-                        <span className="text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{weather?.daily?.[0]?.rainProb || 0}%</span>
+                    <div className="bg-slate-50 p-2 lg:p-2.5 xl:p-3 3xl:p-5 rounded-xl lg:rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[7px] lg:text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Prob. Chuva</span>
+                        <span className="text-xs lg:text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{weather?.daily?.[0]?.rainProb || 0}%</span>
                     </div>
                 </div>
             </div>
 
             {/* Bottom-Right Floating Card: Informações do Pluviômetro */}
             {selectedStation && (
-                <div className="absolute bottom-6 right-6 3xl:bottom-10 3xl:right-10 4xl:bottom-16 4xl:right-16 z-[1000] w-80 3xl:w-[28rem] 4xl:w-[32rem] bg-white/95 backdrop-blur-md rounded-[32px] border border-slate-200 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-3 duration-250">
-                    <div className="bg-blue-600 text-white px-5 py-3 3xl:px-8 3xl:py-5 flex justify-between items-center font-black text-[10px] 3xl:text-sm 4xl:text-base uppercase tracking-widest">
+                <div className="absolute bottom-3 right-3 lg:bottom-4 lg:right-4 xl:bottom-6 xl:right-6 3xl:bottom-10 3xl:right-10 4xl:bottom-16 4xl:right-16 z-[1000] w-56 lg:w-64 xl:w-72 3xl:w-[24rem] 4xl:w-[30rem] tv:w-[36rem] bg-white/95 backdrop-blur-md rounded-[16px] lg:rounded-[20px] xl:rounded-[24px] 3xl:rounded-[32px] border border-slate-200 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-3 duration-250">
+                    <div className="bg-blue-600 text-white px-3 py-2 lg:px-4 lg:py-2.5 xl:px-5 xl:py-3 3xl:px-8 3xl:py-5 flex justify-between items-center font-black text-[8px] lg:text-[9px] xl:text-[10px] 3xl:text-sm 4xl:text-base tv:text-lg uppercase tracking-widest">
                         <span>Informações do Pluviômetro</span>
                         <button onClick={() => setSelectedStation(null)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                            <X className="w-4 h-4 3xl:w-6 3xl:h-6 4xl:w-8 4xl:h-8" />
+                            <X className="w-3 h-3 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 3xl:w-6 3xl:h-6 4xl:w-8 4xl:h-8" />
                         </button>
                     </div>
-                    <div className="p-5 3xl:p-8 space-y-2 3xl:space-y-4 text-xs 3xl:text-lg 4xl:text-xl text-slate-700 font-bold tracking-tight">
-                        <div className="text-slate-800 font-black text-sm 3xl:text-2xl 4xl:text-3xl border-b border-slate-100 pb-2 3xl:pb-4">{selectedStation.name}</div>
+                    <div className="p-3 lg:p-4 xl:p-5 3xl:p-8 space-y-1.5 lg:space-y-2 3xl:space-y-4 text-[9px] lg:text-[10px] xl:text-xs 3xl:text-lg 4xl:text-xl text-slate-700 font-bold tracking-tight">
+                        <div className="text-slate-800 font-black text-[10px] lg:text-xs xl:text-sm 3xl:text-2xl 4xl:text-3xl border-b border-slate-100 pb-1.5 lg:pb-2 3xl:pb-4">{selectedStation.name}</div>
                         <div className="flex justify-between">
                             <span className="text-slate-400 font-medium">Acumulado 24h:</span>
-                            <span className="font-black text-blue-600 text-sm 3xl:text-2xl 4xl:text-3xl">{(selectedStation.rainRaw || selectedStation.acc24hr || 0).toFixed(1)} mm</span>
+                            <span className="font-black text-blue-600 text-[10px] lg:text-xs xl:text-sm 3xl:text-2xl 4xl:text-3xl">{(selectedStation.rainRaw || selectedStation.acc24hr || 0).toFixed(1)} mm</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-slate-400 font-medium">Nível:</span>
@@ -668,7 +680,7 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
                         {selectedStation.lat && (
                             <div className="flex justify-between">
                                 <span className="text-slate-400 font-medium">Coords:</span>
-                                <span className="font-mono text-[10px] 3xl:text-base 4xl:text-lg text-slate-500">[{selectedStation.lat.toFixed(4)}, {(selectedStation.lon || selectedStation.lng || 0).toFixed(4)}]</span>
+                                <span className="font-mono text-[8px] lg:text-[9px] xl:text-[10px] 3xl:text-base 4xl:text-lg text-slate-500">[{selectedStation.lat.toFixed(4)}, {(selectedStation.lon || selectedStation.lng || 0).toFixed(4)}]</span>
                             </div>
                         )}
                     </div>
@@ -684,25 +696,25 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
         .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
 
     return (
-        <div className="grid grid-cols-12 gap-6 3xl:gap-10 4xl:gap-16 h-full">
-            <div className="col-span-4 bg-white border border-slate-200 rounded-[48px] p-8 3xl:p-14 4xl:p-20 flex flex-col overflow-hidden shadow-md">
-                <div className="flex justify-between items-center mb-10 3xl:mb-16">
-                    <h3 className="text-xl 3xl:text-3xl 4xl:text-4xl font-black text-slate-800 uppercase tracking-[4px] 3xl:tracking-[6px]">Chamados Ativos</h3>
-                    <div className="bg-blue-600/10 text-blue-600 px-4 py-1 3xl:px-6 3xl:py-2 rounded-full text-[10px] 3xl:text-sm 4xl:text-base font-black uppercase tracking-[3px] border border-blue-600/20">Monitoramento 24h</div>
+        <div className="grid grid-cols-12 gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16 h-full">
+            <div className="col-span-4 bg-white border border-slate-200 rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] p-4 lg:p-5 xl:p-6 3xl:p-12 4xl:p-16 tv:p-20 flex flex-col overflow-hidden shadow-md">
+                <div className="flex justify-between items-center mb-4 lg:mb-5 xl:mb-6 3xl:mb-10 4xl:mb-14 tv:mb-16 shrink-0">
+                    <h3 className="text-xs lg:text-sm xl:text-base 3xl:text-2xl 4xl:text-3xl tv:text-4xl font-black text-slate-800 uppercase tracking-[2px] lg:tracking-[3px] xl:tracking-[4px]">Chamados Ativos</h3>
+                    <div className="bg-blue-600/10 text-blue-600 px-2 py-0.5 lg:px-3 lg:py-1 3xl:px-5 3xl:py-2 rounded-full text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base tv:text-lg font-black uppercase tracking-wider border border-blue-600/20">Monitoramento 24h</div>
                 </div>
-                <div className="flex-1 overflow-y-auto pr-4 3xl:pr-6 space-y-4 3xl:space-y-6 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto pr-1 lg:pr-2 xl:pr-3 space-y-2 lg:space-y-3 xl:space-y-4 3xl:space-y-6 custom-scrollbar">
                     {list.map((e, idx) => (
-                        <div key={idx} className="bg-slate-50 p-8 3xl:p-12 4xl:p-16 rounded-[40px] border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:border-blue-100">
-                            <div className="flex justify-between items-start mb-6 3xl:mb-10">
-                                <div className="space-y-1 3xl:space-y-3">
-                                    <span className="text-[10px] 3xl:text-base 4xl:text-lg font-black text-blue-600 uppercase tracking-[3px]">{e.localidade || 'Sede'}</span>
-                                    <h4 className="text-2xl 3xl:text-4xl 4xl:text-5xl font-black text-slate-800 uppercase tracking-tight leading-none">{e.details || e.risk}</h4>
+                        <div key={idx} className="bg-slate-50 p-3 lg:p-4 xl:p-5 3xl:p-8 4xl:p-12 tv:p-16 rounded-xl lg:rounded-2xl xl:rounded-[24px] 3xl:rounded-[32px] border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:border-blue-100">
+                            <div className="flex justify-between items-start mb-3 lg:mb-4 xl:mb-5 3xl:mb-8">
+                                <div className="space-y-0.5 lg:space-y-1">
+                                    <span className="text-[8px] lg:text-[9px] xl:text-[10px] 3xl:text-sm 4xl:text-base tv:text-lg font-black text-blue-600 uppercase tracking-widest">{e.localidade || 'Sede'}</span>
+                                    <h4 className="text-xs lg:text-sm xl:text-base 3xl:text-2xl 4xl:text-3xl tv:text-4xl font-black text-slate-800 uppercase tracking-tight leading-snug">{e.details || e.risk}</h4>
                                 </div>
-                                <div className="px-5 py-2 3xl:px-8 3xl:py-4 bg-white rounded-2xl text-[10px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest border border-slate-100 shadow-sm">
+                                <div className="px-2 py-0.5 lg:px-3 lg:py-1 xl:px-4 xl:py-1.5 bg-white rounded-lg text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-xs 4xl:text-sm tv:text-base font-black text-slate-400 uppercase tracking-wider border border-slate-100 shadow-sm shrink-0">
                                     {new Date(e.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                             </div>
-                            <div className={`px-6 py-3 3xl:px-10 3xl:py-5 rounded-2xl text-xs 3xl:text-lg 4xl:text-xl font-black uppercase tracking-[2px] inline-block shadow-md ${String(e.risk).includes('Iminente') || String(e.risk).includes('Alto') ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'
+                            <div className={`px-3 py-1 lg:px-4 lg:py-1.5 rounded-lg text-[8px] lg:text-[9px] xl:text-xs 3xl:text-base 4xl:text-lg font-black uppercase tracking-wider inline-block shadow-sm ${String(e.risk).includes('Iminente') || String(e.risk).includes('Alto') ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'
                                 }`}>
                                 {e.nivelRisco || e.status}
                             </div>
@@ -711,11 +723,11 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
                 </div>
             </div>
 
-            <div className="col-span-8 bg-white border border-slate-200 rounded-[48px] overflow-hidden relative shadow-xl flex flex-col">
-                <div className="absolute top-8 left-8 3xl:top-12 3xl:left-12 4xl:top-16 4xl:left-16 z-[1000] flex gap-3 3xl:gap-5">
-                    <div className="flex bg-white/90 backdrop-blur-xl p-2 3xl:p-3 4xl:p-4 rounded-3xl border border-slate-200 shadow-2xl">
-                        <button onClick={() => setViewMode('vistorias')} className={`px-8 py-3 3xl:px-12 3xl:py-5 4xl:px-16 4xl:py-6 rounded-2xl text-xs 3xl:text-lg 4xl:text-xl font-black uppercase tracking-widest transition-all ${viewMode === 'vistorias' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>Vistorias</button>
-                        <button onClick={() => setViewMode('ocorrencias')} className={`px-8 py-3 3xl:px-12 3xl:py-5 4xl:px-16 4xl:py-6 rounded-2xl text-xs 3xl:text-lg 4xl:text-xl font-black uppercase tracking-widest transition-all ${viewMode === 'ocorrencias' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>Ocorrências</button>
+            <div className="col-span-8 bg-white border border-slate-200 rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] overflow-hidden relative shadow-xl flex flex-col">
+                <div className="absolute top-3 left-3 lg:top-4 lg:left-4 xl:top-6 xl:left-6 3xl:top-12 3xl:left-12 4xl:top-16 4xl:left-16 z-[1000] flex gap-2 lg:gap-3">
+                    <div className="flex bg-white/90 backdrop-blur-xl p-1 lg:p-1.5 xl:p-2 rounded-xl lg:rounded-2xl border border-slate-200 shadow-2xl">
+                        <button onClick={() => setViewMode('vistorias')} className={`px-4 py-2 lg:px-6 lg:py-2.5 xl:px-8 xl:py-3 3xl:px-12 3xl:py-5 4xl:px-16 4xl:py-6 rounded-lg lg:rounded-xl text-[8px] lg:text-[9px] xl:text-xs 3xl:text-base 4xl:text-lg font-black uppercase tracking-wider transition-all ${viewMode === 'vistorias' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}>Vistorias</button>
+                        <button onClick={() => setViewMode('ocorrencias')} className={`px-4 py-2 lg:px-6 lg:py-2.5 xl:px-8 xl:py-3 3xl:px-12 3xl:py-5 4xl:px-16 4xl:py-6 rounded-lg lg:rounded-xl text-[8px] lg:text-[9px] xl:text-xs 3xl:text-base 4xl:text-lg font-black uppercase tracking-wider transition-all ${viewMode === 'ocorrencias' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}>Ocorrências</button>
                     </div>
                 </div>
                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
@@ -754,45 +766,45 @@ const TV_HumanitarianStrategic = () => {
     const rate = stats.capacity > 0 ? (stats.occupants / stats.capacity) * 100 : 0;
 
     return (
-        <div className="grid grid-cols-12 gap-6 3xl:gap-10 4xl:gap-16 h-full font-black">
-            <div className="col-span-12 lg:col-span-4 bg-white border border-slate-200 rounded-[48px] p-12 3xl:p-16 4xl:p-24 flex flex-col justify-between shadow-xl">
+        <div className="grid grid-cols-12 gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16 h-full font-black">
+            <div className="col-span-12 lg:col-span-4 bg-white border border-slate-200 rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] p-5 lg:p-6 xl:p-8 3xl:p-14 4xl:p-20 tv:p-24 flex flex-col justify-between shadow-xl">
                 <div>
-                    <Home className="text-emerald-600 mb-8 3xl:mb-12 w-16 h-16 3xl:w-24 3xl:h-24 4xl:w-32 4xl:h-32" />
-                    <h3 className="text-2xl 3xl:text-4xl 4xl:text-5xl text-slate-400 uppercase tracking-[6px] 3xl:tracking-[8px] mb-2 3xl:mb-4 font-black">Capacidade</h3>
-                    <h2 className="text-8xl 3xl:text-[8rem] 4xl:text-[10rem] text-slate-800 tracking-tighter mb-4 3xl:mb-8 font-black">OCUPADO</h2>
+                    <Home className="text-emerald-600 mb-4 lg:mb-5 xl:mb-6 3xl:mb-10 w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28 tv:w-32 tv:h-32" />
+                    <h3 className="text-xs lg:text-sm xl:text-base 3xl:text-2xl 4xl:text-3xl tv:text-4xl text-slate-400 uppercase tracking-[3px] lg:tracking-[4px] mb-1 font-black">Capacidade</h3>
+                    <h2 className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-8xl 4xl:text-9xl tv:text-[10rem] text-slate-800 tracking-tighter mb-2 lg:mb-3 3xl:mb-6 font-black">OCUPADO</h2>
                 </div>
 
-                <div className="space-y-8 3xl:space-y-12">
+                <div className="space-y-4 lg:space-y-6 3xl:space-y-10">
                     <div className="flex justify-between items-end">
-                        <span className="text-sm 3xl:text-2xl 4xl:text-3xl font-black text-emerald-600 uppercase tracking-[4px] 3xl:tracking-[6px]">Taxa de Ocupação</span>
-                        <span className="text-6xl 3xl:text-8xl 4xl:text-9xl text-slate-800 font-black">{Math.round(rate)}%</span>
+                        <span className="text-[10px] lg:text-xs xl:text-sm 3xl:text-xl 4xl:text-2xl font-black text-emerald-600 uppercase tracking-wider">Taxa de Ocupação</span>
+                        <span className="text-2xl lg:text-3xl xl:text-4xl 3xl:text-6xl 4xl:text-8xl tv:text-9xl text-slate-800 font-black">{Math.round(rate)}%</span>
                     </div>
-                    <div className="w-full h-10 3xl:h-16 4xl:h-20 bg-slate-100 rounded-full overflow-hidden shadow-inner border-2 border-slate-200">
+                    <div className="w-full h-4 lg:h-5 xl:h-6 3xl:h-10 4xl:h-14 tv:h-18 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
                         <div className={`h-full transition-all duration-1000 ${rate > 80 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${rate}%` }} />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-8 3xl:gap-12 mt-12 3xl:mt-16">
-                    <div className="bg-slate-50 p-10 3xl:p-16 4xl:p-20 rounded-[40px] border border-slate-100 shadow-sm flex flex-col justify-center">
-                        <span className="block text-[10px] 3xl:text-lg 4xl:text-xl text-slate-400 uppercase tracking-[4px] 3xl:tracking-[6px] mb-4 3xl:mb-6 font-black">Total Abrigos</span>
-                        <span className="text-7xl 3xl:text-9xl 4xl:text-[10rem] text-slate-800 font-black leading-none">{stats.shelters}</span>
+                <div className="grid grid-cols-2 gap-3 lg:gap-4 xl:gap-5 3xl:gap-8 mt-6 lg:mt-8 xl:mt-10 3xl:mt-14">
+                    <div className="bg-slate-50 p-4 lg:p-5 xl:p-6 3xl:p-10 4xl:p-14 tv:p-16 rounded-[16px] lg:rounded-[20px] xl:rounded-[24px] 3xl:rounded-[32px] border border-slate-100 shadow-sm flex flex-col justify-center">
+                        <span className="block text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base tv:text-lg text-slate-400 uppercase tracking-widest mb-1 lg:mb-1.5 font-black">Total Abrigos</span>
+                        <span className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-7xl 4xl:text-8xl tv:text-9xl text-slate-800 font-black leading-none">{stats.shelters}</span>
                     </div>
-                    <div className="bg-slate-50 p-10 3xl:p-16 4xl:p-20 rounded-[40px] border border-slate-100 shadow-sm flex flex-col justify-center">
-                        <span className="block text-[10px] 3xl:text-lg 4xl:text-xl text-slate-400 uppercase tracking-[4px] 3xl:tracking-[6px] mb-4 3xl:mb-6 font-black">Pessoas</span>
-                        <span className="text-7xl 3xl:text-9xl 4xl:text-[10rem] text-blue-600 font-black leading-none">{stats.occupants}</span>
+                    <div className="bg-slate-50 p-4 lg:p-5 xl:p-6 3xl:p-10 4xl:p-14 tv:p-16 rounded-[16px] lg:rounded-[20px] xl:rounded-[24px] 3xl:rounded-[32px] border border-slate-100 shadow-sm flex flex-col justify-center">
+                        <span className="block text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base tv:text-lg text-slate-400 uppercase tracking-widest mb-1 lg:mb-1.5 font-black">Pessoas</span>
+                        <span className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-7xl 4xl:text-8xl tv:text-9xl text-blue-600 font-black leading-none">{stats.occupants}</span>
                     </div>
                 </div>
             </div>
 
-            <div className="col-span-12 lg:col-span-8 bg-white border border-slate-200 rounded-[48px] p-12 3xl:p-20 4xl:p-28 shadow-xl flex flex-col gap-10 3xl:gap-16">
-                <div className="flex items-center gap-6 3xl:gap-10 pb-6 3xl:pb-10 border-b border-slate-200">
-                    <Users className="text-blue-600 w-12 h-12 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28" />
-                    <h3 className="text-4xl 3xl:text-6xl 4xl:text-7xl text-slate-800 uppercase tracking-tighter font-black">Logística e Manutenção</h3>
+            <div className="col-span-12 lg:col-span-8 bg-white border border-slate-200 rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] p-5 lg:p-6 xl:p-8 3xl:p-14 4xl:p-20 tv:p-24 shadow-xl flex flex-col gap-3 lg:gap-4 xl:gap-5 3xl:gap-8">
+                <div className="flex items-center gap-3 lg:gap-4 xl:gap-5 pb-3 lg:pb-4 xl:pb-5 border-b border-slate-200">
+                    <Users className="text-blue-600 w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28" />
+                    <h3 className="text-xl lg:text-2xl xl:text-3xl 3xl:text-5xl 4xl:text-6xl tv:text-7xl text-slate-800 uppercase tracking-tight font-black">Logística e Manutenção</h3>
                 </div>
-                <div className="flex-1 flex items-center justify-center border-4 border-dashed border-slate-100 rounded-[40px] opacity-40">
+                <div className="flex-1 flex items-center justify-center border-2 lg:border-4 border-dashed border-slate-100 rounded-[16px] lg:rounded-[20px] xl:rounded-[24px] 3xl:rounded-[32px] opacity-40">
                     <div className="text-center">
-                        <Activity className="mx-auto mb-8 3xl:mb-12 text-slate-200 w-24 h-24 3xl:w-40 3xl:h-40 4xl:w-56 4xl:h-56" />
-                        <h4 className="text-2xl 3xl:text-4xl 4xl:text-6xl text-slate-300 uppercase tracking-[10px] 3xl:tracking-[16px] font-black">Módulo Extendido: Censo 2.0</h4>
+                        <Activity className="mx-auto mb-4 lg:mb-5 xl:mb-6 text-slate-200 w-12 h-12 lg:w-16 lg:h-16 xl:w-20 xl:h-20 3xl:w-32 3xl:h-32" />
+                        <h4 className="text-sm lg:text-base xl:text-lg 3xl:text-2xl 4xl:text-3xl tv:text-4xl text-slate-300 uppercase tracking-[4px] lg:tracking-[6px] font-black">Módulo Extendido: Censo 2.0</h4>
                     </div>
                 </div>
             </div>
@@ -802,34 +814,34 @@ const TV_HumanitarianStrategic = () => {
 
 // --- 5. TV SCO STRATEGIC (Gestão de Crise) ---
 const TV_SCOStrategic = ({ plan }) => (
-    <div className={`h-full w-full rounded-[48px] border-8 transition-all duration-1000 flex flex-col items-center justify-center text-center p-20 3xl:p-32 4xl:p-48 shadow-xl ${plan ? (plan.nivel === 'Calamidade' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200') : 'bg-white border-slate-200'
+    <div className={`h-full w-full rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[48px] border-4 lg:border-8 transition-all duration-1000 flex flex-col items-center justify-center text-center p-8 lg:p-12 xl:p-16 3xl:p-32 4xl:p-48 shadow-xl ${plan ? (plan.nivel === 'Calamidade' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200') : 'bg-white border-slate-200'
         }`}>
         {plan ? (
-            <div className="max-w-5xl 3xl:max-w-7xl 4xl:max-w-screen-2xl space-y-12 3xl:space-y-16">
-                <div className="flex justify-center mb-8 3xl:mb-12">
-                    <div className="p-10 3xl:p-16 4xl:p-24 rounded-full bg-white shadow-xl animate-bounce border border-slate-100 flex items-center justify-center">
-                        <ShieldAlert className={`w-32 h-32 3xl:w-48 3xl:h-48 4xl:w-64 4xl:h-64 ${plan.nivel === 'Calamidade' ? 'text-red-600' : 'text-orange-600'}`} />
+            <div className="max-w-xl lg:max-w-2xl xl:max-w-3xl 3xl:max-w-7xl 4xl:max-w-screen-2xl space-y-4 lg:space-y-6 xl:space-y-8 3xl:space-y-16">
+                <div className="flex justify-center mb-4 lg:mb-6">
+                    <div className="p-4 lg:p-6 xl:p-8 3xl:p-16 4xl:p-24 rounded-full bg-white shadow-xl animate-bounce border border-slate-100 flex items-center justify-center">
+                        <ShieldAlert className={`w-12 h-12 lg:w-16 lg:h-16 xl:w-20 xl:h-20 3xl:w-48 3xl:h-48 4xl:w-64 4xl:h-64 ${plan.nivel === 'Calamidade' ? 'text-red-600' : 'text-orange-600'}`} />
                     </div>
                 </div>
-                <h2 className="text-3xl 3xl:text-5xl 4xl:text-7xl font-black text-slate-400 uppercase tracking-[20px] 3xl:tracking-[30px] mb-4 3xl:mb-8">SISTEMA DE COMANDO ATIVO</h2>
-                <div className={`inline-block px-16 py-6 3xl:px-24 3xl:py-10 border border-slate-200 text-white text-9xl 3xl:text-[10rem] 4xl:text-[14rem] font-black uppercase tracking-tighter shadow-2xl mb-12 3xl:mb-16 rounded-[40px] ${plan.nivel === 'Calamidade' ? 'bg-red-600' : 'bg-orange-600'
+                <h2 className="text-xs lg:text-sm xl:text-base 3xl:text-5xl 4xl:text-7xl font-black text-slate-400 uppercase tracking-[4px] lg:tracking-[6px] xl:tracking-[8px] 3xl:tracking-[20px] tv:tracking-[30px] mb-1">SISTEMA DE COMANDO ATIVO</h2>
+                <div className={`inline-block px-6 py-2 lg:px-8 lg:py-3 xl:px-12 xl:py-4 3xl:px-24 3xl:py-10 border border-slate-200 text-white text-xl lg:text-2xl xl:text-3xl 3xl:text-[10rem] 4xl:text-[14rem] font-black uppercase tracking-tighter shadow-2xl mb-4 lg:mb-6 rounded-xl lg:rounded-2xl xl:rounded-3xl ${plan.nivel === 'Calamidade' ? 'bg-red-600' : 'bg-orange-600'
                     }`}>
                     {plan.nivel}
                 </div>
-                <h3 className="text-6xl 3xl:text-8xl 4xl:text-9xl font-black text-slate-800 uppercase tracking-tight leading-none mb-10 3xl:mb-16">{plan.motivo || 'Mobilização Geral'}</h3>
-                <p className="text-2xl 3xl:text-4xl 4xl:text-5xl font-bold text-slate-500 max-w-3xl 3xl:max-w-5xl mx-auto leading-relaxed">{plan.descricao || 'Células de comando centralizadas para resposta tática imediata.'}</p>
+                <h3 className="text-base lg:text-lg xl:text-xl 3xl:text-8xl 4xl:text-9xl font-black text-slate-800 uppercase tracking-tight leading-none mb-4">{plan.motivo || 'Mobilização Geral'}</h3>
+                <p className="text-xs lg:text-sm xl:text-base 3xl:text-4xl 4xl:text-5xl font-bold text-slate-500 max-w-md lg:max-w-xl xl:max-w-2xl mx-auto leading-relaxed">{plan.descricao || 'Células de comando centralizadas para resposta tática imediata.'}</p>
 
-                <div className="pt-20 3xl:pt-28 flex justify-center gap-12 text-slate-400">
-                    <div className="flex items-center gap-4 3xl:gap-8 uppercase tracking-widest font-black 3xl:text-2xl">
-                        <Timer className="animate-spin opacity-50 w-6 h-6 3xl:w-10 3xl:h-10" /> TEMPO DE RESPOSTA ATIVO
+                <div className="pt-6 lg:pt-8 xl:pt-10 3xl:pt-28 flex justify-center gap-4 lg:gap-6 text-slate-400">
+                    <div className="flex items-center gap-2 lg:gap-4 uppercase tracking-widest font-black text-[9px] lg:text-xs xl:text-sm 3xl:text-2xl">
+                        <Timer className="animate-spin opacity-50 w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10" /> TEMPO DE RESPOSTA ATIVO
                     </div>
                 </div>
             </div>
         ) : (
-            <div className="space-y-8 3xl:space-y-12 opacity-20 grayscale group hover:grayscale-0 transition-all cursor-default scale-110 3xl:scale-150">
-                <Shield className="mx-auto text-slate-400 shadow-sm w-48 h-48 3xl:w-64 3xl:h-64 4xl:w-80 4xl:h-80" />
-                <h2 className="text-4xl 3xl:text-6xl 4xl:text-7xl font-black text-slate-400 uppercase tracking-[20px] 3xl:tracking-[30px]">SCO EM ESPERA</h2>
-                <p className="text-sm 3xl:text-2xl 4xl:text-3xl font-black text-slate-500 uppercase tracking-[6px] 3xl:tracking-[10px]">NENHUM ALERTA CRÍTICO ATIVO NO MOMENTO</p>
+            <div className="space-y-4 lg:space-y-6 3xl:space-y-12 opacity-20 grayscale group hover:grayscale-0 transition-all cursor-default scale-95 lg:scale-100 xl:scale-110 3xl:scale-150">
+                <Shield className="mx-auto text-slate-400 shadow-sm w-16 h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 3xl:w-64 3xl:h-64 4xl:w-80 4xl:h-80" />
+                <h2 className="text-xs lg:text-sm xl:text-base 3xl:text-6xl 4xl:text-7xl font-black text-slate-400 uppercase tracking-[4px] lg:tracking-[6px] xl:tracking-[10px] 3xl:tracking-[20px] tv:tracking-[30px]">SCO EM ESPERA</h2>
+                <p className="text-[8px] lg:text-[9px] xl:text-xs 3xl:text-2xl 4xl:text-3xl font-black text-slate-500 uppercase tracking-[2px] lg:tracking-[4px] 3xl:tracking-[6px]">NENHUM ALERTA CRÍTICO ATIVO NO MOMENTO</p>
             </div>
         )}
     </div>
@@ -1186,7 +1198,7 @@ const MobileDashboardView = ({
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-    chartMode, setChartMode, activeContingencyPlan, load, limiteSMJ
+    chartMode, setChartMode, activeContingencyPlan, load, loadRainfallOnly, limiteSMJ
 }) => {
     const userProfile = useContext(UserContext);
     const isOperador = userProfile?.role === 'Operador';
@@ -1236,6 +1248,7 @@ const MobileDashboardView = ({
             navigate={navigate}
             activeContingencyPlan={activeContingencyPlan}
             load={load}
+            refreshRainfall={loadRainfallOnly}
             getWeatherIcon={getWeatherIcon}
             limiteSMJ={limiteSMJ}
         />
@@ -1937,7 +1950,7 @@ const WebViewDashboardView = ({
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
     viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
-    chartMode, setChartMode, activeContingencyPlan, load, limiteSMJ
+    chartMode, setChartMode, activeContingencyPlan, load, loadRainfallOnly, limiteSMJ
 }) => {
     const [tiposRiscoAtivos, setTiposRiscoAtivos] = useState(new Set()); // inicia VAZIO (desativado)
     const [areasRiscoData, setAreasRiscoData] = useState(null);
@@ -1971,6 +1984,7 @@ const WebViewDashboardView = ({
             navigate={navigate}
             activeContingencyPlan={activeContingencyPlan}
             load={load}
+            refreshRainfall={loadRainfallOnly}
             getWeatherIcon={getWeatherIcon}
             limiteSMJ={limiteSMJ}
         />
@@ -2567,6 +2581,97 @@ const Dashboard = () => {
         return () => window.removeEventListener('resize', handleResize)
     }, [])
 
+    const loadRainfallOnly = async () => {
+        try {
+            setPluvioLoading(true);
+
+            // Fetch Manual Readings (SEDE) from DB
+            const manualReadings = await getManualReadings().catch(() => [])
+            const now = new Date()
+            const getLatestForPeriod = (period, hours) => {
+                const windowStart = new Date(now.getTime() - hours * 60 * 60 * 1000)
+                const relevant = (manualReadings || []).filter(r =>
+                    r && (r.period === period || (!r.period && period === '1h')) &&
+                    new Date(r.date) > windowStart &&
+                    new Date(r.date) <= now
+                )
+                return relevant.length > 0 ? parseFloat(relevant[0].volume) : 0
+            }
+
+            const manualAcc24h = getLatestForPeriod('24h', 24)
+            const manualStation = {
+                id: 'SEDE_DEFESA_CIVIL',
+                name: 'SEDE DEFESA CIVIL (Manual)',
+                rainRaw: manualAcc24h,
+            }
+
+            const res = await fetch('/api/pluviometros').catch(() => null)
+            let apiData = []
+            if (res && res.ok) {
+                apiData = await res.json()
+            }
+
+            let formattedApi = (apiData || []).map(st => {
+                const meta = STATION_METADATA[st.id] || STATION_METADATA[st.id + 'A'] || {};
+                return {
+                    id: st.id,
+                    name: meta.name || st.name,
+                    lat: meta.lat || st.lat || null,
+                    lon: meta.lon || st.lon || st.lng || null,
+                    lng: meta.lon || st.lon || st.lng || null,
+                    rainRaw: st.acc24hr ?? st.rainRaw ?? 0,
+                    lastUpdate: st.lastUpdate || null
+                };
+            });
+
+            // If API returned no stations, populate default CEMADEN stations
+            if (formattedApi.length === 0) {
+                const cemadenStations = await cemadenService.getRainfallData().catch(() => []);
+                if (cemadenStations && cemadenStations.length > 0) {
+                    formattedApi = cemadenStations;
+                } else {
+                    formattedApi = Object.keys(STATION_METADATA)
+                        .filter(id => id !== 'SEDE_DEFESA_CIVIL')
+                        .map(id => ({
+                            id,
+                            name: STATION_METADATA[id].name,
+                            lat: STATION_METADATA[id].lat,
+                            lon: STATION_METADATA[id].lon,
+                            lng: STATION_METADATA[id].lon,
+                            rainRaw: 0,
+                            lastUpdate: new Date().toISOString()
+                        }));
+                }
+            }
+
+            const combined = [
+                {
+                    ...manualStation,
+                    lat: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lat || -20.0406,
+                    lon: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon || -40.7456,
+                    lng: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon || -40.7456
+                },
+                ...formattedApi
+            ].map(station => {
+                let level = 'Normal';
+                const acc24 = station.rainRaw || 0;
+                if (acc24 >= 80) level = 'Extremo';
+                else if (acc24 >= 50) level = 'Alerta';
+                else if (acc24 >= 30) level = 'Atenção';
+
+                return { ...station, level }
+            }).filter(station => station && station.lat && (station.lon || station.lng));
+
+            setRainfall(combined);
+        } catch (e) {
+            console.warn('[Pluviometros] Fetch failed, using fallback:', e);
+            const rain = await cemadenService.getRainfallData().catch(() => []);
+            setRainfall(rain || []);
+        } finally {
+            setPluvioLoading(false);
+        }
+    };
+
     const load = async () => {
         try {
             const plan = await contingencyDb.getActivePlan().catch(e => {
@@ -2671,94 +2776,7 @@ const Dashboard = () => {
                     setCemadenAlerts(alerts || []);
                 } catch (e) { console.warn('[Cemaden] Alerts failed:', e); }
 
-                try {
-                    setPluvioLoading(true);
-
-                    // Fetch Manual Readings (SEDE) from DB
-                    const manualReadings = await getManualReadings().catch(() => [])
-                    const now = new Date()
-                    const getLatestForPeriod = (period, hours) => {
-                        const windowStart = new Date(now.getTime() - hours * 60 * 60 * 1000)
-                        const relevant = (manualReadings || []).filter(r =>
-                            r && (r.period === period || (!r.period && period === '1h')) &&
-                            new Date(r.date) > windowStart &&
-                            new Date(r.date) <= now
-                        )
-                        return relevant.length > 0 ? parseFloat(relevant[0].volume) : 0
-                    }
-
-                    const manualAcc24h = getLatestForPeriod('24h', 24)
-                    const manualStation = {
-                        id: 'SEDE_DEFESA_CIVIL',
-                        name: 'SEDE DEFESA CIVIL (Manual)',
-                        rainRaw: manualAcc24h,
-                    }
-
-                    const res = await fetch('/api/pluviometros').catch(() => null)
-                    let apiData = []
-                    if (res && res.ok) {
-                        apiData = await res.json()
-                    }
-
-                    let formattedApi = (apiData || []).map(st => {
-                        const meta = STATION_METADATA[st.id] || STATION_METADATA[st.id + 'A'] || {};
-                        return {
-                            id: st.id,
-                            name: meta.name || st.name,
-                            lat: meta.lat || st.lat || null,
-                            lon: meta.lon || st.lon || st.lng || null,
-                            lng: meta.lon || st.lon || st.lng || null,
-                            rainRaw: st.acc24hr ?? st.rainRaw ?? 0,
-                            lastUpdate: st.lastUpdate || null
-                        };
-                    });
-
-                    // If API returned no stations, populate default CEMADEN stations
-                    if (formattedApi.length === 0) {
-                        const cemadenStations = await cemadenService.getRainfallData().catch(() => []);
-                        if (cemadenStations && cemadenStations.length > 0) {
-                            formattedApi = cemadenStations;
-                        } else {
-                            formattedApi = Object.keys(STATION_METADATA)
-                                .filter(id => id !== 'SEDE_DEFESA_CIVIL')
-                                .map(id => ({
-                                    id,
-                                    name: STATION_METADATA[id].name,
-                                    lat: STATION_METADATA[id].lat,
-                                    lon: STATION_METADATA[id].lon,
-                                    lng: STATION_METADATA[id].lon,
-                                    rainRaw: 0,
-                                    lastUpdate: new Date().toISOString()
-                                }));
-                        }
-                    }
-
-                    const combined = [
-                        {
-                            ...manualStation,
-                            lat: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lat || -20.0406,
-                            lon: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon || -40.7456,
-                            lng: (STATION_METADATA['SEDE_DEFESA_CIVIL'] || {}).lon || -40.7456
-                        },
-                        ...formattedApi
-                    ].map(station => {
-                        let level = 'Normal';
-                        const acc24 = station.rainRaw || 0;
-                        if (acc24 >= 80) level = 'Extremo';
-                        else if (acc24 >= 50) level = 'Alerta';
-                        else if (acc24 >= 30) level = 'Atenção';
-
-                        return { ...station, level }
-                    }).filter(station => station && station.lat && (station.lon || station.lng));
-
-                    setRainfall(combined);
-                } catch (e) {
-                    console.warn('[Pluviometros] Fetch failed, using fallback:', e);
-                    const rain = await cemadenService.getRainfallData().catch(() => []);
-                    setRainfall(rain || []);
-                } finally {
-                    setPluvioLoading(false);
-                }
+                await loadRainfallOnly();
 
                 // Fallback direct INMET fetch if data.alerts is empty
                 try {
@@ -3048,7 +3066,8 @@ const Dashboard = () => {
         viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
         chartMode, setChartMode,
         activeContingencyPlan,
-        load
+        load,
+        loadRainfallOnly
     };
 
     return (
