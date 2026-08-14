@@ -76,7 +76,7 @@ const InterdicaoPrint = () => {
                 if (localMatch) {
                     setData(localMatch);
                     const docId = (localMatch.interdicaoId || localMatch.interdicao_id || id).replace('/', '-');
-                    const docTitle = `Interdição nº ${docId} - ${localMatch.responsavel_nome || localMatch.responsavelNome || 'Proprietário'}`;
+                    const docTitle = `Interdição - ${docId} - ${localMatch.responsavel_nome || localMatch.responsavelNome || 'Proprietário'}`;
                     document.title = docTitle;
                     setLoading(false);
                     return;
@@ -92,7 +92,7 @@ const InterdicaoPrint = () => {
                 if (reportData) {
                     setData(reportData);
                     const docId = (reportData.interdicaoId || reportData.interdicao_id || id).replace('/', '-');
-                    const docTitle = `Interdição nº ${docId} - ${reportData.responsavel_nome || reportData.responsavelNome || 'Proprietário'}`;
+                    const docTitle = `Interdição - ${docId} - ${reportData.responsavel_nome || reportData.responsavelNome || 'Proprietário'}`;
                     document.title = docTitle;
                 } else {
                     console.warn("Interdição não encontrada:", error);

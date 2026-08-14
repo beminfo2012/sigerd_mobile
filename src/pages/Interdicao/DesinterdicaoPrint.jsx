@@ -23,7 +23,7 @@ const DesinterdicaoPrint = () => {
                     const localById = await db.get('desinterdicoes', numericId);
                     if (localById) {
                         setData(localById);
-                        const docTitle = `Desinterdição nº ${localById.interdicaoId || localById.interdicao_id || id} - ${localById.responsavel_nome || localById.responsavelNome || 'Proprietário'}`;
+                        const docTitle = `Desinterdição - ${localById.interdicaoId || localById.interdicao_id || id} - ${localById.responsavel_nome || localById.responsavelNome || 'Proprietário'}`;
                         document.title = docTitle;
                         setLoading(false);
                         return;
@@ -35,7 +35,7 @@ const DesinterdicaoPrint = () => {
                     const localBySupId = await db.getFromIndex('desinterdicoes', 'supabase_id', id);
                     if (localBySupId) {
                         setData(localBySupId);
-                        const docTitle = `Desinterdição nº ${localBySupId.interdicaoId || localBySupId.interdicao_id || id} - ${localBySupId.responsavel_nome || localBySupId.responsavelNome || 'Proprietário'}`;
+                        const docTitle = `Desinterdição - ${localBySupId.interdicaoId || localBySupId.interdicao_id || id} - ${localBySupId.responsavel_nome || localBySupId.responsavelNome || 'Proprietário'}`;
                         document.title = docTitle;
                         setLoading(false);
                         return;
@@ -51,7 +51,7 @@ const DesinterdicaoPrint = () => {
                 );
                 if (found) {
                     setData(found);
-                    const docTitle = `Desinterdição nº ${found.interdicaoId || found.interdicao_id || id} - ${found.responsavel_nome || found.responsavelNome || 'Proprietário'}`;
+                    const docTitle = `Desinterdição - ${found.interdicaoId || found.interdicao_id || id} - ${found.responsavel_nome || found.responsavelNome || 'Proprietário'}`;
                     document.title = docTitle;
                     setLoading(false);
                     return;
@@ -66,7 +66,7 @@ const DesinterdicaoPrint = () => {
 
                 if (reportData) {
                     setData(reportData);
-                    const docTitle = `Desinterdição nº ${reportData.interdicaoId || reportData.interdicao_id || id} - ${reportData.responsavel_nome || reportData.responsavelNome || 'Proprietário'}`;
+                    const docTitle = `Desinterdição - ${reportData.interdicaoId || reportData.interdicao_id || id} - ${reportData.responsavel_nome || reportData.responsavelNome || 'Proprietário'}`;
                     document.title = docTitle;
                 } else {
                     console.warn("Desinterdição não encontrada:", error);

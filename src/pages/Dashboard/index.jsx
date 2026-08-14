@@ -363,32 +363,32 @@ const TvModeDashboardView = ({
 
     if (currentView === 'menu') {
         return (
-            <div className="h-screen w-screen bg-slate-50 flex flex-col p-12 overflow-hidden justify-center items-center">
-                <div className="text-center mb-16 space-y-6">
-                    <img src="/logo_header.png" alt="Logo" className="h-32 mx-auto mb-12 object-contain" />
-                    <h1 className="text-5xl font-black text-slate-800 tracking-[16px] uppercase">MODO TV ESTRATÉGICO</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-[6px]">Selecione o painel de monitoramento para transmissão em Videowall</p>
+            <div className="h-screen w-screen bg-slate-50 flex flex-col p-12 3xl:p-24 4xl:p-32 overflow-hidden justify-center items-center">
+                <div className="text-center mb-16 3xl:mb-24 4xl:mb-32 space-y-6 3xl:space-y-10">
+                    <img src="/logo_header.png" alt="Logo" className="h-32 3xl:h-48 4xl:h-64 mx-auto mb-12 3xl:mb-20 object-contain" />
+                    <h1 className="text-5xl 3xl:text-7xl 4xl:text-8xl font-black text-slate-800 tracking-[16px] 3xl:tracking-[24px] uppercase">MODO TV ESTRATÉGICO</h1>
+                    <p className="text-slate-500 font-bold uppercase tracking-[6px] 3xl:text-2xl 4xl:text-3xl">Selecione o painel de monitoramento para transmissão em Videowall</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 max-w-[1700px]">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 3xl:gap-16 4xl:gap-20 max-w-[1700px] 3xl:max-w-[2400px] 4xl:max-w-[3200px] w-full">
                     {panelOptions.map((opt) => (
                         <button
                             key={opt.id}
                             onClick={() => setCurrentView(opt.id)}
-                            className="bg-white border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-12 rounded-[56px] transition-all flex flex-col items-center gap-10 group shadow-xl hover:shadow-2xl hover:scale-105"
+                            className="bg-white border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-12 3xl:p-16 4xl:p-20 rounded-[56px] transition-all flex flex-col items-center gap-10 3xl:gap-14 group shadow-xl hover:shadow-2xl hover:scale-105"
                         >
-                            <div className="p-10 rounded-full bg-slate-100 group-hover:bg-blue-600 transition-all shadow-md">
-                                <opt.icon size={80} className="text-slate-600 group-hover:text-white" />
+                            <div className="p-10 3xl:p-14 4xl:p-20 rounded-full bg-slate-100 group-hover:bg-blue-600 transition-all shadow-md flex items-center justify-center">
+                                <opt.icon className="w-20 h-20 3xl:w-28 3xl:h-28 4xl:w-36 4xl:h-36 text-slate-600 group-hover:text-white" />
                             </div>
-                            <div className="text-center space-y-3">
-                                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">{opt.label}</h3>
-                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{opt.desc}</p>
+                            <div className="text-center space-y-3 3xl:space-y-6">
+                                <h3 className="text-2xl 3xl:text-4xl 4xl:text-5xl font-black text-slate-800 uppercase tracking-tight">{opt.label}</h3>
+                                <p className="text-[10px] 3xl:text-sm 4xl:text-base text-slate-400 font-black uppercase tracking-widest">{opt.desc}</p>
                             </div>
                         </button>
                     ))}
                 </div>
 
-                <div className="mt-24 flex gap-8 italic text-slate-400 font-black uppercase tracking-widest text-xs">
+                <div className="mt-24 3xl:mt-32 flex gap-8 3xl:gap-12 italic text-slate-400 font-black uppercase tracking-widest text-xs 3xl:text-lg 4xl:text-xl">
                     <span>SALA DE SITUAÇÃO - DEFESA CIVIL</span>
                     <span className="opacity-30">|</span>
                     <span>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
@@ -398,43 +398,43 @@ const TvModeDashboardView = ({
     }
 
     return (
-        <div className="h-screen w-screen bg-slate-100 flex flex-col p-6 gap-6 overflow-hidden">
+        <div className="h-screen w-screen bg-slate-100 flex flex-col p-6 3xl:p-10 4xl:p-16 gap-6 3xl:gap-10 4xl:gap-16 overflow-hidden">
             {/* White TV Header */}
-            <div className="flex justify-between items-center bg-white border border-slate-200 p-8 rounded-[40px] shadow-xl">
-                <div className="flex gap-10 items-center">
-                    <button onClick={() => setCurrentView('menu')} className="bg-slate-100 p-5 rounded-2xl text-slate-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                        <Layers size={28} />
+            <div className="flex justify-between items-center bg-white border border-slate-200 p-8 3xl:p-12 4xl:p-16 rounded-[40px] shadow-xl">
+                <div className="flex gap-10 3xl:gap-16 items-center">
+                    <button onClick={() => setCurrentView('menu')} className="bg-slate-100 p-5 3xl:p-8 rounded-2xl text-slate-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center">
+                        <Layers className="w-7 h-7 3xl:w-12 3xl:h-12 4xl:w-16 4xl:h-16" />
                     </button>
-                    <div className="h-14 w-px bg-slate-200" />
+                    <div className="h-14 3xl:h-20 w-px bg-slate-200" />
                     <div>
-                        <h1 className="text-3xl font-black text-slate-800 tracking-[8px] uppercase leading-none mb-3">
+                        <h1 className="text-3xl 3xl:text-5xl 4xl:text-6xl font-black text-slate-800 tracking-[8px] uppercase leading-none mb-3 3xl:mb-5">
                             {panelOptions.find(p => p.id === currentView)?.label}
                         </h1>
-                        <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 rounded-xl text-white text-[11px] font-black uppercase tracking-widest animate-pulse shadow-lg shadow-blue-600/20">Monitoramento Ativo</span>
-                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[4px] leading-none">SANTA MARIA DE JETIBÁ</span>
+                        <div className="flex items-center gap-4 3xl:gap-6">
+                            <span className="flex items-center gap-2 px-4 py-1.5 3xl:px-6 3xl:py-2.5 bg-blue-600 rounded-xl text-white text-[11px] 3xl:text-base 4xl:text-lg font-black uppercase tracking-widest animate-pulse shadow-lg shadow-blue-600/20">Monitoramento Ativo</span>
+                            <span className="text-[11px] 3xl:text-base 4xl:text-lg font-black text-slate-400 uppercase tracking-[4px] leading-none">SANTA MARIA DE JETIBÁ</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex gap-16 items-center">
+                <div className="flex gap-16 3xl:gap-24 items-center">
                     {weather?.current && (
-                        <div className="flex items-center gap-6 bg-slate-50 px-8 py-4 rounded-3xl border border-slate-100">
-                            <span className="text-4xl">{getWeatherIcon(weather.current.code)}</span>
+                        <div className="flex items-center gap-6 3xl:gap-10 bg-slate-50 px-8 py-4 3xl:px-12 3xl:py-6 rounded-3xl border border-slate-100">
+                            <span className="text-4xl 3xl:text-6xl 4xl:text-7xl">{getWeatherIcon(weather.current.code)}</span>
                             <div className="flex flex-col">
-                                <span className="text-3xl font-black text-slate-800 tabular-nums leading-none mb-2">{Math.round(weather.current.temp)}°C</span>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tempo Real</span>
+                                <span className="text-3xl 3xl:text-5xl 4xl:text-6xl font-black text-slate-800 tabular-nums leading-none mb-2">{Math.round(weather.current.temp)}°C</span>
+                                <span className="text-[10px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest">Tempo Real</span>
                             </div>
                         </div>
                     )}
 
-                    <div className="text-right flex items-center gap-10 border-l border-slate-200 pl-10">
+                    <div className="text-right flex items-center gap-10 3xl:gap-16 border-l border-slate-200 pl-10 3xl:pl-16">
                         <div className="flex flex-col items-end">
-                            <span className="text-6xl font-black text-slate-800 leading-none tracking-tighter tabular-nums mb-2">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Último Refresh: {lastRefresh.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-6xl 3xl:text-8xl 4xl:text-9xl font-black text-slate-800 leading-none tracking-tighter tabular-nums mb-2 3xl:mb-4">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-[10px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest leading-none">Último Refresh: {lastRefresh.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        <button onClick={() => window.close()} className="p-5 bg-slate-100 hover:bg-red-500 hover:text-white text-slate-400 rounded-2xl transition-all shadow-sm">
-                            <X size={28} />
+                        <button onClick={() => window.close()} className="p-5 3xl:p-8 bg-slate-100 hover:bg-red-500 hover:text-white text-slate-400 rounded-2xl transition-all shadow-sm flex items-center justify-center">
+                            <X className="w-7 h-7 3xl:w-12 3xl:h-12 4xl:w-16 4xl:h-16" />
                         </button>
                     </div>
                 </div>
@@ -452,55 +452,55 @@ const TvModeDashboardView = ({
     );
 };// --- 1. TV STRATEGIC OVERVIEW (Dashboard Consolidado) ---
 const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIcon, limiteSMJ }) => (
-    <div className="grid grid-cols-12 gap-6 h-full">
+    <div className="grid grid-cols-12 gap-6 3xl:gap-10 4xl:gap-16 h-full">
         {/* Left Column: Alerts & Stats */}
-        <div className="col-span-4 flex flex-col gap-6">
-            <div className="bg-white border border-slate-200 border border-slate-200 p-10 flex-1 flex flex-col justify-center items-center text-center shadow-md">
-                <div className={`w-32 h-32 rounded-full ${statusInfo.bg || 'bg-blue-600'} flex items-center justify-center text-white shadow-2xl mb-8 animate-pulse`}>
-                    <ShieldAlert size={64} />
+        <div className="col-span-4 flex flex-col gap-6 3xl:gap-10 4xl:gap-16">
+            <div className="bg-white border border-slate-200 p-10 3xl:p-16 4xl:p-24 flex-1 flex flex-col justify-center items-center text-center shadow-md rounded-[40px]">
+                <div className={`w-32 h-32 3xl:w-48 3xl:h-48 4xl:w-64 4xl:h-64 rounded-full ${statusInfo.bg || 'bg-blue-600'} flex items-center justify-center text-white shadow-2xl mb-8 3xl:mb-12 4xl:mb-16 animate-pulse`}>
+                    <ShieldAlert className="w-16 h-16 3xl:w-24 3xl:h-24 4xl:w-32 4xl:h-32" />
                 </div>
-                <h3 className="text-xl font-black text-slate-400 uppercase tracking-[4px] mb-4">Nível de Contingência</h3>
-                <h2 className={`text-7xl font-black uppercase tracking-tight mb-8 ${statusInfo.text}`}>{statusInfo.label}</h2>
-                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
+                <h3 className="text-xl 3xl:text-3xl 4xl:text-4xl font-black text-slate-400 uppercase tracking-[4px] 3xl:tracking-[6px] mb-4 3xl:mb-8">Nível de Contingência</h3>
+                <h2 className={`text-7xl 3xl:text-9xl 4xl:text-[10rem] font-black uppercase tracking-tight mb-8 3xl:mb-12 4xl:mb-16 ${statusInfo.text}`}>{statusInfo.label}</h2>
+                <div className="w-full h-4 3xl:h-8 4xl:h-12 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
                     <div className={`h-full ${statusInfo.color}`} style={{ width: '100%' }} />
                 </div>
-                <p className="mt-8 text-xs font-bold text-slate-400 uppercase tracking-[3px]">Protocolo de Monitoramento Ativo</p>
+                <p className="mt-8 3xl:mt-12 4xl:mt-16 text-xs 3xl:text-xl 4xl:text-2xl font-bold text-slate-400 uppercase tracking-[3px] 3xl:tracking-[5px]">Protocolo de Monitoramento Ativo</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white border border-slate-200 p-8 border border-slate-200 flex flex-col justify-center shadow-md">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
-                            <AlertTriangle size={32} />
+            <div className="grid grid-cols-2 gap-6 3xl:gap-10 4xl:gap-16">
+                <div className="bg-white border border-slate-200 p-8 3xl:p-14 4xl:p-20 flex flex-col justify-center shadow-md rounded-[40px]">
+                    <div className="flex items-center gap-4 3xl:gap-6 4xl:gap-8 mb-4 3xl:mb-8">
+                        <div className="w-14 h-14 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+                            <AlertTriangle className="w-8 h-8 3xl:w-12 3xl:h-12 4xl:w-16 4xl:h-16" />
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ocorrências</span>
+                        <span className="text-[10px] 3xl:text-base 4xl:text-xl font-black uppercase tracking-widest text-slate-400">Ocorrências</span>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-7xl font-black text-slate-800 tabular-nums leading-none tracking-tighter">{data.stats.activeOccurrences}</span>
-                        <span className="text-xs font-bold text-slate-400 uppercase">Hoje</span>
+                    <div className="flex items-baseline gap-2 3xl:gap-4">
+                        <span className="text-7xl 3xl:text-9xl 4xl:text-[10rem] font-black text-slate-800 tabular-nums leading-none tracking-tighter">{data.stats.activeOccurrences}</span>
+                        <span className="text-xs 3xl:text-xl 4xl:text-2xl font-bold text-slate-400 uppercase">Hoje</span>
                     </div>
                 </div>
-                <div className="bg-white border border-slate-200 p-8 border border-slate-200 flex flex-col justify-center shadow-md">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                            <Droplets size={32} />
+                <div className="bg-white border border-slate-200 p-8 3xl:p-14 4xl:p-20 flex flex-col justify-center shadow-md rounded-[40px]">
+                    <div className="flex items-center gap-4 3xl:gap-6 4xl:gap-8 mb-4 3xl:mb-8">
+                        <div className="w-14 h-14 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                            <Droplets className="w-8 h-8 3xl:w-12 3xl:h-12 4xl:w-16 4xl:h-16" />
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Média Chuva</span>
+                        <span className="text-[10px] 3xl:text-base 4xl:text-xl font-black uppercase tracking-widest text-slate-400">Média Chuva</span>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-7xl font-black text-slate-800 tabular-nums leading-none tracking-tighter">
+                    <div className="flex items-baseline gap-2 3xl:gap-4">
+                        <span className="text-7xl 3xl:text-9xl 4xl:text-[10rem] font-black text-slate-800 tabular-nums leading-none tracking-tighter">
                             {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : '0.0'}
                         </span>
-                        <span className="text-xl font-bold text-slate-400 uppercase">mm</span>
+                        <span className="text-xl 3xl:text-3xl 4xl:text-4xl font-bold text-slate-400 uppercase">mm</span>
                     </div>
                 </div>
             </div>
         </div>
 
         {/* Right Column: Heatmap Map */}
-        <div className="col-span-8 bg-white border border-slate-200 border border-slate-200 shadow-xl overflow-hidden relative">
-            <div className="absolute top-8 left-8 z-[1000] bg-white/90 backdrop-blur-md px-6 py-3 rounded-2xl border border-slate-200 shadow-xl">
-                <span className="text-xs font-black text-slate-800 uppercase tracking-[3px]">Mancha de Calor Geral</span>
+        <div className="col-span-8 bg-white border border-slate-200 shadow-xl overflow-hidden relative rounded-[40px]">
+            <div className="absolute top-8 left-8 3xl:top-12 3xl:left-12 4xl:top-16 4xl:left-16 z-[1000] bg-white/90 backdrop-blur-md px-6 py-3 3xl:px-10 3xl:py-5 4xl:px-14 4xl:py-7 rounded-2xl border border-slate-200 shadow-xl">
+                <span className="text-xs 3xl:text-xl 4xl:text-2xl font-black text-slate-800 uppercase tracking-[3px] 3xl:tracking-[5px]">Mancha de Calor Geral</span>
             </div>
             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <MapAutoBounds locations={data.ocorrencias?.locations || []} />
@@ -508,8 +508,8 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
                 <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
                 <LimiteSMJLayer keyId="limite-smj-strategic" />
             </MapContainer>
-            <div className="absolute bottom-8 right-8 z-[1000] bg-white/95 backdrop-blur-md p-6 rounded-2xl border border-slate-200 text-[9px] font-black text-slate-700 uppercase tracking-widest shadow-lg">
-                <div className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" /> Zonas de Maior Concentração</div>
+            <div className="absolute bottom-8 right-8 3xl:bottom-12 3xl:right-12 4xl:bottom-16 4xl:right-16 z-[1000] bg-white/95 backdrop-blur-md p-6 3xl:p-10 4xl:p-14 rounded-2xl border border-slate-200 text-[9px] 3xl:text-base 4xl:text-xl font-black text-slate-700 uppercase tracking-widest shadow-lg">
+                <div className="flex items-center gap-3 3xl:gap-5"><div className="w-3 h-3 3xl:w-5 3xl:h-5 4xl:w-6 4xl:h-6 rounded-full bg-red-600 animate-pulse" /> Zonas de Maior Concentração</div>
             </div>
         </div>
     </div>
@@ -556,18 +556,18 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
             </div>
 
             {/* Top-Right Map Controls Toolbar (Videowall Context) */}
-            <div className="absolute top-6 right-6 z-[1000] flex items-center gap-3">
+            <div className="absolute top-6 right-6 3xl:top-10 3xl:right-10 4xl:top-16 4xl:right-16 z-[1000] flex items-center gap-3 3xl:gap-5">
                 <button
                     onClick={() => setShowBacias(prev => !prev)}
-                    className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl backdrop-blur-md border ${showBacias ? 'bg-blue-600 text-white border-blue-500 shadow-blue-600/30' : 'bg-white/90 text-slate-700 hover:bg-white border-slate-200'}`}
+                    className={`flex items-center gap-2 3xl:gap-4 px-5 py-3 3xl:px-8 3xl:py-5 4xl:px-12 4xl:py-7 rounded-2xl text-xs 3xl:text-lg 4xl:text-2xl font-black uppercase tracking-widest transition-all shadow-xl backdrop-blur-md border ${showBacias ? 'bg-blue-600 text-white border-blue-500 shadow-blue-600/30' : 'bg-white/90 text-slate-700 hover:bg-white border-slate-200'}`}
                 >
-                    <Waves size={18} /> Bacias
+                    <Waves className="w-4 h-4 3xl:w-6 3xl:h-6 4xl:w-8 4xl:h-8" /> Bacias
                 </button>
 
                 <select
                     value={mapStyle}
                     onChange={(e) => setMapStyle(e.target.value)}
-                    className="bg-white/90 backdrop-blur-md text-slate-800 text-xs px-5 py-3 rounded-2xl border border-slate-200 font-black uppercase tracking-wider focus:outline-none cursor-pointer shadow-xl"
+                    className="bg-white/90 backdrop-blur-md text-slate-800 text-xs 3xl:text-lg 4xl:text-2xl px-5 py-3 3xl:px-8 3xl:py-5 4xl:px-12 4xl:py-7 rounded-2xl border border-slate-200 font-black uppercase tracking-wider focus:outline-none cursor-pointer shadow-xl"
                 >
                     <option value="carto">CartoDB Light</option>
                     <option value="satellite">Satélite</option>
@@ -576,33 +576,33 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
             </div>
 
             {/* Top-Left Floating Overlay: Top Estações (24h) */}
-            <div className="absolute top-6 left-6 z-[1000] w-96 max-h-[52vh] bg-white/95 backdrop-blur-md rounded-[32px] p-6 border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
-                <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-[3px] flex items-center gap-3">
-                        <BarChart3 className="text-blue-600" size={20} /> TOP ESTAÇÕES (24H)
+            <div className="absolute top-6 left-6 3xl:top-10 3xl:left-10 4xl:top-16 4xl:left-16 z-[1000] w-96 3xl:w-[32rem] 4xl:w-[40rem] max-h-[52vh] 3xl:max-h-[60vh] bg-white/95 backdrop-blur-md rounded-[32px] p-6 3xl:p-10 4xl:p-14 border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between pb-4 3xl:pb-6 mb-4 3xl:mb-6 border-b border-slate-100">
+                    <h3 className="text-sm 3xl:text-xl 4xl:text-3xl font-black text-slate-800 uppercase tracking-[3px] flex items-center gap-3">
+                        <BarChart3 className="text-blue-600 w-5 h-5 3xl:w-8 3xl:h-8 4xl:w-10 4xl:h-10" /> TOP ESTAÇÕES
                     </h3>
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2.5 py-1 rounded-full">{sortedRain.length} ESTAÇÕES</span>
+                    <span className="text-[9px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2.5 py-1 3xl:px-4 3xl:py-2 rounded-full">{sortedRain.length} ESTAÇÕES</span>
                 </div>
-                <div className="space-y-3 overflow-y-auto pr-1 custom-scrollbar flex-1">
+                <div className="space-y-3 3xl:space-y-5 overflow-y-auto pr-1 custom-scrollbar flex-1">
                     {sortedRain.length === 0 ? (
-                        <div className="text-center py-6 text-slate-400 text-xs font-bold uppercase tracking-widest">Sem dados pluviométricos</div>
+                        <div className="text-center py-6 3xl:py-10 text-slate-400 text-xs 3xl:text-base font-bold uppercase tracking-widest">Sem dados pluviométricos</div>
                     ) : (
                         sortedRain.map((s, idx) => (
                             <div
                                 key={idx}
                                 onClick={() => setSelectedStation(s)}
-                                className={`p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${selectedStation?.name === s.name ? 'bg-blue-50/90 border-blue-300 shadow-sm' : 'bg-slate-50/80 border-slate-100 hover:bg-white hover:border-blue-200'}`}
+                                className={`p-4 3xl:p-6 4xl:p-8 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${selectedStation?.name === s.name ? 'bg-blue-50/90 border-blue-300 shadow-sm' : 'bg-slate-50/80 border-slate-100 hover:bg-white hover:border-blue-200'}`}
                             >
-                                <div className="flex gap-3 items-center min-w-0 pr-2">
-                                    <div className={`w-3 h-3 rounded-full shrink-0 shadow-sm ${getPluvioColor(s.level)}`} />
+                                <div className="flex gap-3 3xl:gap-5 items-center min-w-0 pr-2">
+                                    <div className={`w-3 h-3 3xl:w-5 3xl:h-5 4xl:w-6 4xl:h-6 rounded-full shrink-0 shadow-sm ${getPluvioColor(s.level)}`} />
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">{s.name}</span>
-                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{s.level || 'Normal'}</span>
+                                        <span className="text-xs 3xl:text-xl 4xl:text-2xl font-black text-slate-800 uppercase tracking-tight truncate">{s.name}</span>
+                                        <span className="text-[8px] 3xl:text-sm 4xl:text-base font-bold text-slate-400 uppercase tracking-widest">{s.level || 'Normal'}</span>
                                     </div>
                                 </div>
-                                <div className="flex items-baseline gap-1 shrink-0">
-                                    <span className="text-2xl font-black text-slate-800 tabular-nums">{(s.rainRaw || 0).toFixed(1)}</span>
-                                    <span className="text-[10px] text-slate-400 font-bold uppercase">mm</span>
+                                <div className="flex items-baseline gap-1 3xl:gap-2 shrink-0">
+                                    <span className="text-2xl 3xl:text-4xl 4xl:text-5xl font-black text-slate-800 tabular-nums">{(s.rainRaw || 0).toFixed(1)}</span>
+                                    <span className="text-[10px] 3xl:text-sm 4xl:text-base text-slate-400 font-bold uppercase">mm</span>
                                 </div>
                             </div>
                         ))
@@ -611,47 +611,47 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
             </div>
 
             {/* Bottom-Left Floating Overlay: Previsão Local */}
-            <div className="absolute bottom-6 left-6 z-[1000] w-96 bg-white/95 backdrop-blur-md rounded-[32px] p-6 border border-slate-200 shadow-2xl flex flex-col gap-4">
-                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                        <span className="text-3xl">{getWeatherIcon(weather?.current?.code)}</span>
+            <div className="absolute bottom-6 left-6 3xl:bottom-10 3xl:left-10 4xl:bottom-16 4xl:left-16 z-[1000] w-96 3xl:w-[32rem] 4xl:w-[40rem] bg-white/95 backdrop-blur-md rounded-[32px] p-6 3xl:p-10 4xl:p-14 border border-slate-200 shadow-2xl flex flex-col gap-4 3xl:gap-8">
+                <div className="flex justify-between items-center pb-2 3xl:pb-4 border-b border-slate-100">
+                    <div className="flex items-center gap-3 3xl:gap-5">
+                        <span className="text-3xl 3xl:text-5xl 4xl:text-6xl">{getWeatherIcon(weather?.current?.code)}</span>
                         <div>
-                            <span className="text-2xl font-black text-slate-800 tabular-nums leading-none block">{Math.round(weather?.current?.temp || 0)}°C</span>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Santa Maria de Jetibá</span>
+                            <span className="text-2xl 3xl:text-4xl 4xl:text-5xl font-black text-slate-800 tabular-nums leading-none block">{Math.round(weather?.current?.temp || 0)}°C</span>
+                            <span className="text-[9px] 3xl:text-sm 4xl:text-base font-bold text-slate-400 uppercase tracking-widest">Santa Maria de Jetibá</span>
                         </div>
                     </div>
-                    <span className="text-[9px] font-black uppercase tracking-widest border border-slate-200 px-3 py-1 rounded-full bg-slate-50 text-slate-500">Previsão Local</span>
+                    <span className="text-[9px] 3xl:text-sm 4xl:text-base font-black uppercase tracking-widest border border-slate-200 px-3 py-1 3xl:px-5 3xl:py-2 rounded-full bg-slate-50 text-slate-500">Previsão Local</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                        <span className="block text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Umidade</span>
-                        <span className="text-sm font-black text-blue-600">{weather?.current?.humidity || 0}%</span>
+                <div className="grid grid-cols-3 gap-2 3xl:gap-4">
+                    <div className="bg-slate-50 p-3 3xl:p-5 rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Umidade</span>
+                        <span className="text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{weather?.current?.humidity || 0}%</span>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                        <span className="block text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Vento</span>
-                        <span className="text-sm font-black text-blue-600">{Math.round(weather?.current?.wind || 0)} km/h</span>
+                    <div className="bg-slate-50 p-3 3xl:p-5 rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Vento</span>
+                        <span className="text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{Math.round(weather?.current?.wind || 0)} km/h</span>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-2xl text-center border border-slate-100">
-                        <span className="block text-[8px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Prob. Chuva</span>
-                        <span className="text-sm font-black text-blue-600">{weather?.daily?.[0]?.rainProb || 0}%</span>
+                    <div className="bg-slate-50 p-3 3xl:p-5 rounded-2xl text-center border border-slate-100">
+                        <span className="block text-[8px] 3xl:text-xs 4xl:text-sm font-bold uppercase tracking-widest text-slate-400 mb-0.5 3xl:mb-2">Prob. Chuva</span>
+                        <span className="text-sm 3xl:text-xl 4xl:text-2xl font-black text-blue-600">{weather?.daily?.[0]?.rainProb || 0}%</span>
                     </div>
                 </div>
             </div>
 
             {/* Bottom-Right Floating Card: Informações do Pluviômetro */}
             {selectedStation && (
-                <div className="absolute bottom-6 right-6 z-[1000] w-80 bg-white/95 backdrop-blur-md rounded-[32px] border border-slate-200 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-3 duration-250">
-                    <div className="bg-blue-600 text-white px-5 py-3 flex justify-between items-center font-black text-[10px] uppercase tracking-widest">
+                <div className="absolute bottom-6 right-6 3xl:bottom-10 3xl:right-10 4xl:bottom-16 4xl:right-16 z-[1000] w-80 3xl:w-[28rem] 4xl:w-[32rem] bg-white/95 backdrop-blur-md rounded-[32px] border border-slate-200 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-3 duration-250">
+                    <div className="bg-blue-600 text-white px-5 py-3 3xl:px-8 3xl:py-5 flex justify-between items-center font-black text-[10px] 3xl:text-sm 4xl:text-base uppercase tracking-widest">
                         <span>Informações do Pluviômetro</span>
                         <button onClick={() => setSelectedStation(null)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                            <X size={16} />
+                            <X className="w-4 h-4 3xl:w-6 3xl:h-6 4xl:w-8 4xl:h-8" />
                         </button>
                     </div>
-                    <div className="p-5 space-y-2 text-xs text-slate-700 font-bold tracking-tight">
-                        <div className="text-slate-800 font-black text-sm border-b border-slate-100 pb-2">{selectedStation.name}</div>
+                    <div className="p-5 3xl:p-8 space-y-2 3xl:space-y-4 text-xs 3xl:text-lg 4xl:text-xl text-slate-700 font-bold tracking-tight">
+                        <div className="text-slate-800 font-black text-sm 3xl:text-2xl 4xl:text-3xl border-b border-slate-100 pb-2 3xl:pb-4">{selectedStation.name}</div>
                         <div className="flex justify-between">
                             <span className="text-slate-400 font-medium">Acumulado 24h:</span>
-                            <span className="font-black text-blue-600 text-sm">{(selectedStation.rainRaw || selectedStation.acc24hr || 0).toFixed(1)} mm</span>
+                            <span className="font-black text-blue-600 text-sm 3xl:text-2xl 4xl:text-3xl">{(selectedStation.rainRaw || selectedStation.acc24hr || 0).toFixed(1)} mm</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-slate-400 font-medium">Nível:</span>
@@ -659,16 +659,16 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
                         </div>
                         <div className="flex justify-between">
                             <span className="text-slate-400 font-medium">Fonte:</span>
-                            <span className="font-bold text-slate-600">{selectedStation.isManual ? 'Manual / Defesa Civil' : 'CEMADEN'}</span>
+                            <span className="font-bold text-slate-600">{selectedStation.isManual ? 'Manual / DC' : 'CEMADEN'}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-slate-400 font-medium">Município:</span>
-                            <span className="font-bold text-slate-600">SANTA MARIA DE JETIBÁ-ES</span>
+                            <span className="font-bold text-slate-600">S. M. DE JETIBÁ-ES</span>
                         </div>
                         {selectedStation.lat && (
                             <div className="flex justify-between">
-                                <span className="text-slate-400 font-medium">Coordenadas:</span>
-                                <span className="font-mono text-[10px] text-slate-500">[{selectedStation.lat.toFixed(4)}, {(selectedStation.lon || selectedStation.lng || 0).toFixed(4)}]</span>
+                                <span className="text-slate-400 font-medium">Coords:</span>
+                                <span className="font-mono text-[10px] 3xl:text-base 4xl:text-lg text-slate-500">[{selectedStation.lat.toFixed(4)}, {(selectedStation.lon || selectedStation.lng || 0).toFixed(4)}]</span>
                             </div>
                         )}
                     </div>
@@ -684,25 +684,25 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
         .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
 
     return (
-        <div className="grid grid-cols-12 gap-6 h-full">
-            <div className="col-span-4 bg-white border border-slate-200 rounded-[48px] p-8 flex flex-col overflow-hidden shadow-md">
-                <div className="flex justify-between items-center mb-10">
-                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-[4px]">Chamados Ativos</h3>
-                    <div className="bg-blue-600/10 text-blue-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-[3px] border border-blue-600/20">Monitoramento 24h</div>
+        <div className="grid grid-cols-12 gap-6 3xl:gap-10 4xl:gap-16 h-full">
+            <div className="col-span-4 bg-white border border-slate-200 rounded-[48px] p-8 3xl:p-14 4xl:p-20 flex flex-col overflow-hidden shadow-md">
+                <div className="flex justify-between items-center mb-10 3xl:mb-16">
+                    <h3 className="text-xl 3xl:text-3xl 4xl:text-4xl font-black text-slate-800 uppercase tracking-[4px] 3xl:tracking-[6px]">Chamados Ativos</h3>
+                    <div className="bg-blue-600/10 text-blue-600 px-4 py-1 3xl:px-6 3xl:py-2 rounded-full text-[10px] 3xl:text-sm 4xl:text-base font-black uppercase tracking-[3px] border border-blue-600/20">Monitoramento 24h</div>
                 </div>
-                <div className="flex-1 overflow-y-auto pr-4 space-y-4 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto pr-4 3xl:pr-6 space-y-4 3xl:space-y-6 custom-scrollbar">
                     {list.map((e, idx) => (
-                        <div key={idx} className="bg-slate-50 p-8 rounded-[40px] border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:border-blue-100">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="space-y-1">
-                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-[3px]">{e.localidade || 'Sede'}</span>
-                                    <h4 className="text-2xl font-black text-slate-800 uppercase tracking-tight leading-none">{e.details || e.risk}</h4>
+                        <div key={idx} className="bg-slate-50 p-8 3xl:p-12 4xl:p-16 rounded-[40px] border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:border-blue-100">
+                            <div className="flex justify-between items-start mb-6 3xl:mb-10">
+                                <div className="space-y-1 3xl:space-y-3">
+                                    <span className="text-[10px] 3xl:text-base 4xl:text-lg font-black text-blue-600 uppercase tracking-[3px]">{e.localidade || 'Sede'}</span>
+                                    <h4 className="text-2xl 3xl:text-4xl 4xl:text-5xl font-black text-slate-800 uppercase tracking-tight leading-none">{e.details || e.risk}</h4>
                                 </div>
-                                <div className="px-5 py-2 bg-white rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest border border-slate-100 shadow-sm">
+                                <div className="px-5 py-2 3xl:px-8 3xl:py-4 bg-white rounded-2xl text-[10px] 3xl:text-sm 4xl:text-base font-black text-slate-400 uppercase tracking-widest border border-slate-100 shadow-sm">
                                     {new Date(e.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                             </div>
-                            <div className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-[2px] inline-block shadow-md ${String(e.risk).includes('Iminente') || String(e.risk).includes('Alto') ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'
+                            <div className={`px-6 py-3 3xl:px-10 3xl:py-5 rounded-2xl text-xs 3xl:text-lg 4xl:text-xl font-black uppercase tracking-[2px] inline-block shadow-md ${String(e.risk).includes('Iminente') || String(e.risk).includes('Alto') ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'
                                 }`}>
                                 {e.nivelRisco || e.status}
                             </div>
@@ -712,10 +712,10 @@ const TV_OperationsCenter = ({ data, viewMode, setViewMode, mapStyle, areasRisco
             </div>
 
             <div className="col-span-8 bg-white border border-slate-200 rounded-[48px] overflow-hidden relative shadow-xl flex flex-col">
-                <div className="absolute top-8 left-8 z-[1000] flex gap-3">
-                    <div className="flex bg-white/90 backdrop-blur-xl p-2 rounded-3xl border border-slate-200 shadow-2xl">
-                        <button onClick={() => setViewMode('vistorias')} className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'vistorias' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>Vistorias</button>
-                        <button onClick={() => setViewMode('ocorrencias')} className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'ocorrencias' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>Ocorrências</button>
+                <div className="absolute top-8 left-8 3xl:top-12 3xl:left-12 4xl:top-16 4xl:left-16 z-[1000] flex gap-3 3xl:gap-5">
+                    <div className="flex bg-white/90 backdrop-blur-xl p-2 3xl:p-3 4xl:p-4 rounded-3xl border border-slate-200 shadow-2xl">
+                        <button onClick={() => setViewMode('vistorias')} className={`px-8 py-3 3xl:px-12 3xl:py-5 4xl:px-16 4xl:py-6 rounded-2xl text-xs 3xl:text-lg 4xl:text-xl font-black uppercase tracking-widest transition-all ${viewMode === 'vistorias' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>Vistorias</button>
+                        <button onClick={() => setViewMode('ocorrencias')} className={`px-8 py-3 3xl:px-12 3xl:py-5 4xl:px-16 4xl:py-6 rounded-2xl text-xs 3xl:text-lg 4xl:text-xl font-black uppercase tracking-widest transition-all ${viewMode === 'ocorrencias' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>Ocorrências</button>
                     </div>
                 </div>
                 <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
@@ -754,45 +754,45 @@ const TV_HumanitarianStrategic = () => {
     const rate = stats.capacity > 0 ? (stats.occupants / stats.capacity) * 100 : 0;
 
     return (
-        <div className="grid grid-cols-12 gap-6 h-full font-black">
-            <div className="col-span-12 lg:col-span-4 bg-white border border-slate-200 rounded-[48px] p-12 flex flex-col justify-between shadow-xl">
+        <div className="grid grid-cols-12 gap-6 3xl:gap-10 4xl:gap-16 h-full font-black">
+            <div className="col-span-12 lg:col-span-4 bg-white border border-slate-200 rounded-[48px] p-12 3xl:p-16 4xl:p-24 flex flex-col justify-between shadow-xl">
                 <div>
-                    <Home size={64} className="text-emerald-600 mb-8" />
-                    <h3 className="text-2xl text-slate-400 uppercase tracking-[6px] mb-2 font-black">Capacidade</h3>
-                    <h2 className="text-8xl text-slate-800 tracking-tighter mb-4 font-black">OCUPADO</h2>
+                    <Home className="text-emerald-600 mb-8 3xl:mb-12 w-16 h-16 3xl:w-24 3xl:h-24 4xl:w-32 4xl:h-32" />
+                    <h3 className="text-2xl 3xl:text-4xl 4xl:text-5xl text-slate-400 uppercase tracking-[6px] 3xl:tracking-[8px] mb-2 3xl:mb-4 font-black">Capacidade</h3>
+                    <h2 className="text-8xl 3xl:text-[8rem] 4xl:text-[10rem] text-slate-800 tracking-tighter mb-4 3xl:mb-8 font-black">OCUPADO</h2>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-8 3xl:space-y-12">
                     <div className="flex justify-between items-end">
-                        <span className="text-sm font-black text-emerald-600 uppercase tracking-[4px]">Taxa de Ocupação</span>
-                        <span className="text-6xl text-slate-800 font-black">{Math.round(rate)}%</span>
+                        <span className="text-sm 3xl:text-2xl 4xl:text-3xl font-black text-emerald-600 uppercase tracking-[4px] 3xl:tracking-[6px]">Taxa de Ocupação</span>
+                        <span className="text-6xl 3xl:text-8xl 4xl:text-9xl text-slate-800 font-black">{Math.round(rate)}%</span>
                     </div>
-                    <div className="w-full h-10 bg-slate-100 rounded-full overflow-hidden shadow-inner border-2 border-slate-200">
+                    <div className="w-full h-10 3xl:h-16 4xl:h-20 bg-slate-100 rounded-full overflow-hidden shadow-inner border-2 border-slate-200">
                         <div className={`h-full transition-all duration-1000 ${rate > 80 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${rate}%` }} />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-8 mt-12">
-                    <div className="bg-slate-50 p-10 rounded-[40px] border border-slate-100 shadow-sm">
-                        <span className="block text-[10px] text-slate-400 uppercase tracking-[4px] mb-4 font-black">Total Abrigos</span>
-                        <span className="text-7xl text-slate-800 font-black">{stats.shelters}</span>
+                <div className="grid grid-cols-2 gap-8 3xl:gap-12 mt-12 3xl:mt-16">
+                    <div className="bg-slate-50 p-10 3xl:p-16 4xl:p-20 rounded-[40px] border border-slate-100 shadow-sm flex flex-col justify-center">
+                        <span className="block text-[10px] 3xl:text-lg 4xl:text-xl text-slate-400 uppercase tracking-[4px] 3xl:tracking-[6px] mb-4 3xl:mb-6 font-black">Total Abrigos</span>
+                        <span className="text-7xl 3xl:text-9xl 4xl:text-[10rem] text-slate-800 font-black leading-none">{stats.shelters}</span>
                     </div>
-                    <div className="bg-slate-50 p-10 rounded-[40px] border border-slate-100 shadow-sm">
-                        <span className="block text-[10px] text-slate-400 uppercase tracking-[4px] mb-4 font-black">Pessoas</span>
-                        <span className="text-7xl text-blue-600 font-black">{stats.occupants}</span>
+                    <div className="bg-slate-50 p-10 3xl:p-16 4xl:p-20 rounded-[40px] border border-slate-100 shadow-sm flex flex-col justify-center">
+                        <span className="block text-[10px] 3xl:text-lg 4xl:text-xl text-slate-400 uppercase tracking-[4px] 3xl:tracking-[6px] mb-4 3xl:mb-6 font-black">Pessoas</span>
+                        <span className="text-7xl 3xl:text-9xl 4xl:text-[10rem] text-blue-600 font-black leading-none">{stats.occupants}</span>
                     </div>
                 </div>
             </div>
 
-            <div className="col-span-12 lg:col-span-8 bg-white border border-slate-200 rounded-[48px] p-12 shadow-xl flex flex-col gap-10">
-                <div className="flex items-center gap-6 pb-6 border-b border-slate-200">
-                    <Users size={48} className="text-blue-600" />
-                    <h3 className="text-4xl text-slate-800 uppercase tracking-tighter font-black">Logística e Manutenção</h3>
+            <div className="col-span-12 lg:col-span-8 bg-white border border-slate-200 rounded-[48px] p-12 3xl:p-20 4xl:p-28 shadow-xl flex flex-col gap-10 3xl:gap-16">
+                <div className="flex items-center gap-6 3xl:gap-10 pb-6 3xl:pb-10 border-b border-slate-200">
+                    <Users className="text-blue-600 w-12 h-12 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28" />
+                    <h3 className="text-4xl 3xl:text-6xl 4xl:text-7xl text-slate-800 uppercase tracking-tighter font-black">Logística e Manutenção</h3>
                 </div>
                 <div className="flex-1 flex items-center justify-center border-4 border-dashed border-slate-100 rounded-[40px] opacity-40">
                     <div className="text-center">
-                        <Activity size={100} className="mx-auto mb-8 text-slate-200" />
-                        <h4 className="text-2xl text-slate-300 uppercase tracking-[10px] font-black">Módulo Extendido: Censo 2.0</h4>
+                        <Activity className="mx-auto mb-8 3xl:mb-12 text-slate-200 w-24 h-24 3xl:w-40 3xl:h-40 4xl:w-56 4xl:h-56" />
+                        <h4 className="text-2xl 3xl:text-4xl 4xl:text-6xl text-slate-300 uppercase tracking-[10px] 3xl:tracking-[16px] font-black">Módulo Extendido: Censo 2.0</h4>
                     </div>
                 </div>
             </div>
@@ -802,34 +802,34 @@ const TV_HumanitarianStrategic = () => {
 
 // --- 5. TV SCO STRATEGIC (Gestão de Crise) ---
 const TV_SCOStrategic = ({ plan }) => (
-    <div className={`h-full w-full rounded-[48px] border-8 transition-all duration-1000 flex flex-col items-center justify-center text-center p-20 shadow-xl ${plan ? (plan.nivel === 'Calamidade' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200') : 'bg-white border-slate-200'
+    <div className={`h-full w-full rounded-[48px] border-8 transition-all duration-1000 flex flex-col items-center justify-center text-center p-20 3xl:p-32 4xl:p-48 shadow-xl ${plan ? (plan.nivel === 'Calamidade' ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200') : 'bg-white border-slate-200'
         }`}>
         {plan ? (
-            <div className="max-w-5xl space-y-12">
-                <div className="flex justify-center mb-8">
-                    <div className="p-10 rounded-full bg-white shadow-xl animate-bounce border border-slate-100">
-                        <ShieldAlert size={120} className={plan.nivel === 'Calamidade' ? 'text-red-600' : 'text-orange-600'} />
+            <div className="max-w-5xl 3xl:max-w-7xl 4xl:max-w-screen-2xl space-y-12 3xl:space-y-16">
+                <div className="flex justify-center mb-8 3xl:mb-12">
+                    <div className="p-10 3xl:p-16 4xl:p-24 rounded-full bg-white shadow-xl animate-bounce border border-slate-100 flex items-center justify-center">
+                        <ShieldAlert className={`w-32 h-32 3xl:w-48 3xl:h-48 4xl:w-64 4xl:h-64 ${plan.nivel === 'Calamidade' ? 'text-red-600' : 'text-orange-600'}`} />
                     </div>
                 </div>
-                <h2 className="text-3xl font-black text-slate-400 uppercase tracking-[20px] mb-4">SISTEMA DE COMANDO ATIVO</h2>
-                <div className={`inline-block px-16 py-6 border border-slate-200 text-white text-9xl font-black uppercase tracking-tighter shadow-2xl mb-12 ${plan.nivel === 'Calamidade' ? 'bg-red-600' : 'bg-orange-600'
+                <h2 className="text-3xl 3xl:text-5xl 4xl:text-7xl font-black text-slate-400 uppercase tracking-[20px] 3xl:tracking-[30px] mb-4 3xl:mb-8">SISTEMA DE COMANDO ATIVO</h2>
+                <div className={`inline-block px-16 py-6 3xl:px-24 3xl:py-10 border border-slate-200 text-white text-9xl 3xl:text-[10rem] 4xl:text-[14rem] font-black uppercase tracking-tighter shadow-2xl mb-12 3xl:mb-16 rounded-[40px] ${plan.nivel === 'Calamidade' ? 'bg-red-600' : 'bg-orange-600'
                     }`}>
                     {plan.nivel}
                 </div>
-                <h3 className="text-6xl font-black text-slate-800 uppercase tracking-tight leading-none mb-10">{plan.motivo || 'Mobilização Geral'}</h3>
-                <p className="text-2xl font-bold text-slate-500 max-w-3xl mx-auto leading-relaxed">{plan.descricao || 'Células de comando centralizadas para resposta tática imediata.'}</p>
+                <h3 className="text-6xl 3xl:text-8xl 4xl:text-9xl font-black text-slate-800 uppercase tracking-tight leading-none mb-10 3xl:mb-16">{plan.motivo || 'Mobilização Geral'}</h3>
+                <p className="text-2xl 3xl:text-4xl 4xl:text-5xl font-bold text-slate-500 max-w-3xl 3xl:max-w-5xl mx-auto leading-relaxed">{plan.descricao || 'Células de comando centralizadas para resposta tática imediata.'}</p>
 
-                <div className="pt-20 flex justify-center gap-12 text-slate-400">
-                    <div className="flex items-center gap-4 uppercase tracking-widest font-black">
-                        <Timer className="animate-spin opacity-50" /> TEMPO DE RESPOSTA ATIVO
+                <div className="pt-20 3xl:pt-28 flex justify-center gap-12 text-slate-400">
+                    <div className="flex items-center gap-4 3xl:gap-8 uppercase tracking-widest font-black 3xl:text-2xl">
+                        <Timer className="animate-spin opacity-50 w-6 h-6 3xl:w-10 3xl:h-10" /> TEMPO DE RESPOSTA ATIVO
                     </div>
                 </div>
             </div>
         ) : (
-            <div className="space-y-8 opacity-20 grayscale group hover:grayscale-0 transition-all cursor-default scale-110">
-                <Shield size={200} className="mx-auto text-slate-400 shadow-sm" />
-                <h2 className="text-4xl font-black text-slate-400 uppercase tracking-[20px]">SCO EM ESPERA</h2>
-                <p className="text-sm font-black text-slate-500 uppercase tracking-[6px]">NENHUM ALERTA CRÍTICO ATIVO NO MOMENTO</p>
+            <div className="space-y-8 3xl:space-y-12 opacity-20 grayscale group hover:grayscale-0 transition-all cursor-default scale-110 3xl:scale-150">
+                <Shield className="mx-auto text-slate-400 shadow-sm w-48 h-48 3xl:w-64 3xl:h-64 4xl:w-80 4xl:h-80" />
+                <h2 className="text-4xl 3xl:text-6xl 4xl:text-7xl font-black text-slate-400 uppercase tracking-[20px] 3xl:tracking-[30px]">SCO EM ESPERA</h2>
+                <p className="text-sm 3xl:text-2xl 4xl:text-3xl font-black text-slate-500 uppercase tracking-[6px] 3xl:tracking-[10px]">NENHUM ALERTA CRÍTICO ATIVO NO MOMENTO</p>
             </div>
         )}
     </div>

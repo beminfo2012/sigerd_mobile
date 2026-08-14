@@ -154,7 +154,7 @@ const VistoriaPrint = () => {
             if (!id) return;
             if (id === 'mock') {
                 setData(MOCK_VISTORIA);
-                document.title = "Vistoria nº 034-2026 - Abenair Benfica de Oliveira";
+                document.title = "Vistoria - 034-2026 - Abenair Benfica de Oliveira";
                 setLoading(false);
                 return;
             }
@@ -209,7 +209,7 @@ const VistoriaPrint = () => {
                     localMatch = await enrichWithAberturas(localMatch);
                     setData(localMatch);
                     const docId = (localMatch.vistoriaId || localMatch.vistoria_id || id).replace('/', '-');
-                    const docTitle = `Vistoria nº ${docId} - ${localMatch.solicitante || 'Sem Nome'}`;
+                    const docTitle = `Vistoria - ${docId} - ${localMatch.solicitante || 'Sem Nome'}`;
                     document.title = docTitle;
                     setLoading(false);
                     return;
@@ -226,7 +226,7 @@ const VistoriaPrint = () => {
                     const enrichedReport = await enrichWithAberturas(reportData);
                     setData(enrichedReport);
                     const docId = (enrichedReport.vistoriaId || enrichedReport.vistoria_id || id).replace('/', '-');
-                    const docTitle = `Vistoria nº ${docId} - ${enrichedReport.solicitante || 'Sem Nome'}`;
+                    const docTitle = `Vistoria - ${docId} - ${enrichedReport.solicitante || 'Sem Nome'}`;
                     document.title = docTitle;
                 } else {
                     console.warn("Vistoria not found:", error);

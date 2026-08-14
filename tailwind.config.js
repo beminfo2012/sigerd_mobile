@@ -7,6 +7,11 @@ export default {
     darkMode: 'class',
     theme: {
         extend: {
+            screens: {
+                '3xl': '1920px',
+                '4xl': '2560px',
+                'tv': '3840px',
+            },
             colors: {
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
