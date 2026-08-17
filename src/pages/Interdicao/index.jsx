@@ -1,12 +1,21 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import InterdicaoForm from './InterdicaoForm'
 import InterdicaoList from './InterdicaoList'
 import DesinterdicaoForm from './DesinterdicaoForm'
 
 const Interdicao = () => {
-    const [view, setView] = useState('list') // 'list' | 'form' | 'desinterdicao'
-    const [selectedInterdicao, setSelectedInterdicao] = useState(null)
+    const location = useLocation()
+    const [view, setView] = useState(location.state?.noprerData ? 'form' : 'list')
+    const [selectedInterdicao, setSelectedInterdicao] = useState(location.state?.noprerData || null)
     const [selectedDesinterdicao, setSelectedDesinterdicao] = useState(null)
+
+    useEffect(() => {
+        if (location.state?.noprerData) {
+            setSelectedInterdicao(location.state.noprerData)
+            setView('form')
+        }
+    }, [location.state])
 
     const handleNew = () => {
         setSelectedInterdicao(null)

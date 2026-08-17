@@ -8,7 +8,7 @@ import DiasBadge from './components/DiasBadge';
 import PrazoBar from './components/PrazoBar';
 import { 
     ArrowLeft, Download, MapPin, User, FileText, 
-    Clock, Plus, CheckCircle, ShieldAlert, AlertTriangle, X, Upload, Check, FileImage, Trash2, Edit, Printer
+    Clock, Plus, CheckCircle, ShieldAlert, AlertTriangle, X, Upload, Check, FileImage, Trash2, Edit, Printer, Siren
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../services/supabase';
@@ -36,22 +36,49 @@ const TelaDetalhe = () => {
         if (data) setNoprer(data);
     };
 
+    const handleGerarInterdicao = (obs = '') => {
+        if (!noprer) return;
+        const prefilledData = {
+            responsavel_nome: noprer.nome_notificado || '',
+            responsavel_cpf: noprer.cpf_notificado || '',
+            responsavel_telefone: noprer.contato || '',
+            responsavel_email: noprer.email_notificado || '',
+            endereco: noprer.endereco || '',
+            bairro: noprer.bairro || '',
+            situacao_observada: noprer.descricao_risco || '',
+            relatorio_tecnico: obs || noprer.descricao_risco || '',
+            risco_tipo: noprer.tipo_risco ? [noprer.tipo_risco] : [],
+            risco_grau: noprer.grau_risco || 'Médio',
+            numero: noprer.numero || '',
+            informacoes_complementares: `Origem Notificação Preliminar de Risco (NOPRER) nº ${noprer.numero || ''}. ${obs ? 'Obs: ' + obs : ''}`
+        };
+        navigate('/interdicao', { state: { noprerData: prefilledData } });
+    };
+
     const handleAcao = async (tipo, resultado) => {
         if (!modalObs) {
             alert('Por favor, informe a justificativa ou observação técnica.');
             return;
         }
         setSubmitting(true);
+        const obsSalva = modalObs;
         try {
             await registrarRevistoria(id, {
                 tipo,
                 resultado,
-                observacoes: modalObs,
+                observacoes: obsSalva,
                 agente: userProfile?.full_name || 'Agente'
             });
             setModal(null);
             setModalObs('');
-            await carregarNoprer(); // Recarrega os dados para atualizar UI
+
+            if (tipo === 'escalada') {
+                toast.success('NOPRER escalada! Redirecionando para criar Interdição...');
+                handleGerarInterdicao(obsSalva);
+            } else {
+                toast.success('Ação registrada com sucesso.');
+                await carregarNoprer();
+            }
         } catch (err) {
             alert('Erro ao registrar ação.');
         } finally {
@@ -343,6 +370,23 @@ const TelaDetalhe = () => {
                                 className="w-full bg-[#FEF2F2] dark:bg-red-900/30 hover:bg-red-100 text-[#991B1B] dark:text-red-400 py-2.5 rounded-lg font-bold text-sm transition-colors border border-[#FCA5A5] flex items-center justify-center gap-2"
                             >
                                 <ShieldAlert size={16}/> Escalar para Interdição
+                            </button>
+                        </div>
+                    )}
+
+                    {(noprer.statusCalculado === 'ESCALADA' || noprer.status === 'ESCALADA') && (
+                        <div className="bg-red-50 dark:bg-red-950/30 p-4 rounded-xl border border-red-200 dark:border-red-800 shadow-sm flex flex-col gap-3">
+                            <h3 className="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-widest text-center flex items-center justify-center gap-2">
+                                <ShieldAlert size={16}/> NOPRER Escalada para Interdição
+                            </h3>
+                            <p className="text-xs text-red-600 dark:text-red-300 text-center">
+                                Esta notificação foi escalada por descumprimento. Clique no botão abaixo para abrir a Interdição com os dados preenchidos.
+                            </p>
+                            <button 
+                                onClick={() => handleGerarInterdicao()}
+                                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-sm transition-colors shadow-md flex items-center justify-center gap-2"
+                            >
+                                <Siren size={18}/> Gerar Termo de Interdição
                             </button>
                         </div>
                     )}

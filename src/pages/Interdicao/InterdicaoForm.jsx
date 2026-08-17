@@ -191,32 +191,34 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
         };
 
         if (initialData) {
+            const isDerivedFromNoprer = !initialData.interdicao_id && !initialData.interdicaoId;
+
             setFormData({
                 ...initialData,
-                interdicaoId: initialData.interdicao_id || initialData.interdicaoId,
-                dataHora: formatDateTime(initialData.data_hora || initialData.dataHora || initialData.created_at),
+                interdicaoId: initialData.interdicao_id || initialData.interdicaoId || '',
+                dataHora: formatDateTime(initialData.data_hora || initialData.dataHora || initialData.created_at || new Date().toISOString()),
                 municipio: initialData.municipio || 'Santa Maria de Jetibá',
                 bairro: initialData.bairro || initialData.localidade || '',
                 endereco: initialData.endereco || initialData.logradouro || '',
-                tipoAlvo: initialData.tipo_alvo || initialData.tipoAlvo,
-                tipoAlvoEspecificar: initialData.tipo_alvo_especificar || initialData.tipoAlvoEspecificar,
-                responsavelNome: initialData.responsavel_nome || initialData.responsavelNome,
-                responsavelCpf: initialData.responsavel_cpf || initialData.responsavelCpf,
-                responsavelTelefone: initialData.responsavel_telefone || initialData.responsavelTelefone,
-                responsavelEmail: initialData.responsavel_email || initialData.responsavelEmail,
-                riscoTipo: initialData.risco_tipo || initialData.riscoTipo || [],
-                riscoGrau: initialData.risco_grau || initialData.riscoGrau,
-                situacaoObservada: initialData.situacao_observada || initialData.situacaoObservada,
-                medidaTipo: initialData.medida_tipo || initialData.medidaTipo,
-                medidaPrazo: initialData.medida_prazo || initialData.medidaPrazo,
-                medidaPrazoData: initialData.medida_prazo_data || initialData.medidaPrazoData,
-                evacuacaoNecessaria: initialData.evacuacao_necessaria ?? initialData.evacuacaoNecessaria,
-                relatorioTecnico: initialData.relatorio_tecnico || initialData.relatorioTecnico,
-                recomendacoes: initialData.recomendacoes,
-                orgaosAcionados: initialData.orgaos_acionados || initialData.orgaosAcionados,
-                agente: initialData.agente || initialData.agente || '',
-                matricula: initialData.matricula || initialData.matricula || '',
-                cargo: initialData.cargo || initialData.cargo || '',
+                tipoAlvo: initialData.tipo_alvo || initialData.tipoAlvo || 'Imóvel',
+                tipoAlvoEspecificar: initialData.tipo_alvo_especificar || initialData.tipoAlvoEspecificar || '',
+                responsavelNome: initialData.responsavel_nome || initialData.responsavelNome || initialData.nome_notificado || '',
+                responsavelCpf: initialData.responsavel_cpf || initialData.responsavelCpf || initialData.cpf_notificado || '',
+                responsavelTelefone: initialData.responsavel_telefone || initialData.responsavelTelefone || initialData.contato || '',
+                responsavelEmail: initialData.responsavel_email || initialData.responsavelEmail || initialData.email_notificado || '',
+                riscoTipo: initialData.risco_tipo || initialData.riscoTipo || (initialData.tipo_risco ? [initialData.tipo_risco] : []),
+                riscoGrau: initialData.risco_grau || initialData.riscoGrau || initialData.grau_risco || 'Médio',
+                situacaoObservada: initialData.situacao_observada || initialData.situacaoObservada || initialData.descricao_risco || '',
+                medidaTipo: initialData.medida_tipo || initialData.medidaTipo || 'Total',
+                medidaPrazo: initialData.medida_prazo || initialData.medidaPrazo || 'Indeterminado',
+                medidaPrazoData: initialData.medida_prazo_data || initialData.medidaPrazoData || '',
+                evacuacaoNecessaria: initialData.evacuacao_necessaria ?? initialData.evacuacaoNecessaria ?? false,
+                relatorioTecnico: initialData.relatorio_tecnico || initialData.relatorioTecnico || initialData.descricao_risco || '',
+                recomendacoes: initialData.recomendacoes || '',
+                orgaosAcionados: initialData.orgaos_acionados || initialData.orgaosAcionados || '',
+                agente: initialData.agente || userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
+                matricula: initialData.matricula || userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
+                cargo: initialData.cargo || userProfile?.cargo || localStorage.getItem('lastAgentCargo') || '',
                 assinaturaAgente: initialData.assinatura_agente || initialData.assinaturaAgente || null,
                 apoioTecnico: (() => {
                     let a = initialData.apoio_tecnico || initialData.apoioTecnico || { nome: '', crea: '', matricula: '', cargo: '', assinatura: null };
@@ -225,7 +227,7 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                     }
                     return a;
                 })(),
-                informacoes_complementares: initialData.informacoes_complementares || initialData.informacoesComplementares || '',
+                informacoes_complementares: initialData.informacoes_complementares || initialData.informacoesComplementares || (initialData.numero ? `Origem NOPRER nº ${initialData.numero}` : ''),
                 fotos: (Array.isArray(initialData.fotos) ? initialData.fotos : []).map((f, i) =>
                     typeof f === 'string'
                         ? { id: `legacy-${i}`, data: f, legenda: '' }
@@ -233,6 +235,10 @@ const InterdicaoForm = ({ onBack, initialData, onDesinterdicao, onEditDesinterdi
                 ),
                 temApoioTecnico: !!(initialData.apoioTecnico?.nome || initialData.apoio_tecnico?.nome)
             })
+
+            if (isDerivedFromNoprer) {
+                getNextId();
+            }
 
             if (initialData.latitude && initialData.longitude) {
                 const riskInfo = checkRiskArea(initialData.latitude, initialData.longitude);
