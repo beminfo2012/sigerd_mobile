@@ -4,13 +4,14 @@ import { getOcorrenciasLocal } from './ocorrenciasDb';
 import { getAlertasCemaden } from './alertasCemadenService';
 
 /**
- * Utilitário seguro para buscas com timeout
+ * Utilitário seguro para buscas remotas com timeout rápido de 1.5s
+ * Garante que se o Supabase demorar ou estiver offline, a página carrega instantaneamente com dados locais.
  */
 const safeFetch = async (promise, fallback = []) => {
   try {
     const res = await Promise.race([
       promise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1500))
     ]);
     return res?.data || fallback;
   } catch (e) {
@@ -46,7 +47,7 @@ export const biService = {
   async getOverview({ periodo = '12m', localidade = 'todas', tipologia = 'todas', customRules = null } = {}) {
     const rules = { ...this.getDefaultRules(), ...(customRules || {}) };
 
-    // 1. Busca paralela segura de todas as fontes de dados
+    // 1. Busca paralela ultra-rápida e segura de todas as fontes de dados
     const [
       vLocal,
       vCache,
