@@ -146,12 +146,7 @@ const MODULE_COLORS = {
     green: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-100', header: 'bg-green-600' },
     amber: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', header: 'bg-amber-500' },
     fuchsia: { bg: 'bg-fuchsia-50', text: 'text-fuchsia-600', border: 'border-fuchsia-100', header: 'bg-fuchsia-600' },
-    indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100', header: 'bg-indigo-600' },
-    violet: { bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-100', header: 'bg-violet-600' },
-    sky: { bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-100', header: 'bg-sky-500' },
-    amber: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', header: 'bg-amber-500' },
-    teal: { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-100', header: 'bg-teal-600' },
-    orange: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-100', header: 'bg-orange-500' },
+    indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100', header: 'bg-indigo-600' }
 }
 
 const PermissionModule = ({ module, permissions, onChange }) => {
