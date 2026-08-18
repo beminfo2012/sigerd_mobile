@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { 
     Save, ArrowLeft, User, Phone, MapPin, 
     Briefcase, Shield, CheckSquare, Plus, Trash2, Calendar
 } from 'lucide-react';
-import { getVoluntarioById, saveVoluntario, getAreasAtuacao } from '../../services/voluntariosService';
+import { getVoluntarioById, saveVoluntario, getAreasAtuacao, getProgramasVoluntariado } from '../../services/voluntariosService';
 import { useToast } from '../../components/ToastNotification';
 import bairrosDataRaw from '../../data/Bairros.json';
 import SearchableSelect from '../../components/SearchableSelect';
@@ -38,6 +38,7 @@ const VoluntarioForm = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { toast } = useToast();
+    const [searchParams] = useSearchParams();
 
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -58,10 +59,12 @@ const VoluntarioForm = () => {
         veiculo_proprio: '',
         equipamentos_proprios: '',
         restricoes: '',
-        status: 'ativo'
+        status: 'ativo',
+        programa_id: ''
     });
 
     const [areasDisponiveis, setAreasDisponiveis] = useState([]);
+    const [programasDisponiveis, setProgramasDisponiveis] = useState([]);
     const [areasSelecionadas, setAreasSelecionadas] = useState([]); // [{ area_id, nivel_experiencia }]
     
     const [disponibilidade, setDisponibilidade] = useState({
@@ -79,8 +82,12 @@ const VoluntarioForm = () => {
         setLoading(true);
         try {
             // Load Taxonomies
-            const areas = await getAreasAtuacao();
+            const [areas, programas] = await Promise.all([
+                getAreasAtuacao(),
+                getProgramasVoluntariado()
+            ]);
             setAreasDisponiveis(areas);
+            setProgramasDisponiveis(programas);
 
             if (id) {
                 // Edit mode
@@ -101,7 +108,8 @@ const VoluntarioForm = () => {
                         veiculo_proprio: data.veiculo_proprio || '',
                         equipamentos_proprios: data.equipamentos_proprios || '',
                         restricoes: data.restricoes || '',
-                        status: data.status || 'ativo'
+                        status: data.status || 'ativo',
+                        programa_id: data.programa_id || ''
                     });
 
                     if (data.voluntario_area) {
@@ -120,6 +128,11 @@ const VoluntarioForm = () => {
                             status_tempo_real: disp.status_tempo_real || 'disponível'
                         });
                     }
+                }
+            } else {
+                const urlProg = searchParams.get('programa');
+                if (urlProg && urlProg !== 'geral') {
+                    setVoluntario(prev => ({ ...prev, programa_id: urlProg }));
                 }
             }
         } catch (error) {
@@ -458,6 +471,19 @@ const VoluntarioForm = () => {
                     </h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1.5 md:col-span-2">
+                            <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Programa de Voluntariado</label>
+                            <select 
+                                value={voluntario.programa_id || ''}
+                                onChange={(e) => setVoluntario({...voluntario, programa_id: e.target.value || null})}
+                                className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-xl outline-none focus:border-blue-500 transition-colors font-bold text-sm text-slate-800 dark:text-slate-200"
+                            >
+                                <option value="">Geral (Sem vínculo específico)</option>
+                                {programasDisponiveis.map(p => (
+                                    <option key={p.id} value={p.id}>{p.nome}</option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="space-y-1.5">
                             <label className="text-xs font-black tracking-wider text-slate-500 dark:text-slate-400 uppercase">Vínculo</label>
                             <select 

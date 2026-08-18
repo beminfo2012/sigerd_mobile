@@ -2,22 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { getVoluntarios } from '../../services/voluntariosService';
 import { useNavigate } from 'react-router-dom';
 import { 
-    Users, PlusCircle, Search, CalendarCheck, 
+    Users, Search,
     BellRing, Shield, Award, ClipboardList, ArrowLeft
 } from 'lucide-react';
 
 const VoluntariosDashboard = () => {
     const [disponiveis, setDisponiveis] = useState(0);
     const [emMissao, setEmMissao] = useState(0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCounts = async () => {
             try {
                 const data = await getVoluntarios();
-                // Considera disponíveis os ativos
                 const countAtivos = data.filter(v => v.status === 'ativo').length;
                 setDisponiveis(countAtivos);
-                // Em Missão ficará 0 até o módulo de missões ser finalizado
                 setEmMissao(0);
             } catch (err) {
                 console.error('Erro ao buscar voluntários para o dashboard:', err);
@@ -25,16 +24,15 @@ const VoluntariosDashboard = () => {
         };
         fetchCounts();
     }, []);
-    const navigate = useNavigate();
 
     const modules = [
         {
             title: 'Banco de Voluntários',
-            description: 'Buscar, filtrar e gerenciar cadastros',
+            description: 'Buscar, filtrar e gerenciar cadastros por programa',
             icon: Search,
             color: 'text-blue-500',
             bg: 'bg-blue-50 dark:bg-blue-500/10',
-            path: '/voluntarios/lista'
+            path: '/voluntarios/banco'
         },
         {
             title: 'Acionamentos',

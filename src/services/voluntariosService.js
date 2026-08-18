@@ -10,6 +10,7 @@ export const getVoluntarios = async () => {
             .from('voluntarios')
             .select(`
                 *,
+                programas_voluntariado(id, nome, cor, icone),
                 voluntario_area(
                     nivel_experiencia,
                     areas_atuacao(id, nome)
@@ -32,6 +33,7 @@ export const getVoluntarioById = async (id) => {
             .from('voluntarios')
             .select(`
                 *,
+                programas_voluntariado(id, nome, cor, icone),
                 voluntario_area(
                     nivel_experiencia,
                     areas_atuacao(id, nome)
@@ -206,6 +208,75 @@ export const deleteAreaAtuacao = async (id) => {
         if (error) throw error;
     } catch (error) {
         console.error('Erro ao deletar área de atuação:', error);
+        throw error;
+    }
+};
+
+// ==========================================
+// PROGRAMAS DE VOLUNTARIADO
+// ==========================================
+
+export const getProgramasVoluntariado = async () => {
+    try {
+        const { data, error } = await supabase
+            .from('programas_voluntariado')
+            .select('*')
+            .order('nome', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Erro ao buscar programas de voluntariado:', error);
+        throw error;
+    }
+};
+
+export const saveProgramaVoluntariado = async (programa) => {
+    try {
+        if (programa.id) {
+            const { data, error } = await supabase
+                .from('programas_voluntariado')
+                .update({ 
+                    nome: programa.nome, 
+                    descricao: programa.descricao, 
+                    cor: programa.cor,
+                    icone: programa.icone,
+                    updated_at: new Date().toISOString() 
+                })
+                .eq('id', programa.id)
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        } else {
+            const { data, error } = await supabase
+                .from('programas_voluntariado')
+                .insert([{ 
+                    nome: programa.nome, 
+                    descricao: programa.descricao,
+                    cor: programa.cor,
+                    icone: programa.icone 
+                }])
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        }
+    } catch (error) {
+        console.error('Erro ao salvar programa de voluntariado:', error);
+        throw error;
+    }
+};
+
+export const deleteProgramaVoluntariado = async (id) => {
+    try {
+        const { error } = await supabase
+            .from('programas_voluntariado')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+    } catch (error) {
+        console.error('Erro ao deletar programa de voluntariado:', error);
         throw error;
     }
 };

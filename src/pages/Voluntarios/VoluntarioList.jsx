@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
     Search, Plus, ArrowLeft, Filter, 
     UserCheck, MapPin, Briefcase, Phone,
-    Eye, Edit2, Trash2, ChevronDown, Award, X, FileText
+    Eye, Edit2, Trash2, ChevronDown, Award, X, FileText, Shield
 } from 'lucide-react';
 import { getVoluntarios, deleteVoluntario, getAreasAtuacao } from '../../services/voluntariosService';
 import { useToast } from '../../components/ToastNotification';
@@ -25,6 +25,7 @@ const NIVEL_COLOR = {
 
 const VoluntarioList = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { toast } = useToast();
     
     const [voluntarios, setVoluntarios] = useState([]);
@@ -77,7 +78,14 @@ const VoluntarioList = () => {
     };
 
     const filteredVoluntarios = useMemo(() => {
+        const urlProgramaId = searchParams.get('programa');
+
         return voluntarios.filter(v => {
+            if (urlProgramaId) {
+                if (urlProgramaId === 'geral' && v.programa_id) return false;
+                if (urlProgramaId !== 'geral' && v.programa_id !== urlProgramaId) return false;
+            }
+
             const matchesSearch = 
                 v.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) || 
                 (v.cpf && v.cpf.includes(searchTerm)) ||
@@ -99,7 +107,7 @@ const VoluntarioList = () => {
             {/* Cabeçalho */}
             <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between sticky top-0 z-20">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/voluntarios')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400">
+                    <button onClick={() => navigate('/voluntarios/banco')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400">
                         <ArrowLeft size={20} />
                     </button>
                     <div>
@@ -112,7 +120,10 @@ const VoluntarioList = () => {
                 </div>
                 
                 <button
-                    onClick={() => navigate('/voluntarios/novo')}
+                    onClick={() => {
+                        const progId = searchParams.get('programa');
+                        navigate(`/voluntarios/novo${progId && progId !== 'geral' ? `?programa=${progId}` : ''}`);
+                    }}
                     className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-all flex items-center gap-2 border border-blue-400 dark:border-blue-300/30"
                 >
                     <Plus size={18} /> Novo Voluntário
@@ -224,12 +235,16 @@ const VoluntarioList = () => {
                                         </span>
                                     </div>
 
-                                    {/* Linha 2: Localização */}
-                                    <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium mb-3">
-                                        <MapPin size={13} className="text-rose-400 shrink-0" />
-                                        <span>{voluntario.bairro || 'Bairro não informado'}</span>
-                                        {voluntario.vinculo && <span className="text-slate-300 mx-1">•</span>}
-                                        {voluntario.vinculo && <span className="truncate">{voluntario.vinculo}</span>}
+                                    {/* Linha 2: Localização e Programa */}
+                                    <div className="flex flex-col gap-1 mb-3">
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                            <MapPin size={13} className="text-rose-400 shrink-0" />
+                                            <span>{voluntario.bairro || 'Bairro não informado'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-bold">
+                                            <Shield size={13} className="shrink-0" />
+                                            <span>{voluntario.programas_voluntariado?.nome || 'Geral'}</span>
+                                        </div>
                                     </div>
 
                                     {/* Linha 3: Especialidades */}

@@ -88,6 +88,7 @@ const RedapPrintSecao = lazy(() => import('./pages/Redap/RedapPrintSecao'))
 
 // Voluntarios (Lazy)
 const VoluntariosDashboard = lazy(() => import('./pages/Voluntarios/index'))
+const BancoVoluntarios = lazy(() => import('./pages/Voluntarios/BancoVoluntarios'))
 const VoluntarioList = lazy(() => import('./pages/Voluntarios/VoluntarioList'))
 const VoluntarioForm = lazy(() => import('./pages/Voluntarios/VoluntarioForm'))
 const AcionamentosList = lazy(() => import('./pages/Voluntarios/AcionamentosList'))
@@ -607,6 +608,11 @@ const AppContent = ({
                                 <Route path="/voluntarios/lista" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <VoluntarioList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/voluntarios/banco" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <BancoVoluntarios />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/voluntarios/novo" element={
