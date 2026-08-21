@@ -1006,13 +1006,13 @@ export default function OcorrenciasForm() {
                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Assinatura do Agente</label>
                                 <div className="flex gap-2">
                                     {userProfile?.signature && (
-                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))} className="text-[9px] font-black text-blue-600 uppercase flex items-center gap-1">
-                                            <Sparkles size={10} /> Auto
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature }))} className="text-[10px] font-black bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-1 rounded-md uppercase flex items-center gap-1 transition-colors">
+                                            <Sparkles size={12} /> Auto-assinar
                                         </button>
                                     )}
                                     {formData.assinaturaAgente && (
-                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: null }))} className="text-[9px] font-black text-red-500 uppercase flex items-center gap-1">
-                                            <Trash2 size={10} /> Limpar
+                                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, assinaturaAgente: null }))} className="text-[10px] font-black bg-red-50 text-red-500 hover:bg-red-100 px-2 py-1 rounded-md uppercase flex items-center gap-1 transition-colors">
+                                            <Trash2 size={12} /> Limpar
                                         </button>
                                     )}
                                 </div>
@@ -1024,9 +1024,26 @@ export default function OcorrenciasForm() {
                                 {formData.assinaturaAgente ? (
                                     <img src={formData.assinaturaAgente} className="h-full w-auto p-2" alt="Agente" />
                                 ) : (
-                                    <div className="text-center space-y-1">
-                                        <Edit2 size={20} className="mx-auto text-slate-300" />
-                                        <p className="text-[9px] font-black text-slate-400 uppercase">Assinar</p>
+                                    <div className="flex gap-8 items-center justify-center w-full h-full">
+                                        <div className="text-center space-y-1 hover:scale-110 transition-transform">
+                                            <Edit2 size={24} className="mx-auto text-slate-400" />
+                                            <p className="text-[10px] font-black text-slate-500 uppercase">Desenhar</p>
+                                        </div>
+                                        {userProfile?.signature && (
+                                            <>
+                                                <div className="w-px h-12 bg-slate-200"></div>
+                                                <div 
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        setFormData(prev => ({ ...prev, assinaturaAgente: userProfile.signature })); 
+                                                    }}
+                                                    className="text-center space-y-1 hover:scale-110 transition-transform group"
+                                                >
+                                                    <Sparkles size={24} className="mx-auto text-blue-400 group-hover:text-blue-600" />
+                                                    <p className="text-[10px] font-black text-blue-500 group-hover:text-blue-600 uppercase">Usar Perfil</p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>
