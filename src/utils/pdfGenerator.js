@@ -38,7 +38,7 @@ const normalizeData = (data, type) => {
             situacaoObservada: data.situacaoObservada || data.situacao_observada || 'Estabilizado',
             populacaoEstimada: data.populacaoEstimada || data.populacao_estimada || '---',
             gruposVulneraveis: data.gruposVulneraveis || data.grupos_vulneraveis || [],
-            observacoes: data.observacoes || '---',
+            observacoes: data.descricao || data.observacoes || '---',
             referencias_normativas: (() => {
                 let r = data.referencias_normativas || data.referenciasNormativas || [];
                 if (typeof r === 'string') {
@@ -46,7 +46,7 @@ const normalizeData = (data, type) => {
                 }
                 return Array.isArray(r) ? r : [];
             })(),
-            medidasTomadas: data.medidasTomadas || data.medidas_tomadas || [],
+            medidasTomadas: data.medidas_adotadas || data.medidasTomadas || data.medidas_tomadas || [],
             encaminhamentos: data.encaminhamentos || [],
             agente: data.agente || '---',
             matricula: data.matricula || '---',
@@ -337,7 +337,7 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                 ${renderField('Coordenadas', `${data.latitude}, ${data.longitude}`)}
             </div>
 
-            ${sectionTitle(`${secNum++}. Diagnóstico de Risco`)}
+            ${sectionTitle(`${secNum++}. ${type === 'ocorrencia' ? 'Tipo de Ocorrência' : 'Diagnóstico de Risco'}`)}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                 ${renderField('Categoria Principal', data.categoriaRisco)}
                 <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
@@ -391,9 +391,9 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
 
                 if (data.observacoes && data.observacoes !== '---') {
                     htmlBlocks += `
-                    ${sectionTitle(`${secNum++}. Observações Técnicas`)}
+                    ${sectionTitle(`${secNum++}. ${type === 'ocorrencia' ? 'Descrição da Ocorrência' : 'Observações Técnicas'}`)}
                     <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
-                        <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">RELATÓRIO TÉCNICO</div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">${type === 'ocorrencia' ? 'DESCRIÇÃO' : 'RELATÓRIO TÉCNICO'}</div>
                         <div class="rich-text-content" style="font-size: 13px; color: #334155; line-height: 1.6;">
                             ${data.observacoes}
                         </div>
@@ -459,17 +459,28 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                     return html;
                 };
 
-                const renderRecomendacoesBlock = () => `
-                    ${sectionTitle(`${secNum++}. Recomendações e Encaminhamentos`)}
+                const renderRecomendacoesBlock = () => {
+                    let medidasHtml = '';
+                    if (Array.isArray(data.medidasTomadas)) {
+                        medidasHtml = (data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Monitoramento e Orientação']).map(m => `
+                            <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #475569; font-weight: 600;">
+                                <div style="color: #2a5299;">•</div>
+                                <div>${m}</div>
+                            </div>
+                        `).join('');
+                    } else {
+                        medidasHtml = `
+                            <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #475569; font-weight: 600; white-space: pre-wrap;">
+                                <div>${data.medidasTomadas || 'Monitoramento e Orientação'}</div>
+                            </div>
+                        `;
+                    }
+                    return `
+                    ${sectionTitle(`${secNum++}. ${type === 'ocorrencia' ? 'Medidas Adotadas e Encaminhamentos' : 'Recomendações e Encaminhamentos'}`)}
                     <div style="background: #f8fafc; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
-                        <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">MEDIDAS RECOMENDADAS</div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-bottom: 10px;">${type === 'ocorrencia' ? 'MEDIDAS ADOTADAS' : 'MEDIDAS RECOMENDADAS'}</div>
                         <div style="display: flex; flex-direction: column; gap: 6px;">
-                            ${(data.medidasTomadas.length > 0 ? data.medidasTomadas : ['Monitoramento e Orientação']).map(m => `
-                                <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #475569; font-weight: 600;">
-                                    <div style="color: #2a5299;">•</div>
-                                    <div>${m}</div>
-                                </div>
-                            `).join('')}
+                            ${medidasHtml}
                         </div>
                         
                         ${data.encaminhamentos && data.encaminhamentos.length > 0 ? `
@@ -486,6 +497,7 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                         </div>` : ''}
                     </div>
                 `;
+                };
 
                 const renderAberturasBlock = () => {
                     if (!data.aberturas || data.aberturas.length === 0) return '';

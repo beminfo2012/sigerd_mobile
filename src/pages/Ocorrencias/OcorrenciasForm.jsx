@@ -31,10 +31,9 @@ const logradourosData = logradourosDataRaw
     }));
 const ORGAOS_OPTIONS = ['Defesa Civil', 'Bombeiros', 'SECOBR', 'Agropecuária', 'Saúde', 'Assistência Social', 'Outro'];
 const TIPO_OCORRENCIA_OPTIONS = [
-    'Poda/queda de árvore', 'Vistoria de imóvel', 'Reclamação de rachadura/trinca',
-    'Animal em via pública', 'Apoio a outro órgão', 'Deslizamento/escorregamento',
-    'Alagamento/enchente', 'Vendaval/destelhamento', 'Incêndio (encaminhar Bombeiros)',
-    'Acidente com vítima (encaminhar Bombeiros/SAMU)', 'Outros'
+    'Deslizamento de terra', 'Alagamento', 'Queda de árvore',
+    'Rachadura/trinca em edificação', 'Erosão', 'Risco de desabamento',
+    'Desabamento de imóvel', 'Queda de muro', 'Interdição de via', 'Outros'
 ];
 const NIVEL_GRAVIDADE_OPTIONS = ['Baixo', 'Médio', 'Alto', 'Iminente'];
 const DESCRICAO_CHIPS = [
@@ -521,22 +520,7 @@ export default function OcorrenciasForm() {
         window.open(encodedUrl, '_blank');
     };
 
-    const isValid = () => {
-        if (!formData.solicitante_nome && !formData.solicitante) return false;
-        const tipo = formData.tipo_ocorrencia || formData.tipoOcorrencia || formData.categoria_risco;
-        if (!tipo) return false;
-        const gravidade = formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || formData.nivelRisco;
-        if (!gravidade) return false;
-        if (!formData.orgao_solicitado) return false;
-        if (!formData.orgao_atendeu) return false;
-        
-        // Foto validation
-        const totalFotos = formData.fotos?.length || 0;
-        if ((gravidade === 'Iminente') && totalFotos < 3) return false;
-        if ((gravidade === 'Alto') && totalFotos < 1) return false;
-
-        return true;
-    };
+    const isValid = () => true;
 
     const saveRecord = async (isDraft, resetAfter = false) => {
         setSaving(true);
@@ -870,58 +854,7 @@ export default function OcorrenciasForm() {
                     </div>
                 </div>
 
-                {/* ATENDIMENTO */}
-                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                    <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Atendimento</h2>
-                    <div className="space-y-3">
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Órgão Solicitado</label>
-                            <select
-                                name="orgao_solicitado"
-                                value={formData.orgao_solicitado || ''}
-                                onChange={handleInputChange}
-                                className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold mt-1 outline-none"
-                            >
-                                <option value="">Selecione...</option>
-                                {ORGAOS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">Órgão que Atendeu</label>
-                            <select
-                                name="orgao_atendeu"
-                                value={formData.orgao_atendeu || ''}
-                                onChange={handleInputChange}
-                                className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 font-bold mt-1 outline-none"
-                            >
-                                <option value="">Selecione...</option>
-                                {ORGAOS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                            </select>
-                        </div>
 
-                        {showEncaminhamento && (
-                            <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 mt-2 animate-in fade-in slide-in-from-top-2">
-                                <h3 className="text-xs font-bold text-orange-800 uppercase mb-2">Detalhes do Encaminhamento</h3>
-                                <input
-                                    type="text"
-                                    name="numero_ocorrencia_externa"
-                                    placeholder="Nº Ocorrência Externa (Opcional)"
-                                    value={formData.numero_ocorrencia_externa || ''}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-white p-2 rounded-lg border border-orange-200 font-bold text-sm outline-none mb-2"
-                                />
-                                <input
-                                    type="text"
-                                    name="observacao_encaminhamento"
-                                    placeholder="Observação"
-                                    value={formData.observacao_encaminhamento || ''}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-white p-2 rounded-lg border border-orange-200 font-bold text-sm outline-none"
-                                />
-                            </div>
-                        )}
-                    </div>
-                </div>
 
                 {/* CLASSIFICAÇÃO OPERACIONAL */}
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
@@ -946,29 +879,6 @@ export default function OcorrenciasForm() {
                         {TIPO_OCORRENCIA_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
 
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Nível de Gravidade</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                        {NIVEL_GRAVIDADE_OPTIONS.map(nivel => (
-                            <button
-                                key={nivel}
-                                type="button"
-                                onClick={() => setFormData(prev => ({
-                                    ...prev,
-                                    nivel_gravidade: nivel,
-                                    nivelGravidade: nivel,
-                                    nivel_risco: nivel,
-                                    nivelRisco: nivel
-                                }))}
-                                className={`p-2 rounded-xl text-sm font-bold border transition-colors ${
-                                    (formData.nivel_gravidade === nivel || formData.nivel_risco === nivel)
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                }`}
-                            >
-                                {nivel}
-                            </button>
-                        ))}
-                    </div>
 
                     <div className="mb-4">
                         <label className="text-[10px] font-bold text-slate-500 uppercase block mb-2">Descrição Rápida (Chips)</label>
@@ -1008,83 +918,30 @@ export default function OcorrenciasForm() {
                     </div>
 
                     <div className="flex items-center justify-between mt-4 mb-2">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase block">Descrição / Observações</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block">Descrição da Ocorrência</label>
                         <button type="button" onClick={() => setIsNortisIAOpen(true)} className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors">
                             ✨ REFERÊNCIAS
                         </button>
                     </div>
-                    <RichTextEditor
+                    <textarea
+                        className="w-full bg-white p-3 rounded-xl border border-slate-200 font-bold outline-none text-sm min-h-[100px]"
+                        placeholder="O que aconteceu? Onde? Quais condições foram constatadas no local?"
                         value={formData.descricao || formData.observacoes || ''}
-                        onChange={val => setFormData(prev => ({ ...prev, descricao: val, observacoes: val }))}
+                        onChange={e => setFormData(prev => ({ ...prev, descricao: e.target.value, observacoes: e.target.value }))}
                     />
-                </div>
-
-                {/* BLOCO CONDICIONAL TÉCNICO */}
-                <div className={`p-4 rounded-2xl border transition-all duration-300 ${formData.risco_pessoas_estruturas ? 'bg-red-50 border-red-200' : 'bg-white border-slate-100 shadow-sm'}`}>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                            <input
-                                type="checkbox"
-                                name="risco_pessoas_estruturas"
-                                checked={formData.risco_pessoas_estruturas || false}
-                                onChange={handleInputChange}
-                                className="peer sr-only"
-                            />
-                            <div className="w-6 h-6 rounded border-2 border-slate-300 peer-checked:bg-red-600 peer-checked:border-red-600 flex items-center justify-center transition-colors">
-                                <CheckCircle size={16} className="text-white opacity-0 peer-checked:opacity-100" />
-                            </div>
-                        </div>
-                        <span className="font-bold text-slate-700">Envolve risco a pessoas ou estruturas?</span>
-                    </label>
-
-                    {formData.risco_pessoas_estruturas && (
-                        <div className="mt-4 pt-4 border-t border-red-200 space-y-6 animate-in slide-in-from-top-4 fade-in">
-                            
-                            {/* COBRADE Placeholder */}
-                            <div>
-                                <h3 className="text-xs font-black text-red-800 uppercase tracking-widest mb-2">Classificação Técnica (COBRADE)</h3>
-                                <select
-                                    name="cobrade_grupo"
-                                    value={formData.cobrade_grupo || ''}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-white p-3 rounded-xl border border-red-200 font-bold outline-none text-sm"
-                                >
-                                    <option value="">Selecione o Grupo...</option>
-                                    <option value="Natural">Natural</option>
-                                    <option value="Tecnológico">Tecnológico</option>
-                                </select>
-                                {/* Cascading selects would go here in full implementation */}
-                            </div>
-
-                            {/* Danos Humanos */}
-                            <div>
-                                <h3 className="text-xs font-black text-red-800 uppercase tracking-widest mb-3">Danos Humanos</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <StepperInput label="Mortos" value={formData.mortos} onChange={(v) => setFormData(p => ({...p, mortos: v}))} />
-                                    <StepperInput label="Feridos" value={formData.feridos} onChange={(v) => setFormData(p => ({...p, feridos: v}))} />
-                                    <StepperInput label="Desaparecidos" value={formData.desaparecidos} onChange={(v) => setFormData(p => ({...p, desaparecidos: v}))} />
-                                    <StepperInput label="Desalojados" value={formData.desalojados} onChange={(v) => setFormData(p => ({...p, desalojados: v}))} />
-                                    <StepperInput label="Desabrigados" value={formData.desabrigados} onChange={(v) => setFormData(p => ({...p, desabrigados: v}))} />
-                                </div>
-                            </div>
-
-                            {/* Medidas Adotadas Placeholder */}
-                            <div>
-                                <h3 className="text-xs font-black text-red-800 uppercase tracking-widest mb-2">Medidas Adotadas</h3>
-                                <div className="flex items-center justify-between mt-4 mb-2">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase block">Observações</label>
-                        <button type="button" onClick={() => setIsNortisIAOpen(true)} className="flex items-center gap-1.5 text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors">
-                            ✨ REFERÊNCIAS
-                        </button>
+                    
+                    <div className="flex items-center justify-between mt-4 mb-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase block">Medidas Adotadas</label>
                     </div>
-                    <RichTextEditor
-                        value={formData.observacoes || ''}
-                        onChange={val => setFormData(prev => ({ ...prev, observacoes: val }))}
+                    <textarea
+                        className="w-full bg-white p-3 rounded-xl border border-slate-200 font-bold outline-none text-sm min-h-[80px]"
+                        placeholder="Quais ações foram tomadas no local de forma objetiva?"
+                        value={formData.medidas_adotadas || ''}
+                        onChange={e => setFormData(prev => ({ ...prev, medidas_adotadas: e.target.value }))}
                     />
-                            </div>
-                        </div>
-                    )}
                 </div>
+
+
 
                 {/* FOTOS E ASSINATURAS */}
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
@@ -1291,13 +1148,7 @@ export default function OcorrenciasForm() {
                 {/* BOTTOM ACTIONS */}
                 <div className="fixed bottom-[64px] md:bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sm:p-4 z-40 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.08)]">
                     <div className="max-w-7xl mx-auto flex flex-col gap-2">
-                        {(!isValid() && !saving) && (
-                            <div className="text-[10px] text-center font-bold text-red-500 uppercase">
-                                Preencha os campos obrigatórios (Solicitante, Tipo, Gravidade, Órgãos)
-                                {(formData.nivel_gravidade === 'Iminente' || formData.nivel_gravidade === 'Alto') && ' e adicione as fotos mínimas necessárias'}
-                                para finalizar.
-                            </div>
-                        )}
+
                         <div className="flex gap-2">
                             <button
                                 onClick={() => saveRecord(true)}

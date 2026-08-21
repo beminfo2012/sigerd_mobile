@@ -205,12 +205,10 @@ const OcorrenciasPrint = () => {
     const numAgente = secNum++;
     const numSolicitacao = secNum++;
     const numDiagnostico = secNum++;
+    const numDescricao = secNum++;
     const numChecklist = hasChecklist ? secNum++ : null;
-    const numDanosHumanos = secNum++;
-    const numDanosMateriais = (data.descricao_danos && data.descricao_danos.trim() !== '' && data.descricao_danos !== '---') ? secNum++ : null;
     const numMedidas = secNum++;
     const numEncaj = secNum++;
-    const numObs = hasObs ? secNum++ : null;
     const numFotos = hasPhotos ? secNum++ : null;
 
     const showApoio = data.tem_apoio_tecnico || data.temApoioTecnico || (apoioTecnico && (apoioTecnico.nome || apoioTecnico.assinatura));
@@ -303,30 +301,13 @@ const OcorrenciasPrint = () => {
                                             </tr>
                                             <tr>
                                                 <th style={{ width: '40%' }}>Referência</th>
-                                                <th style={{ width: '30%' }}>Coordenadas GPS</th>
-                                                <th style={{ width: '30%' }}>Unidade Consumidora (UC)</th>
+                                                <th style={{ width: '30%' }}>Data da Ocorrência</th>
+                                                <th style={{ width: '30%' }}>Horário</th>
                                             </tr>
                                             <tr>
                                                 <td>{data.informacoes_complementares || data.informacoesComplementares || '---'}</td>
-                                                <td style={{ fontFamily: 'monospace', fontSize: '9px', lineHeight: '1.2' }}>
-                                                    {hasMap ? (
-                                                        <div className="flex flex-col">
-                                                            <span>LAT: {lat.toFixed(6)}</span>
-                                                            <span>LNG: {lng.toFixed(6)}</span>
-                                                        </div>
-                                                    ) : '---'}
-                                                </td>
-                                                <td>{data.unidade_consumidora || '---'}</td>
-                                            </tr>
-                                            <tr>
-                                                <th style={{ width: '40%' }}>Data da Ocorrência</th>
-                                                <th style={{ width: '30%' }}>Horário</th>
-                                                <th style={{ width: '30%' }}>Residências em Risco</th>
-                                            </tr>
-                                            <tr>
                                                 <td>{formatOcorrenciaDate(data.data_ocorrencia)}</td>
                                                 <td>{data.horario_ocorrencia || '---'}</td>
-                                                <td>{data.residencias_em_risco || data.residenciasEmRisco || '---'}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -377,10 +358,10 @@ const OcorrenciasPrint = () => {
                             </div>
                         </section>
 
-                        {/* 3. Diagnóstico de Risco */}
+                        {/* 3. Tipo de Ocorrência */}
                         <section className="mb-6 avoid-break">
                             <div className="section-header">
-                                <span className="section-header-title">{numDiagnostico}. Diagnóstico de Risco</span>
+                                <span className="section-header-title">{numDiagnostico}. Tipo de Ocorrência</span>
                                 <div className="section-header-line"></div>
                             </div>
                             <table className="report-table">
@@ -469,73 +450,31 @@ const OcorrenciasPrint = () => {
                             </section>
                         )}
 
-                        {/* 5. Danos Humanos */}
+                        {/* 4. Descrição da Ocorrência */}
                         <section className="mb-6 avoid-break">
                             <div className="section-header">
-                                <span className="section-header-title">{numDanosHumanos}. Danos Humanos Registrados</span>
+                                <span className="section-header-title">{numDescricao}. Descrição da Ocorrência</span>
                                 <div className="section-header-line"></div>
                             </div>
-                            {data.tem_danos_humanos ? (
-                                <table className="report-table">
-                                    <thead>
-                                        <tr>
-                                            <th style={{ backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center', fontSize: '8px' }}>Óbitos</th>
-                                            <th style={{ backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center', fontSize: '8px' }}>Feridos</th>
-                                            <th style={{ backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center', fontSize: '8px' }}>Enfermos</th>
-                                            <th style={{ backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center', fontSize: '8px' }}>Desalojados</th>
-                                            <th style={{ backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center', fontSize: '8px' }}>Desabrigados</th>
-                                            <th style={{ backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center', fontSize: '8px' }}>Desaparecidos</th>
-                                            <th style={{ backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center', fontSize: '8px' }}>Outros Afetados</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td style={{ textAlign: 'center', fontWeight: 'bold' }} className={data.mortos > 0 ? 'badge-risk-alto' : ''}>{data.mortos || 0}</td>
-                                            <td style={{ textAlign: 'center', fontWeight: 'bold' }} className={data.feridos > 0 ? 'badge-risk-alto' : ''}>{data.feridos || 0}</td>
-                                            <td style={{ textAlign: 'center', fontWeight: 'bold' }} className={data.enfermos > 0 ? 'badge-risk-alto' : ''}>{data.enfermos || 0}</td>
-                                            <td style={{ textAlign: 'center', fontWeight: 'bold' }} className={data.desalojados > 0 ? 'badge-risk-medio' : ''}>{data.desalojados || 0}</td>
-                                            <td style={{ textAlign: 'center', fontWeight: 'bold' }} className={data.desabrigados > 0 ? 'badge-risk-alto' : ''}>{data.desabrigados || 0}</td>
-                                            <td style={{ textAlign: 'center', fontWeight: 'bold' }} className={data.desaparecidos > 0 ? 'badge-risk-alto' : ''}>{data.desaparecidos || 0}</td>
-                                            <td style={{ textAlign: 'center', fontWeight: 'bold' }} className={data.outros_afetados > 0 ? 'badge-risk-baixo' : ''}>{data.outros_afetados || 0}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            ) : (
-                                <div className="p-3 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 text-xs italic">
-                                    Nenhum dano humano registrado inicialmente neste atendimento.
-                                </div>
-                            )}
+                            <div className="p-4 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-xs leading-relaxed whitespace-pre-wrap text-justify print-rich-text"
+                                 dangerouslySetInnerHTML={{ __html: (data.descricao || data.observacoes || '---').replace(/<li data-list="[^"]*">/g, '<li>') }}
+                            >
+                            </div>
                         </section>
 
-                        {/* 6. Danos Materiais */}
-                        {numDanosMateriais && (
-                            <section className="mb-6 avoid-break">
-                                <div className="section-header">
-                                    <span className="section-header-title">{numDanosMateriais}. Danos Materiais Identificados</span>
-                                    <div className="section-header-line"></div>
-                                </div>
-                                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-xs leading-relaxed whitespace-pre-wrap text-justify">
-                                    {data.descricao_danos}
-                                </div>
-                            </section>
-                        )}
-
-                        {/* 7. Medidas Adotadas no Atendimento */}
+                        {/* 5. Medidas Adotadas no Atendimento */}
                         <section className="mb-6 avoid-break">
                             <div className="section-header">
                                 <span className="section-header-title">{numMedidas}. Medidas Adotadas no Atendimento</span>
                                 <div className="section-header-line"></div>
                             </div>
-                            <table className="report-table">
-                                <tbody>
-                                    {(data.medidasTomadas || data.medidas_tomadas || ['Monitoramento do Local']).map((m, i) => (
-                                        <tr key={i}>
-                                            <td style={{ fontWeight: 'bold', width: '40%' }}>{m}</td>
-                                            <td style={{ width: '60%' }}>{getMedidaDetail(m)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <div className="p-4 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 text-xs leading-relaxed whitespace-pre-wrap text-justify">
+                                {Array.isArray(data.medidas_adotadas) 
+                                    ? data.medidas_adotadas.join(', ') 
+                                    : Array.isArray(data.medidas_tomadas) 
+                                        ? data.medidas_tomadas.join(', ') 
+                                        : (data.medidas_adotadas || data.medidas_tomadas || 'Nenhuma medida registrada.')}
+                            </div>
                         </section>
 
                         {/* Encaminhamentos e Responsabilidades */}
@@ -578,51 +517,7 @@ const OcorrenciasPrint = () => {
                             </table>
                         </section>
 
-                        {/* 8. Observações Técnicas */}
-                        {hasObs && (
-                            <section className="mb-6 avoid-break">
-                                <div className="section-header">
-                                    <span className="section-header-title">{numObs}. Observações Técnicas</span>
-                                    <div className="section-header-line"></div>
-                                </div>
-                                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
-                                    <style dangerouslySetInnerHTML={{__html: `
-                                        .print-rich-text ul, .print-rich-text ol { 
-                                            padding-left: 1.5rem !important; 
-                                            margin: 0.5rem 0 !important; 
-                                        }
-                                        .print-rich-text ul li { 
-                                            list-style-type: disc !important; 
-                                            display: list-item !important; 
-                                            margin-bottom: 0.25rem !important;
-                                        }
-                                        .print-rich-text ol li { 
-                                            list-style-type: decimal !important; 
-                                            display: list-item !important; 
-                                            margin-bottom: 0.25rem !important;
-                                        }
-                                        .print-rich-text blockquote { 
-                                            border-left: 4px solid #94a3b8 !important; 
-                                            padding-left: 1rem !important; 
-                                            font-style: italic !important; 
-                                            color: #475569 !important; 
-                                            margin: 1rem 0 !important; 
-                                            background-color: #f1f5f9 !important; 
-                                            padding: 0.5rem 1rem !important; 
-                                            display: block !important;
-                                            -webkit-print-color-adjust: exact !important;
-                                            print-color-adjust: exact !important;
-                                        }
-                                        /* Overrides for quill specific pseudo elements if present */
-                                        .print-rich-text li::before { display: none !important; }
-                                    `}} />
-                                    <div 
-                                        className="print-rich-text text-slate-700 text-xs leading-relaxed text-justify"
-                                        dangerouslySetInnerHTML={{ __html: (data.descricao || data.observacoes || '').replace(/<li data-list="[^"]*">/g, '<li>') }}
-                                    />
-                                </div>
-                            </section>
-                        )}
+
 
                         {/* 9. Relatório Fotográfico */}
                         {hasPhotos && (

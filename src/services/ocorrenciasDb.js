@@ -62,7 +62,7 @@ export const INITIAL_OCORRENCIA_STATE = {
     danos_materiais: [],
     
     // MEDIDAS
-    medidas_adotadas: [],
+    medidas_adotadas: '',
     medidasTomadas: [], // Legacy
 
     fotos: [],               // Photos array [ { id, data, legenda } ]
