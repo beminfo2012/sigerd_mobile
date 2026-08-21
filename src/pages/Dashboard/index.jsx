@@ -9,6 +9,9 @@ import {
     Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield, Waves
 } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap, Marker } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import LimiteSMJLayer from '../../components/LimiteSMJLayer'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -31,6 +34,73 @@ const createCustomPin = (color) => {
         iconSize: [30, 30],
         iconAnchor: [15, 30],
         popupAnchor: [0, -30]
+    });
+};
+
+const createCustomDot = (color) => {
+    return L.divIcon({
+        className: 'custom-dot-marker',
+        html: `
+            <div style="
+                width: 14px;
+                height: 14px;
+                background-color: ${color};
+                border: 2px solid #ffffff;
+                border-radius: 50%;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            "></div>
+        `,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+        popupAnchor: [0, -7]
+    });
+};
+
+const createClusterIcon = (cluster) => {
+    const childMarkers = cluster.getAllChildMarkers();
+    let maxRank = 1;
+    let maxColor = '#10b981'; // default green
+
+    childMarkers.forEach(marker => {
+        const color = marker.options.markerColor || '#10b981';
+        let rank = 1;
+        if (color === '#dc2626' || color === '#ef4444') {
+            rank = 4;
+        } else if (color === '#ea580c' || color === '#f97316') {
+            rank = 3;
+        } else if (color === '#f59e0b') {
+            rank = 2;
+        }
+        if (rank > maxRank) {
+            maxRank = rank;
+            maxColor = color;
+        }
+    });
+
+    const count = childMarkers.length;
+
+    return L.divIcon({
+        html: `
+            <div style="
+                background-color: ${maxColor};
+                color: #ffffff;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 800;
+                font-size: 12px;
+                border: 2.5px solid #ffffff;
+                box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+            ">
+                ${count}
+            </div>
+        `,
+        className: 'custom-marker-cluster-icon',
+        iconSize: L.point(32, 32, true),
+        iconAnchor: [16, 16]
     });
 };
 
@@ -1534,31 +1604,35 @@ const MobileDashboardView = ({
                                         </Popup>
                                     </CircleMarker>
                                 ))}
-                                {filteredLocations?.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
-                                    <Marker
-                                        key={idx}
-                                        position={[loc.lat, loc.lng]}
-                                        icon={createCustomPin(getMarkerColor(loc))}
-                                    >
-                                        <Popup minWidth={180}>
-                                            <div className="p-1">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
-                                                        {viewMode === 'vistorias' ? 'Vistoria' : viewMode === 'ocorrencias' ? 'Ocorrência' : 'Interdição'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
-                                                    </span>
-                                                    {viewMode === 'ocorrencias' && (
-                                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
-                                                    )}
+                                <MarkerClusterGroup iconCreateFunction={createClusterIcon} maxClusterRadius={60}>
+                                    {filteredLocations?.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
+                                        <Marker
+                                            key={idx}
+                                            position={[loc.lat, loc.lng]}
+                                            icon={createCustomDot(getMarkerColor(loc))}
+                                            markerColor={getMarkerColor(loc)}
+                                            loc={loc}
+                                        >
+                                            <Popup minWidth={180}>
+                                                <div className="p-1">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
+                                                            {viewMode === 'vistorias' ? 'Vistoria' : viewMode === 'ocorrencias' ? 'Ocorrência' : 'Interdição'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
+                                                        </span>
+                                                        {viewMode === 'ocorrencias' && (
+                                                            <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs font-bold text-slate-800 mb-1">{loc.risk}</div>
+                                                    <div className="text-[11px] text-slate-500 leading-relaxed mb-2 line-clamp-2">{loc.details}</div>
+                                                    <div className="text-[9px] font-bold text-slate-400 uppercase">
+                                                        <span>Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="text-xs font-bold text-slate-800 mb-1">{loc.risk}</div>
-                                                <div className="text-[11px] text-slate-500 leading-relaxed mb-2 line-clamp-2">{loc.details}</div>
-                                                <div className="text-[9px] font-bold text-slate-400 uppercase">
-                                                    <span>Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</span>
-                                                </div>
-                                            </div>
-                                        </Popup>
-                                    </Marker>
-                                ))}
+                                            </Popup>
+                                        </Marker>
+                                    ))}
+                                </MarkerClusterGroup>
                             </MapContainer>
                             {/* Standard Mobile Legend */}
                             <div className="absolute bottom-2 right-2 z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 rounded-xl shadow-2xl border border-slate-250/80 dark:border-slate-800 text-[8px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest space-y-1.5">
@@ -2287,33 +2361,37 @@ const WebViewDashboardView = ({
                                         </Popup>
                                     </CircleMarker>
                                 ))}
-                                {filteredLocations?.filter(loc => loc.lat && loc.lng && Math.abs(loc.lat) > 0.01 && !isNaN(loc.lat)).map((loc, idx) => (
-                                    <Marker
-                                        key={idx}
-                                        position={[loc.lat, loc.lng]}
-                                        icon={createCustomPin(getMarkerColor(loc))}
-                                    >
-                                        <Popup minWidth={220}>
-                                            <div className="p-2">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
-                                                        {viewMode === 'vistorias' ? 'Vistoria' : viewMode === 'ocorrencias' ? 'Ocorrência' : 'Interdição'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
-                                                    </span>
-                                                    {viewMode === 'ocorrencias' && (
-                                                        <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
-                                                    )}
+                                <MarkerClusterGroup iconCreateFunction={createClusterIcon} maxClusterRadius={60}>
+                                    {filteredLocations?.filter(loc => loc.lat && loc.lng && Math.abs(loc.lat) > 0.01 && !isNaN(loc.lat)).map((loc, idx) => (
+                                        <Marker
+                                            key={idx}
+                                            position={[loc.lat, loc.lng]}
+                                            icon={createCustomDot(getMarkerColor(loc))}
+                                            markerColor={getMarkerColor(loc)}
+                                            loc={loc}
+                                        >
+                                            <Popup minWidth={220}>
+                                                <div className="p-2">
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
+                                                            {viewMode === 'vistorias' ? 'Vistoria' : viewMode === 'ocorrencias' ? 'Ocorrência' : 'Interdição'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
+                                                        </span>
+                                                        {viewMode === 'ocorrencias' && (
+                                                            <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-sm font-black text-slate-800 mb-2">{loc.risk}</div>
+                                                    <div className="text-xs text-slate-500 leading-relaxed mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100 line-clamp-2">
+                                                        {loc.details || 'Sem detalhes adicionais registrados.'}
+                                                    </div>
+                                                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
+                                                        <span>Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="text-sm font-black text-slate-800 mb-2">{loc.risk}</div>
-                                                <div className="text-xs text-slate-500 leading-relaxed mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100 line-clamp-2">
-                                                    {loc.details || 'Sem detalhes adicionais registrados.'}
-                                                </div>
-                                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
-                                                    <span>Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</span>
-                                                </div>
-                                            </div>
-                                        </Popup>
-                                    </Marker>
-                                ))}
+                                            </Popup>
+                                        </Marker>
+                                    ))}
+                                </MarkerClusterGroup>
                             </MapContainer>
                             {/* Standard Web Legend */}
                             <div className="absolute bottom-[76px] right-4 md:bottom-4 md:right-4 z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3.5 rounded-2xl shadow-2xl border border-slate-250/80 dark:border-slate-800 text-[9px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest space-y-2.5">
