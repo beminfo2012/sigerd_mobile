@@ -150,6 +150,29 @@
     @apply flex flex-col h-screen overflow-hidden;
   }
 
+  /* Marker & Tooltip Effects */
+  .marker-hover-effect:hover {
+    transform: scale(1.15);
+    z-index: 1000 !important;
+  }
+
+  /* Modern Tooltip / Popup Override */
+  .leaflet-popup-content-wrapper {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(0,0,0,0.05) !important;
+    padding: 0 !important;
+  }
+  .leaflet-popup-content {
+    margin: 12px !important;
+    line-height: 1.4 !important;
+  }
+  .leaflet-popup-tip {
+    background: #ffffff !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+  }
+
   .main-content {
     @apply flex-1 overflow-y-auto bg-background transition-all duration-300;
     padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));

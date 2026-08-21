@@ -24,8 +24,8 @@ const createCustomPin = (color) => {
     return L.divIcon({
         className: 'custom-pin-marker',
         html: `
-            <div style="position: relative; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center;">
-                <svg viewBox="0 0 24 24" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.3));">
+            <div class="marker-hover-effect" style="position: relative; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="30" height="30" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.15));">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="${color}" stroke="#ffffff" stroke-width="1.5"/>
                     <circle cx="12" cy="9" r="3.5" fill="#ffffff"/>
                 </svg>
@@ -41,13 +41,15 @@ const createCustomDot = (color) => {
     return L.divIcon({
         className: 'custom-dot-marker',
         html: `
-            <div style="
-                width: 14px;
-                height: 14px;
+            <div class="marker-hover-effect" style="
+                width: 16px;
+                height: 16px;
                 background-color: ${color};
+                background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), transparent);
                 border: 2px solid #ffffff;
                 border-radius: 50%;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                transition: all 0.2s ease;
             "></div>
         `,
         iconSize: [14, 14],
@@ -81,19 +83,21 @@ const createClusterIcon = (cluster) => {
 
     return L.divIcon({
         html: `
-            <div style="
+            <div class="marker-hover-effect" style="
                 background-color: ${maxColor};
+                background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), transparent);
                 color: #ffffff;
-                width: 32px;
-                height: 32px;
+                width: 34px;
+                height: 34px;
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-weight: 800;
-                font-size: 12px;
-                border: 2.5px solid #ffffff;
-                box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+                font-size: 13px;
+                border: 2px solid #ffffff;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+                transition: all 0.2s ease;
             ">
                 ${count}
             </div>
@@ -1060,8 +1064,9 @@ const AreasRiscoLayer = ({ data, tiposAtivos }) => {
             style={(feature) => ({
                 color: getRiscoColor(feature?.properties?.nivel_risco || ''),
                 fillColor: getRiscoColor(feature?.properties?.nivel_risco || ''),
-                fillOpacity: 0.35,
+                fillOpacity: 0.1,
                 weight: 2,
+                dashArray: '5, 5',
                 opacity: 0.9
             })}
             onEachFeature={(feature, layer) => {
@@ -1262,12 +1267,66 @@ const CamadasControl = ({ tiposAtivos, setTiposAtivos, position = 'topleft' }) =
     );
 };
 
+// --- Painel de controle de estilos do mapa (estilo Leaflet) ---
+const MapStyleControl = ({ mapStyle, setMapStyle, size = 18, isMobile = false }) => {
+    const [open, setOpen] = useState(false);
+
+    const styles = [
+        { id: 'positron', label: 'CartoDB Positron', emoji: '⚪' },
+        { id: 'street', label: 'OpenStreetMap', emoji: '🏙️' },
+        { id: 'satellite', label: 'Satélite', emoji: '🌅' },
+        { id: 'dark', label: 'CartoDB Dark', emoji: '⚫' }
+    ];
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setOpen(v => !v)}
+                title="Estilo do mapa"
+                className={isMobile 
+                    ? "w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700 active:scale-90 transition-transform"
+                    : "w-[34px] h-[34px] bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center rounded-[4px] shadow-sm border-2 border-[rgba(0,0,0,0.2)] dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                }
+            >
+                <Layers size={size} />
+            </button>
+
+            {open && (
+                <div 
+                    className="absolute left-[44px] top-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-2 min-w-[170px] flex flex-col gap-1 z-[99999]"
+                >
+                    <div className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1 px-2.5 pt-1">
+                        Estilo do Mapa
+                    </div>
+                    {styles.map(style => (
+                        <button
+                            key={style.id}
+                            onClick={() => {
+                                setMapStyle(style.id);
+                                setOpen(false);
+                            }}
+                            className={`flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-left text-[11px] font-bold transition-all ${
+                                mapStyle === style.id 
+                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                            }`}
+                        >
+                            <span className="text-sm leading-none">{style.emoji}</span>
+                            <span>{style.label}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 // --- SUB-COMPONENT: MOBILE VIEW ---
 const MobileDashboardView = ({
     data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, statusInfo,
-    viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
+    viewMode, setViewMode, mapFilter, setMapFilter, timeFilter, setTimeFilter, mapStyle, setMapStyle,
     chartMode, setChartMode, activeContingencyPlan, load, loadRainfallOnly, limiteSMJ
 }) => {
     const userProfile = useContext(UserContext);
@@ -1283,7 +1342,19 @@ const MobileDashboardView = ({
     }, []);
     const currentData = viewMode === 'vistorias' ? data.vistorias : viewMode === 'ocorrencias' ? data.ocorrencias : (data.interdicoes || { stats: { total: 0 }, breakdown: [], localidadeBreakdown: [], locations: [] });
     const locations = currentData?.locations || [];
-    const filteredLocations = mapFilter === 'Todas' ? locations : locations.filter(l => l.risk === mapFilter);
+    const now = new Date();
+    const isWithinTime = (dateStr) => {
+        if (!dateStr || timeFilter === 'Todas') return true;
+        const d = new Date(dateStr);
+        if (timeFilter === 'Hoje') return d.toDateString() === now.toDateString();
+        if (timeFilter === '24h') return now - d <= 24 * 60 * 60 * 1000;
+        if (timeFilter === '7d') return now - d <= 7 * 24 * 60 * 60 * 1000;
+        if (timeFilter === '30d') return now - d <= 30 * 24 * 60 * 60 * 1000;
+        if (timeFilter === 'Mes') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        return true;
+    };
+    const filteredLocations = (mapFilter === 'Todas' ? locations : locations.filter(l => l.risk === mapFilter))
+        .filter(l => isWithinTime(l.date || l.data_ocorrencia));
     const typologies = ['Todas', ...(currentData?.breakdown || []).map(b => b.label)];
     const displayedBreakdown = currentData?.chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown;
 
@@ -1555,26 +1626,29 @@ const MobileDashboardView = ({
                     <div className="bg-white dark:bg-slate-800 p-2 border border-slate-200 shadow-sm border border-slate-100 dark:border-slate-700">
                         <div className={`h-80 w-full rounded-[26px] overflow-hidden bg-slate-100 relative z-0 ${mapStyle === 'satellite' ? 'leaflet-satellite-wrapper' : ''}`}>
                             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
+                                <CustomMapControls />
                                 <MapAutoBounds locations={filteredLocations} />
                                 {/* Map Style Toggle (Mobile - Absolute inside map) */}
                                 <div className="absolute top-4 left-4 z-[9999] flex flex-col gap-1.5">
-                                    <button
-                                        onClick={() => setMapStyle(mapStyle === 'street' ? 'satellite' : 'street')}
-                                        className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700 active:scale-90 transition-transform"
-                                    >
-                                        <Layers size={20} />
-                                    </button>
+                                    <MapStyleControl mapStyle={mapStyle} setMapStyle={setMapStyle} size={20} isMobile={true} />
                                     {/* Controle de camadas de risco — painel inline */}
                                     <CamadasControl tiposAtivos={tiposRiscoAtivos} setTiposAtivos={setTiposRiscoAtivos} />
                                 </div>
 
 
-                                {mapStyle === 'street' ? (
+                                {mapStyle === 'street' && (
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                )}
+                                {mapStyle === 'positron' && (
                                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                                ) : (
+                                )}
+                                {mapStyle === 'satellite' && (
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                 )}
-                                <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                {mapStyle === 'dark' && (
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                                )}
+                                <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={mapStyle !== 'satellite'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
                                 <OrthofotsLayer />
                                 {/* Camada de Áreas de Risco (toggle por tipo) */}
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
@@ -1614,67 +1688,26 @@ const MobileDashboardView = ({
                                             loc={loc}
                                         >
                                             <Popup minWidth={180}>
-                                                <div className="p-1">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
-                                                            {viewMode === 'vistorias' ? 'Vistoria' : viewMode === 'ocorrencias' ? 'Ocorrência' : 'Interdição'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
-                                                        </span>
-                                                        {viewMode === 'ocorrencias' && (
-                                                            <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
-                                                        )}
+                                                <div className="p-1 font-sans">
+                                                    <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1.5">
+                                                        ID {viewMode === 'vistorias' ? 'VISTORIA' : viewMode === 'ocorrencias' ? 'OCORRÊNCIA' : 'INTERDIÇÃO'}: {loc.formattedId || 'N/A'}
                                                     </div>
-                                                    <div className="text-xs font-bold text-slate-800 mb-1">{loc.risk}</div>
-                                                    <div className="text-[11px] text-slate-500 leading-relaxed mb-2 line-clamp-2">{loc.details}</div>
-                                                    <div className="text-[9px] font-bold text-slate-400 uppercase">
-                                                        <span>Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</span>
+                                                    <div className="text-[11px] text-slate-700 mb-0.5">
+                                                        <strong>Tipo:</strong> {loc.details || loc.risk || 'N/A'}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-700 mb-0.5">
+                                                        <strong>Data:</strong> {new Date(loc.date).toLocaleDateString('pt-BR')}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-700">
+                                                        <strong>Risco:</strong> {loc.risk || 'N/A'}
                                                     </div>
                                                 </div>
                                             </Popup>
                                         </Marker>
                                     ))}
                                 </MarkerClusterGroup>
+                                <MapLegend viewMode={viewMode} rainfall={rainfall} tiposRiscoAtivos={tiposRiscoAtivos} isMobile={true} />
                             </MapContainer>
-                            {/* Standard Mobile Legend */}
-                            <div className="absolute bottom-2 right-2 z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-2 rounded-xl shadow-2xl border border-slate-250/80 dark:border-slate-800 text-[8px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest space-y-1.5">
-                                <div className="mb-0.5 text-[7px] text-slate-400">LEGENDA DO MAPA</div>
-                                {viewMode === 'ocorrencias' ? (
-                                    <>
-                                        <div className="flex items-center gap-2"><LegendPin color="#3b82f6" />Atendido</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#f59e0b" />Em Atend.</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#f97316" />Em Análise</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#ef4444" />Pendente</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#64748b" />Cancelada</div>
-                                    </>
-                                ) : viewMode === 'vistorias' ? (
-                                    <>
-                                        <div className="flex items-center gap-2"><LegendPin color="#dc2626" />R4</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#ea580c" />R3</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#f59e0b" />R2</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#10b981" />R1</div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="flex items-center gap-2"><LegendPin color="#dc2626" />Interd. Total</div>
-                                        <div className="flex items-center gap-2"><LegendPin color="#ea580c" />Interd. Parcial</div>
-                                    </>
-                                )}
-                                {(rainfall || []).some(s => s.lat && (s.lon || s.lng)) && (
-                                    <>
-                                        <div className="mt-1 pt-1 border-t border-slate-200 text-[7px] text-slate-400">PLUVIÔMETROS</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>Extremo</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-400"></div>Alerta</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-400"></div>Normal</div>
-                                    </>
-                                )}
-                                {tiposRiscoAtivos.size > 0 && (
-                                    <>
-                                        <div className="mt-1 pt-1 border-t border-slate-200 text-[7px] text-slate-400">ÁREAS DE RISCO</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded bg-orange-500 opacity-60"></div>R3 - Alto</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded bg-amber-500 opacity-60"></div>R2 - Médio</div>
-                                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded bg-green-500 opacity-60"></div>R1 - Baixo</div>
-                                    </>
-                                )}
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -2023,7 +2056,7 @@ const WebViewDashboardView = ({
     data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
     handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
     showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
-    viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
+    viewMode, setViewMode, mapFilter, setMapFilter, timeFilter, setTimeFilter, mapStyle, setMapStyle,
     chartMode, setChartMode, activeContingencyPlan, load, loadRainfallOnly, limiteSMJ
 }) => {
     const [tiposRiscoAtivos, setTiposRiscoAtivos] = useState(new Set()); // inicia VAZIO (desativado)
@@ -2040,7 +2073,19 @@ const WebViewDashboardView = ({
     const isOperador = userProfile?.role === 'Operador';
     const currentData = viewMode === 'vistorias' ? (data.vistorias || data) : viewMode === 'ocorrencias' ? (data.ocorrencias || data) : (data.interdicoes || data);
     const locations = currentData?.locations || [];
-    const filteredLocations = mapFilter === 'Todas' ? locations : locations.filter(l => l.risk === mapFilter);
+    const now = new Date();
+    const isWithinTime = (dateStr) => {
+        if (!dateStr || timeFilter === 'Todas') return true;
+        const d = new Date(dateStr);
+        if (timeFilter === 'Hoje') return d.toDateString() === now.toDateString();
+        if (timeFilter === '24h') return now - d <= 24 * 60 * 60 * 1000;
+        if (timeFilter === '7d') return now - d <= 7 * 24 * 60 * 60 * 1000;
+        if (timeFilter === '30d') return now - d <= 30 * 24 * 60 * 60 * 1000;
+        if (timeFilter === 'Mes') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        return true;
+    };
+    const filteredLocations = (mapFilter === 'Todas' ? locations : locations.filter(l => l.risk === mapFilter))
+        .filter(l => isWithinTime(l.date || l.data_ocorrencia));
     const typologies = ['Todas', ...(currentData?.breakdown || []).map(b => b.label)];
 
     const isTvMode = new URLSearchParams(window.location.search).get('tvMode') === 'true';
@@ -2054,6 +2099,7 @@ const WebViewDashboardView = ({
             viewMode={viewMode}
             setViewMode={setViewMode}
             mapFilter={mapFilter}
+            timeFilter={timeFilter}
             mapStyle={mapStyle}
             navigate={navigate}
             activeContingencyPlan={activeContingencyPlan}
@@ -2308,30 +2354,44 @@ const WebViewDashboardView = ({
                                     >
                                         {typologies.map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
+                                    <select
+                                        value={timeFilter}
+                                        onChange={(e) => setTimeFilter(e.target.value)}
+                                        className="bg-slate-50 dark:bg-slate-700/50 text-[10px] md:text-[11px] font-bold text-slate-700 dark:text-slate-200 border-0 rounded-lg px-2 md:px-3 py-1.5 focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-sm outline-none uppercase"
+                                    >
+                                        <option value="Todas">Tudo</option>
+                                        <option value="Hoje">Hoje</option>
+                                        <option value="24h">24h</option>
+                                        <option value="7d">7 dias</option>
+                                        <option value="30d">30 dias</option>
+                                        <option value="Mes">Este Mês</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
                         <div className={`flex-1 min-h-[520px] w-full rounded-[24px] overflow-hidden relative z-0 border border-slate-100 dark:border-slate-800 shadow-inner ${mapStyle === 'satellite' ? 'leaflet-satellite-wrapper' : ''}`}>
-                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={true} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
+                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
+                                <CustomMapControls />
                                 <MapAutoBounds locations={filteredLocations} />
                                 {/* Map Style Toggle (Web - Below Zoom) */}
-                                <div className="absolute top-[80px] left-[10px] z-[9999] flex flex-col gap-2">
-                                    <button
-                                        onClick={() => setMapStyle(mapStyle === 'street' ? 'satellite' : 'street')}
-                                        className="w-[34px] h-[34px] bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center rounded-[4px] shadow-sm border-2 border-[rgba(0,0,0,0.2)] text-slate-700 dark:text-slate-200 transition-colors"
-                                        title="Alternar vista"
-                                    >
-                                        <Layers size={18} />
-                                    </button>
+                                <div className="absolute top-4 left-4 z-[9999] flex flex-col gap-2">
+                                    <MapStyleControl mapStyle={mapStyle} setMapStyle={setMapStyle} size={18} isMobile={false} />
                                     <CamadasControl tiposAtivos={tiposRiscoAtivos} setTiposAtivos={setTiposRiscoAtivos} />
                                 </div>
 
-                                {mapStyle === 'street' ? (
+                                {mapStyle === 'street' && (
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                )}
+                                {mapStyle === 'positron' && (
                                     <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
-                                ) : (
+                                )}
+                                {mapStyle === 'satellite' && (
                                     <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                                 )}
-                                <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && Math.abs(l.lat) > 0.01 && !isNaN(l.lat))} show={mapStyle === 'street'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
+                                {mapStyle === 'dark' && (
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                                )}
+                                <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && Math.abs(l.lat) > 0.01 && !isNaN(l.lat))} show={mapStyle !== 'satellite'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
                                 <OrthofotsLayer />
                                 {/* Camada de Áreas de Risco (GeoJSON toggle por tipo) */}
                                 {tiposRiscoAtivos.size > 0 && areasRiscoData && (
@@ -2371,21 +2431,23 @@ const WebViewDashboardView = ({
                                             loc={loc}
                                         >
                                             <Popup minWidth={220}>
-                                                <div className="p-2">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest line-clamp-1">
-                                                            {viewMode === 'vistorias' ? 'Vistoria' : viewMode === 'ocorrencias' ? 'Ocorrência' : 'Interdição'} {loc.formattedId ? `- ${loc.formattedId}` : ''}
+                                                <div className="p-1.5 font-sans">
+                                                    <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-1.5">
+                                                        <span className="text-[11px] font-black text-blue-600 uppercase tracking-widest">
+                                                            ID {viewMode === 'vistorias' ? 'VISTORIA' : viewMode === 'ocorrencias' ? 'OCORRÊNCIA' : 'INTERDIÇÃO'}: {loc.formattedId || 'N/A'}
                                                         </span>
                                                         {viewMode === 'ocorrencias' && (
-                                                            <span className="text-[8px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 ml-2 shrink-0">{loc.status}</span>
+                                                            <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full text-slate-500 shrink-0">{loc.status}</span>
                                                         )}
                                                     </div>
-                                                    <div className="text-sm font-black text-slate-800 mb-2">{loc.risk}</div>
-                                                    <div className="text-xs text-slate-500 leading-relaxed mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100 line-clamp-2">
-                                                        {loc.details || 'Sem detalhes adicionais registrados.'}
+                                                    <div className="text-[12px] text-slate-700 mb-1">
+                                                        <strong>Tipo:</strong> {loc.details || loc.risk || 'N/A'}
                                                     </div>
-                                                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
-                                                        <span>Data: {new Date(loc.date).toLocaleDateString('pt-BR')}</span>
+                                                    <div className="text-[12px] text-slate-700 mb-1">
+                                                        <strong>Data:</strong> {new Date(loc.date).toLocaleDateString('pt-BR')}
+                                                    </div>
+                                                    <div className="text-[12px] text-slate-700">
+                                                        <strong>Risco:</strong> {loc.risk || 'N/A'}
                                                     </div>
                                                 </div>
                                             </Popup>
@@ -2393,55 +2455,14 @@ const WebViewDashboardView = ({
                                     ))}
                                 </MarkerClusterGroup>
                             </MapContainer>
-                            {/* Standard Web Legend */}
-                            <div className="absolute bottom-[76px] right-4 md:bottom-4 md:right-4 z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3.5 rounded-2xl shadow-2xl border border-slate-250/80 dark:border-slate-800 text-[9px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest space-y-2.5">
-                                <div className="mb-1 text-[8px] text-slate-400">LEGENDA</div>
-                                {viewMode === 'ocorrencias' ? (
-                                    <>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#3b82f6" />Atendido</div>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#f59e0b" />Em Atendimento</div>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#f97316" />Em Análise</div>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#ef4444" />Pendente</div>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#64748b" />Cancelada</div>
-                                    </>
-                                ) : viewMode === 'vistorias' ? (
-                                    <>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#dc2626" />R4</div>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#ea580c" />R3</div>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#f59e0b" />R2</div>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#10b981" />R1</div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#dc2626" />Total</div>
-                                        <div className="flex items-center gap-2.5"><LegendPin color="#ea580c" />Parcial</div>
-                                    </>
-                                )}
-                                {(rainfall || []).some(s => s.lat && (s.lon || s.lng)) && (
-                                    <>
-                                        <div className="mt-1.5 pt-1.5 border-t border-white/20 dark:border-slate-700/50 text-[8px] text-slate-400">PLUVIÔMETROS</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-400"></div>(&gt;80mm)</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-400"></div>(&gt;50mm)</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-400"></div>(&gt;30mm)</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-blue-400"></div>(&lt;30mm)</div>
-                                    </>
-                                )}
-                                {tiposRiscoAtivos.size > 0 && (
-                                    <>
-                                        <div className="mt-1.5 pt-1.5 border-t border-white/20 dark:border-slate-700/50 text-[8px] text-slate-400">ÁREAS DE RISCO</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-red-700 opacity-70"></div>R4 - Muito Alto</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-orange-500 opacity-70"></div>R3 - Alto</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-amber-500 opacity-70"></div>R2 - Médio</div>
-                                        <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-green-500 opacity-70"></div>R1 - Baixo</div>
-                                    </>
-                                )}
-                            </div>
+                            <MapLegend viewMode={viewMode} rainfall={rainfall} tiposRiscoAtivos={tiposRiscoAtivos} isMobile={false} />
                         </div>
                     </div>
 
                     {/* Resumo Situacional Column */}
-                    <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
-                        <div className="flex justify-between items-center mb-8">
+                    <div className="lg:col-span-4 relative h-[600px] lg:h-auto">
+                        <div className="lg:absolute lg:inset-0 bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col h-full">
+                            <div className="flex justify-between items-center mb-8">
                             <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : viewMode === 'ocorrencias' ? 'Ocorrências' : 'Interdições'}</h3>
                             <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                                 <button
@@ -2458,7 +2479,7 @@ const WebViewDashboardView = ({
                                 </button>
                             </div>
                         </div>
-                        <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-6 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
                             {(() => {
                                 const list = (chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || [];
                                 const top = list.slice(0, 10);
@@ -2489,7 +2510,6 @@ const WebViewDashboardView = ({
                             )}
                         </div>
 
-                        <BILinkFooter modulo={viewMode} contexto={{ visao: chartMode }} />
 
                         {/* Pluviômetros (Relocado para o final da lista situacional) */}
                         <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
@@ -2509,7 +2529,7 @@ const WebViewDashboardView = ({
                                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Buscando Estações...</div>
                                     </div>
                                 ) : rainfall?.length > 0 ? (
-                                    <div className="space-y-2.5 pr-2 custom-scrollbar max-h-[220px] overflow-y-auto">
+                                    <div className="space-y-2.5 pr-2 custom-scrollbar max-h-[140px] overflow-y-auto">
                                         {rainfall.slice(0, 5).map((station, idx) => (
                                             <div key={idx} onClick={() => navigate('/pluviometros')} className="group flex items-center justify-between p-3 rounded-[16px] bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 hover:border-blue-200 dark:hover:border-blue-500/50 hover:bg-blue-50/30 hover:shadow-sm cursor-pointer transition-all">
                                                 <div className="flex items-center gap-3">
@@ -2536,6 +2556,7 @@ const WebViewDashboardView = ({
                                 )}
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -2573,7 +2594,119 @@ const WebViewDashboardView = ({
         </div >
     );
 };
+// --- MAP LEGEND ---
+const MapLegend = ({ viewMode, rainfall, tiposRiscoAtivos, isMobile = false }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    
+    if (!isOpen) {
+        return (
+            <div className={`absolute z-[9999] ${isMobile ? 'bottom-2 right-2' : 'bottom-[76px] right-4 md:bottom-4 md:right-4'}`}>
+                <button 
+                    onClick={() => setIsOpen(true)}
+                    className="w-10 h-10 flex items-center justify-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 text-blue-600 transition-all hover:scale-105"
+                    title="Abrir Legenda"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                </button>
+            </div>
+        );
+    }
 
+    return (
+        <div className={`absolute z-[9999] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3.5 rounded-2xl shadow-2xl border border-slate-250/80 dark:border-slate-800 text-[9px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest space-y-2.5 max-h-[400px] overflow-y-auto custom-scrollbar animate-in ${isMobile ? 'bottom-2 right-2' : 'bottom-[76px] right-4 md:bottom-4 md:right-4'}`}>
+            <div className="flex justify-between items-center mb-1">
+                <div className="text-[8px] text-slate-400">LEGENDA DO MAPA</div>
+                <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            {viewMode === 'ocorrencias' ? (
+                <>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#3b82f6" />Atendido</div>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#f59e0b" />Em Atendimento</div>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#f97316" />Em Análise</div>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#ef4444" />Pendente</div>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#64748b" />Cancelada</div>
+                </>
+            ) : viewMode === 'vistorias' ? (
+                <>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#dc2626" />R4</div>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#ea580c" />R3</div>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#f59e0b" />R2</div>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#10b981" />R1</div>
+                </>
+            ) : (
+                <>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#dc2626" />Total</div>
+                    <div className="flex items-center gap-2.5"><LegendPin color="#ea580c" />Parcial</div>
+                </>
+            )}
+            {(rainfall || []).some(s => s.lat && (s.lon || s.lng)) && (
+                <>
+                    <div className="mt-1.5 pt-1.5 border-t border-white/20 dark:border-slate-700/50 text-[8px] text-slate-400">PLUVIÔMETROS</div>
+                    <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-red-400 shadow-sm border border-white"></div>(&gt;80mm)</div>
+                    <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-orange-400 shadow-sm border border-white"></div>(&gt;50mm)</div>
+                    <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-amber-400 shadow-sm border border-white"></div>(&gt;30mm)</div>
+                    <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded-full bg-blue-400 shadow-sm border border-white"></div>(&lt;30mm)</div>
+                </>
+            )}
+            {tiposRiscoAtivos.size > 0 && (
+                <>
+                    <div className="mt-1.5 pt-1.5 border-t border-white/20 dark:border-slate-700/50 text-[8px] text-slate-400">ÁREAS DE RISCO</div>
+                    <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-red-700 opacity-70 border border-white"></div>R4 - Muito Alto</div>
+                    <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-orange-500 opacity-70 border border-white"></div>R3 - Alto</div>
+                    <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-amber-500 opacity-70 border border-white"></div>R2 - Médio</div>
+                    <div className="flex items-center gap-2.5"><div className="w-3 h-3 rounded bg-green-500 opacity-70 border border-white"></div>R1 - Baixo</div>
+                </>
+            )}
+        </div>
+    );
+};
+
+// --- CUSTOM MAP CONTROLS ---
+const CustomMapControls = ({ defaultCenter = [-20.0246, -40.7464], defaultZoom = 13 }) => {
+    const map = useMap();
+
+    const handleZoomIn = () => map.zoomIn();
+    const handleZoomOut = () => map.zoomOut();
+    
+    const handleHome = () => {
+        map.setView(defaultCenter, defaultZoom);
+    };
+
+    const handleGPS = () => {
+        if (!navigator.geolocation) {
+            alert("Geolocalização não é suportada no seu navegador.");
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                map.flyTo([latitude, longitude], 15, { duration: 1 });
+            },
+            () => alert("Não foi possível obter a sua localização.")
+        );
+    };
+
+    return (
+        <div className="absolute top-4 right-4 z-[9999] flex flex-col gap-2">
+            <div className="flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <button onClick={handleZoomIn} className="w-8 h-8 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-700" title="Aumentar Zoom">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+                <button onClick={handleZoomOut} className="w-8 h-8 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Diminuir Zoom">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/></svg>
+                </button>
+            </div>
+            <button onClick={handleHome} className="w-8 h-8 flex items-center justify-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-xl shadow-lg border border-slate-200 dark:border-slate-800" title="Enquadrar Estado">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </button>
+            <button onClick={handleGPS} className="w-8 h-8 flex items-center justify-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors rounded-xl shadow-lg border border-slate-200 dark:border-slate-800" title="Minha Localização">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            </button>
+        </div>
+    );
+};
 
 // --- MAIN DASHBOARD COMPONENT ---
 const Dashboard = () => {
@@ -2595,7 +2728,8 @@ const Dashboard = () => {
     const [viewMode, setViewMode] = useState('vistorias'); // 'vistorias' | 'ocorrencias' | 'interdicoes'
     const [chartMode, setChartMode] = useState('tipologia')
     const [mapFilter, setMapFilter] = useState('Todas')
-    const [mapStyle, setMapStyle] = useState('street')
+    const [mapStyle, setMapStyle] = useState('positron')
+    const [timeFilter, setTimeFilter] = useState('Todas'); // 'Todas' | 'Hoje' | '24h' | '7d' | '30d' | 'Mes'
     const [climateLoading, setClimateLoading] = useState(true)
     const [pluvioLoading, setPluvioLoading] = useState(true)
     const [activeContingencyPlan, setActiveContingencyPlan] = useState(null)
@@ -3141,7 +3275,7 @@ const Dashboard = () => {
         data, weather, rainfall, cemadenAlerts, syncDetail, syncing, handleSync,
         handleClearCache, handleExportKML, navigate, setShowForecast, pluvioLoading,
         showReportMenu, setShowReportMenu, getWeatherIcon, handleGenerateReport, statusInfo,
-        viewMode, setViewMode, mapFilter, setMapFilter, mapStyle, setMapStyle,
+        viewMode, setViewMode, mapFilter, setMapFilter, timeFilter, setTimeFilter, mapStyle, setMapStyle,
         chartMode, setChartMode,
         activeContingencyPlan,
         load,
