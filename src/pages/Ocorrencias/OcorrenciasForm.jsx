@@ -1000,7 +1000,7 @@ export default function OcorrenciasForm() {
                     )}
 
                     <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 mt-6">Assinaturas</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase">Assinatura do Agente</label>
@@ -1032,29 +1032,7 @@ export default function OcorrenciasForm() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">Assinatura do Assistido</label>
-                                {formData.assinaturaAssistido && (
-                                    <button type="button" onClick={() => setFormData(prev => ({ ...prev, assinaturaAssistido: null }))} className="text-[9px] font-black text-red-500 uppercase flex items-center gap-1">
-                                        <Trash2 size={10} /> Limpar
-                                    </button>
-                                )}
-                            </div>
-                            <div
-                                onClick={() => { setActiveSignatureType('assistido'); setShowSignaturePad(true); }}
-                                className="h-28 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden hover:border-blue-500/50 hover:bg-blue-50/30 transition-all"
-                            >
-                                {formData.assinaturaAssistido ? (
-                                    <img src={formData.assinaturaAssistido} className="h-full w-auto p-2" alt="Assistido" />
-                                ) : (
-                                    <div className="text-center space-y-1">
-                                        <Edit2 size={20} className="mx-auto text-slate-300" />
-                                        <p className="text-[9px] font-black text-slate-400 uppercase">Assinar</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 
@@ -1172,14 +1150,10 @@ export default function OcorrenciasForm() {
             {/* Modals and Overlays */}
             {showSignaturePad && (
                 <SignaturePadComp
-                    title={activeSignatureType === 'agente' ? "Assinatura do Agente" : "Assinatura do Assistido"}
+                    title="Assinatura do Agente"
                     onCancel={() => setShowSignaturePad(false)}
                     onSave={(dataUrl) => {
-                        if (activeSignatureType === 'agente') {
-                            setFormData(prev => ({ ...prev, assinaturaAgente: dataUrl }));
-                        } else {
-                            setFormData(prev => ({ ...prev, assinaturaAssistido: dataUrl }));
-                        }
+                        setFormData(prev => ({ ...prev, assinaturaAgente: dataUrl }));
                         setShowSignaturePad(false);
                     }}
                 />

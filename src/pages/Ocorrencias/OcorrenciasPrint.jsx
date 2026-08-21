@@ -212,7 +212,7 @@ const OcorrenciasPrint = () => {
     const numFotos = hasPhotos ? secNum++ : null;
 
     const showApoio = data.tem_apoio_tecnico || data.temApoioTecnico || (apoioTecnico && (apoioTecnico.nome || apoioTecnico.assinatura));
-    const showAssistido = data.assinaturaAssistido || data.assinatura_assistido;
+
 
     return (
         <PrintLayout
@@ -595,19 +595,6 @@ const OcorrenciasPrint = () => {
                                     <p className="text-[10px] font-black text-slate-800 uppercase">{apoioTecnico.nome}</p>
                                     <p className="text-[8px] font-bold text-slate-500 uppercase">{apoioTecnico.cargo || 'Apoio Técnico Esp.'}</p>
                                     <p className="text-[8px] text-slate-400 uppercase">Registro: {apoioTecnico.crea}</p>
-                                </div>
-                            )}
-
-                            {/* Assistido Signature */}
-                            {showAssistido && (
-                                <div className="flex flex-col items-center text-center min-w-[200px]">
-                                    <div className="h-16 flex items-end justify-center mb-2">
-                                        <img src={data.assinaturaAssistido || data.assinatura_dash || data.assinatura_assistido} alt="Assinatura do Assistido" className="max-h-full max-w-[180px]" />
-                                    </div>
-                                    <div className="w-48 border-b border-slate-400 mb-1"></div>
-                                    <p className="text-[10px] font-black text-slate-800 uppercase">{data.solicitante || 'Assistido / Morador'}</p>
-                                    <p className="text-[8px] font-bold text-slate-500 uppercase">Morador / Solicitante</p>
-                                    <p className="text-[8px] text-slate-400 uppercase">Declarou ciente</p>
                                 </div>
                             )}
                         </div>
