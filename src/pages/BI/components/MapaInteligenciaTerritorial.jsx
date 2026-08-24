@@ -59,7 +59,7 @@ export default function MapaInteligenciaTerritorial({ geoPoints = [], areasRisco
 
   return (
     <div className={`bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col relative transition-all duration-300 ${
-      isFullscreen ? 'fixed inset-0 z-[100] rounded-none p-4' : 'h-[620px]'
+      isFullscreen ? 'fixed inset-0 z-[100] rounded-xl p-4' : 'h-[620px]'
     }`}>
       {/* Cabeçalho do Mapa */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 shrink-0">

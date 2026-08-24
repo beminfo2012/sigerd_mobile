@@ -90,148 +90,36 @@ const GeoDashboard = () => {
         loadWaze();
         const wazeInterval = setInterval(loadWaze, 5 * 60 * 1000); // Update every 5 min
 
-        return () => clearInterval(wazeInterval);
-    }, [])
-
-    const filteredPoints = useMemo(() => {
-        return vistorias.filter(p => {
-            const matchesCat = filterCategory === 'all' || p.risk === filterCategory
-
-            let matchesTime = true
-            if (filterTime !== 'all') {
-                const threshold = new Date()
-                const hours = parseInt(filterTime)
-                threshold.setHours(threshold.getHours() - hours)
-                matchesTime = new Date(p.date) >= threshold
-            }
-
-            return matchesCat && matchesTime
-        })
-    }, [vistorias, filterCategory, filterTime])
-
-    const categories = useMemo(() => {
-        return ['all', ...new Set(vistorias.map(v => v.risk))].filter(Boolean)
-    }, [vistorias])
-
-    if (loading) return (
-        <div className="h-screen flex items-center justify-center bg-slate-900 text-white">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-        </div>
-    )
-
-    return (
+        return (
         <div className="h-full flex flex-col bg-slate-950 overflow-hidden relative">
-            {/* Header / Controls */}
-            <div className="absolute top-3 left-3 right-3 z-[1000] pointer-events-none">
-                <div className="flex flex-col gap-2.5">
-                    <div className="flex justify-between items-center bg-white/5 backdrop-blur-md p-2 rounded-2xl shadow-xl pointer-events-auto border border-white/10">
-                        <div className="flex items-center gap-2 min-w-0">
-                            {!isFullscreen && (
-                                <button onClick={() => navigate(-1)} className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-600 flex-shrink-0">
-                                    <ArrowLeft size={20} />
-                                </button>
-                            )}
-                            <div className="min-w-0 truncate">
-                                <h1 className="text-[11px] sm:text-sm font-black text-slate-800 uppercase tracking-tight truncate">Monitoramento Estratégico</h1>
-                                <div className="hidden sm:block text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Mapa de Calor em Tempo Real</div>
-                            </div>
-                        </div>
-                        <div className="flex bg-slate-100 p-0.5 sm:p-1 rounded-xl flex-shrink-0 ml-2">
-                            <button
-                                onClick={() => setShowWaze(!showWaze)}
-                                className={`p-1.5 sm:p-2 rounded-lg transition-all flex items-center gap-1.5 sm:gap-2 ${showWaze ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-400'}`}
-                            >
-                                <Car size={16} />
-                                <span className="text-[9px] sm:text-[10px] font-black uppercase">Waze</span>
-                            </button>
-                            <div className="w-[1px] bg-slate-200 mx-1 my-1" />
-                            <button
-                                onClick={() => setViewMode('heat')}
-                                className={`p-1.5 sm:p-2 rounded-lg transition-all flex items-center gap-1.5 sm:gap-2 ${viewMode === 'heat' ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-400'}`}
-                            >
-                                <Flame size={16} />
-                                <span className="text-[9px] sm:text-[10px] font-black uppercase">Calor</span>
-                            </button>
-                            <button
-                                onClick={() => setViewMode('points')}
-                                className={`p-1.5 sm:p-2 rounded-lg transition-all flex items-center gap-1.5 sm:gap-2 ${viewMode === 'points' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}
-                            >
-                                <MapIcon size={16} />
-                                <span className="text-[9px] sm:text-[10px] font-black uppercase">Pontos</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none pointer-events-auto px-1 -mx-1">
-                        <div className="flex bg-white/5 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-white/10 gap-1 shrink-0">
-                            <div className="p-1.5 text-slate-400 border-r border-slate-100 px-2 flex items-center gap-1">
-                                <Filter size={14} />
-                                <span className="text-[10px] font-black uppercase tracking-tighter">Filtros</span>
-                            </div>
-                            <select
-                                value={filterCategory}
-                                onChange={e => setFilterCategory(e.target.value)}
-                                className="bg-transparent text-[10px] font-bold text-slate-700 outline-none px-2 py-1 uppercase max-w-[120px]"
-                            >
-                                {categories.map(cat => (
-                                    <option key={cat} value={cat}>{cat === 'all' ? 'Todas Tipologias' : cat}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="flex bg-white/5 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-white/10 gap-1 shrink-0">
-                            <div className="p-1.5 text-slate-400 border-r border-slate-100 px-2 flex items-center gap-1">
-                                <Calendar size={14} />
-                            </div>
-                            <select
-                                value={filterTime}
-                                onChange={e => setFilterTime(e.target.value)}
-                                className="bg-transparent text-[10px] font-bold text-slate-700 outline-none px-2 py-1 uppercase"
-                            >
-                                <option value="all">Todo o Período</option>
-                                <option value="24">Últimas 24h</option>
-                                <option value="48">Últimas 48h</option>
-                                <option value="168">Última Semana</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+            {/* Top Left Floating Controls */}
+            <div className="absolute top-6 left-4 z-[1000] flex flex-col gap-2">
+                <button onClick={() => navigate(-1)} className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl shadow-lg border border-slate-100 hover:bg-white active:scale-95 transition-all text-slate-700 flex items-center justify-center w-12 h-12">
+                    <ArrowLeft size={20} />
+                </button>
+                <button onClick={() => setViewMode(viewMode === 'heat' ? 'points' : 'heat')} className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl shadow-lg border border-slate-100 hover:bg-white active:scale-95 transition-all text-slate-700 flex items-center justify-center w-12 h-12">
+                    <Layers size={20} />
+                </button>
+                <button className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl shadow-lg border border-slate-100 hover:bg-white active:scale-95 transition-all text-blue-600 flex items-center justify-center w-12 h-12">
+                    <Crosshair size={20} />
+                </button>
             </div>
 
-            {/* Floating Summary Card */}
-            <div className="absolute bottom-4 left-3 right-3 z-[1000] pointer-events-none">
-                <div className="bg-slate-900/5 backdrop-blur-md border border-white/10 p-4 rounded-[28px] shadow-2xl pointer-events-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-blue-500/20 w-11 h-11 rounded-2xl flex items-center justify-center text-blue-400">
-                            <Layers size={22} />
-                        </div>
-                        <div>
-                            <div className="text-xl font-black text-white leading-none">{filteredPoints.length}</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Registros</div>
-                        </div>
+            {/* Bottom Left Legend */}
+            <div className="absolute bottom-6 left-4 z-[1000]">
+                <div className="bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-xl border border-slate-100/50 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wide">Crítico (<span className="text-red-500">&gt;20</span>)</span>
                     </div>
-
-                    {showWaze && wazeData.alerts.length > 0 && (
-                        <div className="flex items-center gap-3 border-l border-white/10 pl-4 h-full">
-                            <div className="bg-orange-500/20 w-11 h-11 rounded-2xl flex items-center justify-center text-orange-400">
-                                <Car size={22} />
-                            </div>
-                            <div>
-                                <div className="text-xl font-black text-white leading-none">{wazeData.alerts.length}</div>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Acidentes/Hazard</div>
-                            </div>
-                        </div>
-                    )}
-
-                    {!showWaze && filteredPoints.length > 5 && (
-                        <div className="bg-red-500/10 px-3 py-1.5 rounded-2xl border border-red-500/20 flex items-center gap-2">
-                            <Flame size={18} className="text-red-500 animate-pulse" />
-                            <div className="text-left">
-                                <div className="text-[9px] font-black text-red-500 uppercase tracking-widest leading-none">Densidade</div>
-                                <div className="text-[8px] font-bold text-red-400 uppercase tracking-tight mt-0.5">Cluster Detectado</div>
-                            </div>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wide">Atenção</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wide">Normal</span>
+                    </div>
                 </div>
             </div>
 

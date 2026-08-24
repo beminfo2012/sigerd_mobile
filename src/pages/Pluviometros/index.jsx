@@ -49,7 +49,6 @@ const getPluvioColor = (level) => {
 // Create custom icons for Leaflet Map
 const createPluvioIcon = (station, isActive) => {
     if (!isActive) {
-        // Inactive: small gray circle
         return L.divIcon({
             className: 'custom-pluvio-inactive',
             html: `
@@ -68,35 +67,33 @@ const createPluvioIcon = (station, isActive) => {
         });
     }
 
-    // Active: colored circle with rainfall value
     const rainVal = (station.acc24hr || 0).toFixed(1);
     const level = station.level || 'Normal';
     const color = getPluvioColor(level);
+    const isCritical = level === 'Extremo' || level === 'Alerta';
 
     return L.divIcon({
         className: 'custom-pluvio-active',
         html: `
-            <div style="
-                background-color: ${color};
-                color: white;
-                font-family: 'Outfit', 'Inter', system-ui, sans-serif;
-                font-size: 10px;
-                font-weight: 900;
-                width: 26px;
-                height: 26px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border: 2px solid white;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            ">
-                ${rainVal}
+            <div style="position: relative; width: 44px; height: 56px; display: flex; justify-content: center; align-items: flex-start;">
+                ${isCritical ? `<div style="position: absolute; top: 18px; left: 22px; width: 44px; height: 44px; background-color: transparent; border: 3px solid ${color}; border-radius: 50%; transform: translate(-50%, -50%); animation: pulse-ring-marker 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;"></div>` : ''}
+                <svg viewBox="0 0 24 36" style="position: absolute; top: 0; left: 0; width: 44px; height: 56px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3)); z-index: 2;">
+                    <path d="M12 0C5.373 0 0 5.373 0 12C0 21 12 36 12 36C12 36 24 21 24 12C24 5.373 18.627 0 12 0Z" fill="${color}" stroke="#ffffff" stroke-width="2"/>
+                </svg>
+                <div style="position: relative; z-index: 10; margin-top: 11px; color: white; font-weight: 900; font-size: 13px; font-family: 'Outfit', 'Inter', sans-serif;">
+                    ${rainVal}
+                </div>
             </div>
+            <style>
+                @keyframes pulse-ring-marker {
+                    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+                    100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+                }
+            </style>
         `,
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
-        popupAnchor: [0, -13]
+        iconSize: [44, 56],
+        iconAnchor: [22, 56],
+        popupAnchor: [0, -56]
     });
 };
 // --- Bacias Hidrográficas Layer ---

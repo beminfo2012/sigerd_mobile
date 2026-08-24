@@ -16,6 +16,8 @@ import { pullAllData } from './services/db'
 import { getLatestDraftRedap } from './services/redapDb'
 import Sidebar from './components/Sidebar'
 import DesktopHeader from './components/DesktopHeader'
+import MobileHeader from './components/MobileHeader'
+import MobileNavigation from './components/MobileNavigation'
 import { ativarSincronizacaoOfflineAutomatica } from './services/SincronizacaoVistorias'
 import { OperacaoProvider } from './contexts/OperacaoContext'
 
@@ -271,15 +273,7 @@ const AppContent = ({
                 <div className={`flex flex-col flex-1 relative ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
                     {/* Mobile Header - Hide on print, desktop, and TV mode */}
                     {!isPrintPage && !isTvMode && (
-                        <header className="mobile-header md:hidden px-4">
-                            <div className="flex items-center gap-2">
-                                <img src="/logo_header.png" alt="Logo" className="h-8 w-auto object-contain" onError={(e) => e.target.style.display = 'none'} />
-                                <h1 className="text-lg font-black tracking-tight">SIGERD <span className="text-[10px] uppercase opacity-70 font-bold ml-1">Mobile</span></h1>
-                            </div>
-                            <Link to="/menu" className="user-avatar text-sm">
-                                {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-                            </Link>
-                        </header>
+                        <MobileHeader userProfile={userProfile} />
                     )}
 
                     {/* Main Content Area */}
@@ -691,31 +685,7 @@ const AppContent = ({
 
                     {/* Bottom Navigation - Hide on print, desktop, and TV mode */}
                     {!isPrintPage && !isTvMode && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.role === 'Admin' || userProfile?.role === 'Redap_Geral' || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
-                        <nav className="bottom-nav md:hidden">
-                            <Link to="/" className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                                <Home size={24} />
-                                <span>Início</span>
-                            </Link>
-                            {userProfile?.role !== 'Operador' && (
-                                <Link to="/georescue" className={`nav-item ${activeTab === 'georescue' ? 'active' : ''}`} onClick={() => setActiveTab('georescue')}>
-                                    <Map size={24} />
-                                    <span>GeoRescue</span>
-                                </Link>
-                            )}
-                            <div className="nav-item fab-container">
-                                <Link to="/vistorias" className="fab-button" onClick={() => setActiveTab('vistorias')}>
-                                    <FileText size={24} />
-                                </Link>
-                            </div>
-                            <Link to="/interdicao" className={`nav-item ${activeTab === 'interdicao' ? 'active' : ''}`} onClick={() => setActiveTab('interdicao')}>
-                                <AlertOctagon size={24} />
-                                <span>Interdição</span>
-                            </Link>
-                            <Link to="/menu" className={`nav-item ${activeTab === 'menu' ? 'active' : ''}`} onClick={() => setActiveTab('menu')}>
-                                <MenuIcon size={24} />
-                                <span>Menu</span>
-                            </Link>
-                        </nav>
+                        <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
                     )}
                 </div>
             </div>

@@ -611,7 +611,7 @@ const RelatorioSituacionalPrint = () => {
                             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid var(--border)', textAlign: 'center' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--ice2)' }}>
-                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>VISTORIAS</th>
+                                        <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>Vistorias</th>
                                         <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>OCORRÊNCIAS</th>
                                         <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>INTERDIÇÕES</th>
                                         <th style={{ width: '20%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>CHUVA MÉDIA (24H)</th>

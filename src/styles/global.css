@@ -1,6 +1,7 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 @layer base {
   :root {
@@ -291,7 +292,7 @@
   filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
 }
 
-/* Desativa os filtros de modo escuro no mapa de satélite real usando wrappers, classes ou seletores inteligentes :has() */
+/* Desativa os filtros de modo escuro no mapa de satÃ©lite real usando wrappers, classes ou seletores inteligentes :has() */
 .leaflet-satellite-wrapper .leaflet-container,
 .leaflet-satellite-wrapper .leaflet-container .leaflet-tile,
 .leaflet-satellite-view,
@@ -324,3 +325,4 @@
 .print-container .leaflet-tile {
   filter: none !important;
 }
+

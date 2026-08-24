@@ -422,17 +422,17 @@ const Alerts = () => {
             <div className="space-y-5">
                 {/* Control Panel */}
                 <div className="bg-white p-6 border border-slate-200 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100">
-                    <h2 className="text-sm font-bold text-slate-800 mb-5 pb-3 border-b border-slate-100">
+                    <h2 className="text-base font-black text-slate-900 mb-5 pb-4 border-b border-slate-100">
                         Configurações do Alerta
                     </h2>
 
-                    <div className="space-y-4">
+                 <div className="space-y-5">
                         {/* Carregar Alerta */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">
+                            <label className="text-[13px] font-bold text-slate-700 mb-2 block">
                                 Carregar Alerta do INMET
                             </label>
-                            <div className="flex gap-2">
+                            <div className="flex gap-3 items-center">
                                 <select
                                     value={selectedAlert ? alerts.indexOf(selectedAlert) : ''}
                                     onChange={(e) => {
@@ -440,7 +440,8 @@ const Alerts = () => {
                                             loadAlertToForm(alerts[parseInt(e.target.value)])
                                         }
                                     }}
-                                    className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="flex-1 px-4 py-3.5 border border-slate-200 bg-slate-50/50 rounded-2xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none shadow-sm transition-all"
+                                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2394a3b8\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 1rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em' }}
                                 >
                                     <option value="">
                                         {loading ? 'Carregando...' : alerts.length === 0 ? 'Nenhum alerta ativo' : 'Selecione um alerta...'}
@@ -451,92 +452,122 @@ const Alerts = () => {
                                         </option>
                                     ))}
                                 </select>
-                                <button
-                                    onClick={fetchAlerts}
-                                    title="Atualizar lista"
-                                    className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-colors active:scale-95"
-                                >
-                                    <RefreshCw size={18} />
-                                </button>
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-blue-500 rounded-2xl animate-pulse opacity-40 blur-sm pulse-ring-marker"></div>
+                                    <button
+                                        onClick={fetchAlerts}
+                                        title="Atualizar lista"
+                                        className="relative bg-blue-600 text-white p-4 h-[52px] min-w-[64px] flex items-center justify-center rounded-2xl hover:bg-blue-700 transition-colors active:scale-95 shadow-lg shadow-blue-500/30"
+                                    >
+                                        <RefreshCw size={24} />
+                                    </button>
+                                </div>
                             </div>
+                            <p className="text-[11px] font-medium text-blue-600 mt-2 ml-1">
+                                Toque para buscar o aviso mais recente direto do INMET
+                            </p>
                         </div>
 
-                        <div className="border-t border-slate-100 my-4" />
-
-                        {/* Aviso de e Severidade */}
+                        {/* Aviso de */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">Aviso de:</label>
-                            <input type="text" value={alertType} onChange={(e) => setAlertType(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm mb-4" />
+                            <label className="text-[13px] font-bold text-slate-700 mb-2 block">Aviso de:</label>
+                            <input type="text" placeholder="Ex: Chuvas Intensas" value={alertType} onChange={(e) => setAlertType(e.target.value)}
+                                className="w-full px-4 py-3.5 border border-slate-200 bg-slate-50/50 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm transition-all" />
+                        </div>
 
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">Severidade:</label>
-                            <select value={severity} onChange={(e) => setSeverity(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm">
-                                <option value="Perigo Potencial">Perigo Potencial (Amarelo)</option>
-                                <option value="Perigo">Perigo (Laranja)</option>
-                                <option value="Grande Perigo">Grande Perigo (Vermelho)</option>
-                            </select>
+                        {/* Severidade */}
+                        <div>
+                            <label className="text-[13px] font-bold text-slate-700 mb-2 block">Severidade:</label>
+                            <div className="relative">
+                                <select value={severity} onChange={(e) => setSeverity(e.target.value)}
+                                    className={`w-full pl-10 pr-4 py-3.5 border rounded-2xl text-sm font-bold appearance-none shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 ${severity === 'Grande Perigo' ? 'bg-red-50 border-red-300 text-red-700 focus:ring-red-500/20 focus:border-red-500' : severity === 'Perigo' ? 'bg-orange-50 border-orange-300 text-orange-700 focus:ring-orange-500/20 focus:border-orange-500' : 'bg-yellow-50 border-yellow-300 text-yellow-700 focus:ring-yellow-500/20 focus:border-yellow-500'}`}
+                                    style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2394a3b8\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundPosition: 'right 1rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em' }}
+                                >
+                                    <option value="Perigo Potencial">Perigo Potencial (Amarelo)</option>
+                                    <option value="Perigo">Perigo (Laranja)</option>
+                                    <option value="Grande Perigo">Grande Perigo (Vermelho)</option>
+                                </select>
+                                <div className={`absolute left-4 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${severity === 'Grande Perigo' ? 'bg-red-600' : severity === 'Perigo' ? 'bg-orange-500' : 'bg-yellow-400'}`}></div>
+                            </div>
                         </div>
 
                         {/* Datas */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 mb-2 block">Início:</label>
-                                <input type="text" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm" />
+                                <label className="text-[13px] font-bold text-slate-700 mb-2 block">Início:</label>
+                                <div className="relative">
+                                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    </div>
+                                    <input type="text" placeholder="dd/mm/aaaa hh:mm" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3.5 border border-slate-200 bg-slate-50/50 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm transition-all" />
+                                </div>
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-slate-500 mb-2 block">Fim:</label>
-                                <input type="text" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm" />
+                                <label className="text-[13px] font-bold text-slate-700 mb-2 block">Fim:</label>
+                                <div className="relative">
+                                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    </div>
+                                    <input type="text" placeholder="dd/mm/aaaa hh:mm" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3.5 border border-slate-200 bg-slate-50/50 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm transition-all" />
+                                </div>
                             </div>
                         </div>
 
                         {/* Riscos */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">Riscos:</label>
-                            <textarea value={risks} onChange={(e) => setRisks(e.target.value)} rows="3"
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm resize-none" />
+                            <label className="text-[13px] font-bold text-slate-700 mb-2 block">Riscos:</label>
+                            <textarea placeholder="Descreva os riscos associados a este aviso..." value={risks} onChange={(e) => setRisks(e.target.value)} rows="3"
+                                className="w-full px-4 py-3.5 border border-slate-200 bg-slate-50/50 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm transition-all resize-none" />
                         </div>
 
                         {/* Imagem */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">Imagem (Opcional):</label>
-                            <input type="file" accept="image/*" onChange={handleImageUpload}
-                                className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                            <label className="text-[13px] font-bold text-slate-700 mb-2 block">Imagem (Opcional):</label>
+                            <div className="relative">
+                                <input type="file" accept="image/*" onChange={handleImageUpload}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                <div className="border border-dashed border-blue-200 bg-blue-50/50 rounded-2xl px-4 py-5 flex items-center justify-between text-sm transition-all hover:bg-blue-50">
+                                    <div className="flex items-center gap-2 text-blue-600 font-bold">
+                                        <span className="bg-blue-600 text-white rounded-lg px-3 py-1.5 shadow-sm">Escolher arquivo</span>
+                                    </div>
+                                    <span className="text-slate-400 font-medium">{mapImage ? 'Imagem selecionada' : 'Nenhum arquivo escolhido'}</span>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Instruções */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">Instruções:</label>
+                            <label className="text-[13px] font-bold text-slate-700 mb-2 block">Instruções:</label>
                             <textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows="4"
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm resize-none" />
+                                className="w-full px-4 py-3.5 border border-slate-200 bg-slate-50/50 rounded-2xl text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm transition-all resize-none" />
                         </div>
 
-                        <div className="border-t border-slate-100 my-4" />
+                        <div className="border-t border-slate-100 my-6" />
 
                         {/* Formato */}
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">Formato:</label>
+                            <label className="text-[13px] font-bold text-slate-700 mb-2 block">Formato:</label>
                             <div className="grid grid-cols-2 gap-3">
                                 <button onClick={() => setFormat('stories')}
-                                    className={`py-3 px-4 rounded-xl font-bold text-sm ${format === 'stories' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    className={`py-3.5 px-4 rounded-2xl font-bold text-sm transition-all active:scale-95 shadow-sm ${format === 'stories' ? 'bg-blue-600 text-white shadow-blue-500/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
                                     Stories (9:16)
                                 </button>
                                 <button onClick={() => setFormat('feed')}
-                                    className={`py-3 px-4 rounded-xl font-bold text-sm ${format === 'feed' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    className={`py-3.5 px-4 rounded-2xl font-bold text-sm transition-all active:scale-95 shadow-sm ${format === 'feed' ? 'bg-blue-600 text-white shadow-blue-500/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
                                     Feed (1:1)
                                 </button>
                             </div>
                         </div>
 
                         <button onClick={downloadImage}
-                            className="w-full bg-slate-800 text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 mt-2 hover:bg-slate-900 transition-all active:scale-95 shadow-lg">
+                            className="w-full bg-slate-800 text-white py-4 px-6 rounded-2xl font-bold flex items-center justify-center gap-2 mt-4 hover:bg-slate-900 transition-all active:scale-95 shadow-lg">
                             <Upload size={20} /> Baixar Apenas Imagem
                         </button>
 
                         <button onClick={shareToWhatsApp}
-                            className="w-full bg-[#25D366] text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 mt-3 hover:bg-[#20ba59] transition-all active:scale-95 shadow-lg border-b-4 border-green-700">
+                            className="w-full bg-[#25D366] text-white py-4 px-6 rounded-2xl font-bold flex items-center justify-center gap-2 mt-3 hover:bg-[#20ba59] transition-all active:scale-95 shadow-lg shadow-[#25D366]/20">
                             <MessageCircle size={22} fill="white" />
                             {isCopying ? 'Pronto! Texto Copiado!' : 'Postar no Canal WhatsApp'}
                         </button>
@@ -544,14 +575,13 @@ const Alerts = () => {
                         {(severity === 'Perigo' || severity === 'Grande Perigo') && (
                             <button
                                 onClick={shareToSecretaries}
-                                className="w-full mt-4 flex items-center justify-center gap-2 text-slate-400 hover:text-red-600 transition-colors text-[10px] font-black uppercase tracking-widest bg-slate-50 py-2 rounded-lg border border-dashed border-slate-200"
+                                className="w-full mt-4 flex items-center justify-center gap-2 text-slate-500 hover:text-red-600 transition-colors text-[11px] font-black uppercase tracking-widest bg-slate-50 py-3 rounded-2xl border border-dashed border-slate-200 active:scale-95"
                             >
-                                <ShieldAlert size={14} />
+                                <ShieldAlert size={16} />
                                 Alertar Secretários (WhatsApp)
                             </button>
                         )}
-                    </div>
-                </div>
+                    </div>   </div>
 
                 {/* Preview Area */}
                 <div className="bg-white p-6 border border-slate-200 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex justify-center items-center min-h-[600px] overflow-hidden">

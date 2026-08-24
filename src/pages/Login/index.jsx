@@ -6,112 +6,99 @@ const MobileLoginView = ({
     username, setUsername, password, setPassword, loading, error, handleSubmit, handleBiometricLogin, showPassword, setShowPassword
 }) => (
     <div
-        className="fixed inset-0 w-screen h-screen flex flex-col justify-center items-center overflow-hidden font-sans"
-        style={{ backgroundColor: '#102754' }}
+        className="fixed inset-0 w-screen h-screen flex flex-col items-center overflow-hidden font-sans pt-8 pb-7 px-8"
+        style={{ background: 'radial-gradient(120% 70% at 50% 0%, #16224a 0%, #0e1836 45%, #091230 100%)' }}
     >
-        <div className="w-full max-w-sm flex flex-col items-center gap-8 relative z-10 px-8">
-            {/* Logo & Brand */}
-            <div className="flex flex-col items-center gap-4 text-center">
-                <img
-                    src="/logo_sigerd_new.png"
-                    alt="Logo SIGERD"
-                    className="w-32 h-32 object-contain"
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                />
-                <div>
-                    <h1 className="text-5xl font-bold text-white tracking-widest leading-none">SIGERD</h1>
-                    <p className="text-[13px] text-white/70 font-medium mt-4 leading-relaxed">
-                        Sistema Integrado de Gerenciamento de<br />Riscos e Desastres
-                    </p>
-                </div>
+        {/* logo */}
+        <div className="mt-[18px] flex flex-col items-center">
+            <div className="relative w-[132px] h-[132px] flex items-center justify-center before:content-[''] before:absolute before:-inset-5 before:bg-[radial-gradient(circle,rgba(255,87,34,0.18)_0%,rgba(255,87,34,0)_70%)]">
+                <img src="/logo_header.png" alt="SIGERD" className="w-[96px] h-[96px] object-contain relative z-10" />
+            </div>
+            <div className="mt-[14px] font-display font-extrabold text-[34px] tracking-[6px] text-white">SIGERD</div>
+            <div className="mt-[10px] font-sans font-normal text-[12.5px] leading-[1.6] tracking-[0.1px] text-[#aab4d6] text-center max-w-[250px]">
+                Sistema Integrado de Gerenciamento<br />de Riscos e Desastres
+            </div>
+        </div>
+
+        <div className="w-full max-w-[326px] mt-[26px] flex flex-col items-stretch">
+            <button
+                type="button"
+                onClick={handleBiometricLogin}
+                disabled={loading}
+                className="w-full h-[52px] rounded-[14px] border-[1.5px] border-white/30 bg-white/5 text-white font-sans font-semibold text-[15px] flex items-center justify-center gap-[10px] cursor-pointer transition-all duration-200 hover:bg-white/10 hover:border-white/40 disabled:opacity-50"
+            >
+                <Fingerprint size={19} className="opacity-90" />
+                Entrar com a Digital
+            </button>
+
+            <div className="flex items-center gap-[14px] my-6">
+                <span className="flex-1 h-[1px] bg-white/10"></span>
+                <span className="text-[10.5px] tracking-[1.6px] text-[#5f6a92] font-semibold whitespace-nowrap">OU USE SUA CONTA</span>
+                <span className="flex-1 h-[1px] bg-white/10"></span>
             </div>
 
-            {/* Auth Section */}
-            <div className="w-full flex flex-col gap-6">
-                <button
-                    type="button"
-                    onClick={handleBiometricLogin}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center gap-3 rounded-full font-bold text-[#102754] bg-white transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50 h-[60px] text-lg shadow-lg"
-                >
-                    <Fingerprint size={28} />
-                    Entrar com a Digital
-                </button>
-
-                <div className="flex items-center gap-3">
-                    <div className="h-[1px] flex-1 bg-white/20" />
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-white/40 whitespace-nowrap">
-                        ou use sua conta
-                    </span>
-                    <div className="h-[1px] flex-1 bg-white/20" />
+            <form onSubmit={handleSubmit} className="flex flex-col">
+                <div className="relative mb-4 group">
+                    <User className="absolute left-[14px] top-[18px] w-[19px] h-[19px] text-[#aab4d6] pointer-events-none transition-colors duration-160 group-focus-within:text-orange-mobile-soft" strokeWidth={1.8} />
+                    <input
+                        type="text"
+                        id="email"
+                        placeholder=" "
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                        className="peer w-full h-[56px] bg-white/5 border-[1.3px] border-white/10 rounded-[13px] pt-[20px] pb-[6px] px-[44px] text-white font-sans text-[15px] font-medium outline-none transition-all duration-160 focus:border-orange-mobile focus:shadow-[0_0_0_3.5px_rgba(255,87,34,0.16)]"
+                    />
+                    <label htmlFor="email" className="absolute left-[44px] top-[18px] text-[#aab4d6] text-[14.5px] font-normal pointer-events-none origin-top-left transition-all duration-160 peer-focus:top-[9px] peer-focus:scale-75 peer-focus:text-orange-mobile-soft peer-[&:not(:placeholder-shown)]:top-[9px] peer-[&:not(:placeholder-shown)]:scale-75 peer-[&:not(:placeholder-shown)]:text-orange-mobile-soft">E-mail</label>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    <div className="relative">
-                        <User className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40" size={20} />
-                        <input
-                            type="text"
-                            placeholder="E-mail"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                            className="w-full h-16 pl-14 pr-6 rounded-2xl bg-[#1e293b]/30 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-white/40 transition-all text-base font-medium"
-                        />
-                    </div>
-
-                    <div className="relative">
-                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/40" size={20} />
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Senha"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="w-full h-16 pl-14 pr-14 rounded-2xl bg-[#1e293b]/30 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-white/40 transition-all text-base font-medium"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
-                        >
-                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                    </div>
-
-                    {error && (
-                        <div className="flex items-center gap-2 p-3 rounded-xl text-xs font-bold bg-red-500/20 border border-red-500/40 text-red-200">
-                            <ShieldAlert size={14} className="shrink-0" />
-                            {error}
-                        </div>
-                    )}
-
+                <div className="relative mb-4 group">
+                    <Lock className="absolute left-[14px] top-[18px] w-[19px] h-[19px] text-[#aab4d6] pointer-events-none transition-colors duration-160 group-focus-within:text-orange-mobile-soft" strokeWidth={1.8} />
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        id="senha"
+                        placeholder=" "
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="peer w-full h-[56px] bg-white/5 border-[1.3px] border-white/10 rounded-[13px] pt-[20px] pb-[6px] px-[44px] text-white font-sans text-[15px] font-medium outline-none transition-all duration-160 focus:border-orange-mobile focus:shadow-[0_0_0_3.5px_rgba(255,87,34,0.16)]"
+                    />
+                    <label htmlFor="senha" className="absolute left-[44px] top-[18px] text-[#aab4d6] text-[14.5px] font-normal pointer-events-none origin-top-left transition-all duration-160 peer-focus:top-[9px] peer-focus:scale-75 peer-focus:text-orange-mobile-soft peer-[&:not(:placeholder-shown)]:top-[9px] peer-[&:not(:placeholder-shown)]:scale-75 peer-[&:not(:placeholder-shown)]:text-orange-mobile-soft">Senha</label>
                     <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full flex items-center justify-center gap-2.5 rounded-3xl font-bold text-white transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60 h-16 text-xl mt-2"
-                        style={{
-                            backgroundColor: '#ff5722',
-                            boxShadow: '0 8px 30px rgba(255, 87, 34, 0.3)',
-                        }}
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-[14px] top-[18px] text-[#c7cfe8] opacity-85 hover:opacity-100 transition-opacity"
                     >
-                        {loading ? (
-                            <><Loader2 className="animate-spin" size={24} /> Entrando...</>
-                        ) : (
-                            "Entrar no App"
-                        )}
+                        {showPassword ? <EyeOff size={20} strokeWidth={1.8} /> : <Eye size={20} strokeWidth={1.8} />}
                     </button>
-                </form>
-            </div>
+                </div>
 
-            {/* Rodapé */}
-            <div className="flex flex-col items-center gap-1.5 text-center mt-4">
-                <p className="text-[12px] font-bold text-white" style={{ opacity: 0.9 }}>
-                    Defesa Civil de Santa Maria de Jetibá
-                </p>
-                <p className="text-[11px] text-white/40 font-medium">
-                    © 2024-2026 SIGERD Mobile
-                </p>
-            </div>
+                {error && (
+                    <div className="mb-4 flex items-center gap-2 p-3 rounded-xl text-xs font-bold bg-red-500/20 border border-red-500/40 text-red-200">
+                        <ShieldAlert size={14} className="shrink-0" />
+                        {error}
+                    </div>
+                )}
+
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-[56px] mt-1.5 border-none rounded-[14px] bg-gradient-to-b from-[#ff6a33] to-orange-mobile text-white font-sans font-bold text-[16px] tracking-[0.2px] shadow-[0_10px_24px_-6px_rgba(255,87,34,0.55)] transition-all duration-120 hover:-translate-y-[1px] hover:shadow-[0_14px_28px_-6px_rgba(255,87,34,0.65)] active:translate-y-0 disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                    {loading ? (
+                        <><Loader2 className="animate-spin" size={24} /> Entrando...</>
+                    ) : (
+                        "Entrar no App"
+                    )}
+                </button>
+            </form>
+        </div>
+
+        <div className="flex-1"></div>
+
+        <div className="text-center pb-1.5">
+            <div className="text-[13px] font-semibold text-white/90 font-sans">Defesa Civil de Santa Maria de Jetibá</div>
+            <div className="mt-[5px] text-[10.5px] text-[#333d5e] font-sans">© 2024–2026 SIGERD Mobile</div>
         </div>
     </div>
 );

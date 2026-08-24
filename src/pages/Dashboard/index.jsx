@@ -58,6 +58,29 @@ const createCustomDot = (color) => {
     });
 };
 
+const createSmallPluvioIcon = (station) => {
+    const level = station.level || 'Normal';
+    let color = '#22c55e';
+    if (level === 'Extremo') color = '#ef4444';
+    else if (level === 'Alerta') color = '#f97316';
+    else if (level === 'Atenção') color = '#f59e0b';
+    const isCritical = level === 'Extremo' || level === 'Alerta';
+
+    return L.divIcon({
+        className: 'custom-pluvio-active-small',
+        html: `
+            <div style="position: relative; width: 14px; height: 14px; display: flex; justify-content: center; align-items: center; opacity: 0.8; z-index: -1;">
+                ${isCritical ? `<div style="position: absolute; top: 7px; left: 7px; width: 24px; height: 24px; background-color: transparent; border: 1.5px solid ${color}; border-radius: 50%; transform: translate(-50%, -50%); animation: pulse-ring-marker 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;"></div>` : ''}
+                <div style="width: 14px; height: 14px; background-color: ${color}; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 1.5px solid #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.3);"></div>
+            </div>
+        `,
+        iconSize: [14, 14],
+        iconAnchor: [7, 14],
+        popupAnchor: [0, -14]
+    });
+};
+
+
 const createClusterIcon = (cluster) => {
     const childMarkers = cluster.getAllChildMarkers();
     let maxRank = 1;
@@ -1473,15 +1496,15 @@ const MobileDashboardView = ({
                 {/* 2. Indicadores Operacionais */}
                 {!isOperador && (
                     <div>
-                        <div className="flex justify-between items-center mb-6 px-1">
+                        <div className="flex justify-between items-center mb-5">
                             <div className="flex flex-col">
-                                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[2px] -mt-1">Santa Maria de Jetibá</span>
+                                <h2 className="text-lg font-bold text-[#0a1e3f] dark:text-gray-100 tracking-tight">Indicadores Operacionais</h2>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[1px] mt-0.5">Santa Maria de Jetibá</span>
                             </div>
                             <button
                                 onClick={handleSync}
                                 disabled={syncing}
-                                className={`p-2.5 rounded-xl transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-slate-200/50 text-gray-500'}`}
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${syncing ? 'bg-blue-100 text-blue-600 animate-spin' : 'bg-blue-50/80 text-blue-500 border border-blue-100'}`}
                             >
                                 <RefreshCw size={18} />
                             </button>
@@ -1513,7 +1536,7 @@ const MobileDashboardView = ({
 
                 {/* 3. Acesso Rápido - Circular Icons */}
                 <div>
-                    <h2 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-6 px-1 uppercase tracking-widest text-center">Acesso Rápido</h2>
+                    <h2 className="text-base font-bold text-[#0a1e3f] dark:text-slate-400 mb-5 px-1 tracking-tight">Acesso Rápido</h2>
                     <div className="grid grid-cols-4 gap-2 px-1 justify-items-center">
                         <div onClick={() => navigate('/monitoramento')} className="flex flex-col items-center gap-2.5 cursor-pointer">
                             <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 active:scale-90 transition-all">
@@ -1547,19 +1570,19 @@ const MobileDashboardView = ({
                 </div>
 
                 {/* 4. Tipologia Breakdown */}
-                <div className="bg-white dark:bg-slate-800 p-6 border border-slate-200 shadow-sm border border-slate-100 dark:border-slate-700">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[24px] border border-slate-100 shadow-sm">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[2px]">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'}</h3>
-                        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+                        <h3 className="text-lg font-bold text-[#0a1e3f] dark:text-slate-100 tracking-tight">{viewMode === 'vistorias' ? 'Vistorias' : 'Ocorrências'}</h3>
+                        <div className="flex bg-slate-50 dark:bg-slate-900 p-1 rounded-xl border border-slate-100">
                             <button
                                 onClick={() => setChartMode('tipologia')}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'tipologia' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${chartMode === 'tipologia' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
                             >
                                 Tipologia
                             </button>
                             <button
                                 onClick={() => setChartMode('localidade')}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'localidade' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${chartMode === 'localidade' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
                             >
                                 Localidade
                             </button>
@@ -1568,9 +1591,12 @@ const MobileDashboardView = ({
                     <div className="space-y-6">
                         {topItems.map((item, idx) => (
                             <div key={idx}>
-                                <div className="flex justify-between items-center mb-1.5 px-1">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase truncate max-w-[80%]">{item.label}</span>
-                                    <span className="text-xs font-black text-slate-800 dark:text-slate-100 tabular-nums">{item.count}</span>
+                                <div className="flex justify-between items-center mb-2 px-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-2 h-2 rounded-full ${item.color || 'bg-blue-500'}`} />
+                                        <span className="text-[13px] font-bold text-[#0a1e3f] capitalize">{item.label}</span>
+                                    </div>
+                                    <span className="text-[13px] font-black text-[#0a1e3f]">{item.count}</span>
                                 </div>
                                 <div className="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-2 overflow-hidden shadow-inner">
                                     <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-500'}`} style={{ width: `${item.percentage}%` }} />
@@ -1578,9 +1604,8 @@ const MobileDashboardView = ({
                             </div>
                         ))}
                         {breakdownToDisplay.length === 0 && (
-                            <div className="text-center py-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Sem dados registrados</div>
+                            <div className="text-center py-4 text-slate-400 text-xs font-bold">Sem dados registrados</div>
                         )}
-
                     </div>
                 </div>
 
@@ -1656,27 +1681,21 @@ const MobileDashboardView = ({
                                 )}
                                 <LimiteSMJLayer keyId="limite-smj-mobile1" />
                                 {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
+                                {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
                                 {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
-                                    <CircleMarker
-                                        key={`pluvio-${idx}`}
-                                        center={[station.lat, station.lon || station.lng]}
-                                        radius={8}
-                                        pathOptions={{
-                                            color: '#fff',
-                                            fillColor: getPluvioColor(station.level),
-                                            fillOpacity: 1,
-                                            weight: 2
-                                        }}
+                                    <Marker
+                                        key={`pluvio-web-${idx}`}
+                                        position={[station.lat, station.lon || station.lng]}
+                                        icon={createSmallPluvioIcon(station)}
+                                        zIndexOffset={-1000}
                                     >
-                                        <Popup minWidth={160}>
-                                            <div style={{ fontFamily: 'sans-serif' }}>
-                                                <div style={{ fontSize: '9px', fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '2px' }}>🌧️ Pluviômetro CEMADEN</div>
-                                                <div style={{ fontSize: '12px', fontWeight: 700, color: '#1e293b', marginBottom: '2px' }}>{station.name}</div>
-                                                <div style={{ fontSize: '14px', fontWeight: 900, color: getPluvioColor(station.level) }}>{(station.rainRaw || 0).toFixed(1)} mm</div>
-                                                <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '2px' }}>Acumulado 24h • {station.level}</div>
+                                        <Popup>
+                                            <div className="p-2">
+                                                <div className="font-bold text-sm mb-1">{station.name || 'Estação CEMADEN'}</div>
+                                                <div className="text-xs text-slate-600">Acumulado 24h: <span className="font-bold text-blue-600">{(station.acc24hr || 0).toFixed(1)} mm</span></div>
                                             </div>
                                         </Popup>
-                                    </CircleMarker>
+                                    </Marker>
                                 ))}
                                 <MarkerClusterGroup iconCreateFunction={createClusterIcon} maxClusterRadius={60}>
                                     {filteredLocations?.filter(l => l.lat && l.lng && !isNaN(Number(l.lat))).map((loc, idx) => (
@@ -2399,27 +2418,21 @@ const WebViewDashboardView = ({
                                 )}
                                 <LimiteSMJLayer keyId="limite-smj-mobile2" />
                                 {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
+                                {/* Pluviômetros CEMADEN - todos os com coordenadas válidas */}
                                 {(rainfall || []).filter(s => s.lat && (s.lon || s.lng)).map((station, idx) => (
-                                    <CircleMarker
+                                    <Marker
                                         key={`pluvio-web-${idx}`}
-                                        center={[station.lat, station.lon || station.lng]}
-                                        radius={10}
-                                        pathOptions={{
-                                            color: '#fff',
-                                            fillColor: getPluvioColor(station.level),
-                                            fillOpacity: 1,
-                                            weight: 2.5
-                                        }}
+                                        position={[station.lat, station.lon || station.lng]}
+                                        icon={createSmallPluvioIcon(station)}
+                                        zIndexOffset={-1000}
                                     >
-                                        <Popup minWidth={180}>
-                                            <div style={{ fontFamily: 'sans-serif' }}>
-                                                <div style={{ fontSize: '9px', fontWeight: 900, color: '#3b82f6', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '4px' }}>🌧️ Pluviômetro CEMADEN</div>
-                                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>{station.name}</div>
-                                                <div style={{ fontSize: '18px', fontWeight: 900, color: getPluvioColor(station.level) }}>{(station.rainRaw || 0).toFixed(1)} <span style={{ fontSize: '12px' }}>mm</span></div>
-                                                <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px', fontWeight: 600 }}>Acumulado 24h • Nível: <strong style={{ color: getPluvioColor(station.level) }}>{station.level}</strong></div>
+                                        <Popup>
+                                            <div className="p-2">
+                                                <div className="font-bold text-sm mb-1">{station.name || 'Estação CEMADEN'}</div>
+                                                <div className="text-xs text-slate-600">Acumulado 24h: <span className="font-bold text-blue-600">{(station.acc24hr || 0).toFixed(1)} mm</span></div>
                                             </div>
                                         </Popup>
-                                    </CircleMarker>
+                                    </Marker>
                                 ))}
                                 <MarkerClusterGroup iconCreateFunction={createClusterIcon} maxClusterRadius={60}>
                                     {filteredLocations?.filter(loc => loc.lat && loc.lng && Math.abs(loc.lat) > 0.01 && !isNaN(loc.lat)).map((loc, idx) => (
