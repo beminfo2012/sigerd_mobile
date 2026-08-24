@@ -628,7 +628,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIc
 const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, baciasData }) => {
     const [selectedStation, setSelectedStation] = useState(null);
     const [showBacias, setShowBacias] = useState(false);
-    const [mapStyle, setMapStyle] = useState('carto');
+    const [mapStyle, setMapStyle] = useState('google');
 
     const sortedRain = [...(rainfall || [])].sort((a, b) => (b.rainRaw || 0) - (a.rainRaw || 0));
     const validStations = (rainfall || []).filter(s => s.lat && (s.lon || s.lng));
@@ -639,14 +639,20 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
             <div className="absolute inset-0 z-0">
                 <MapContainer center={[-20.0246, -40.7464]} zoom={12} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                     <MapAutoBounds locations={validStations} />
+                    {mapStyle === 'google' && (
+                        <TileLayer url="https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}" attribution="&copy; Google Maps" maxZoom={22} />
+                    )}
+                    {mapStyle === 'google_sat' && (
+                        <TileLayer url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" attribution="&copy; Google Maps" maxZoom={22} />
+                    )}
                     {mapStyle === 'carto' && (
-                        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" maxZoom={22} />
                     )}
                     {mapStyle === 'satellite' && (
-                        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={22} />
                     )}
                     {mapStyle === 'osm' && (
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={22} />
                     )}
                     <LimiteSMJLayer keyId="limite-smj-climate-tv" />
                     {showBacias && baciasData && <BaciasLayer data={baciasData} />}
@@ -678,6 +684,8 @@ const TV_ClimateCenter = ({ rainfall, weather, getWeatherIcon, limiteSMJ, bacias
                     onChange={(e) => setMapStyle(e.target.value)}
                     className="bg-white/90 backdrop-blur-md text-slate-800 text-[9px] lg:text-[10px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl px-3 py-2 lg:px-4 lg:py-2.5 xl:px-5 xl:py-3 3xl:px-8 3xl:py-5 4xl:px-12 4xl:py-7 rounded-xl lg:rounded-2xl border border-slate-200 font-black uppercase tracking-wider focus:outline-none cursor-pointer shadow-xl"
                 >
+                    <option value="google">Google Maps</option>
+                    <option value="google_sat">Google Satélite</option>
                     <option value="carto">CartoDB Light</option>
                     <option value="satellite">Satélite</option>
                     <option value="osm">OpenStreetMap</option>
@@ -1295,6 +1303,8 @@ const MapStyleControl = ({ mapStyle, setMapStyle, size = 18, isMobile = false })
     const [open, setOpen] = useState(false);
 
     const styles = [
+        { id: 'google', label: 'Google Maps', emoji: '🗺️' },
+        { id: 'google_sat', label: 'Google Satélite', emoji: '🌅' },
         { id: 'positron', label: 'CartoDB Positron', emoji: '⚪' },
         { id: 'street', label: 'OpenStreetMap', emoji: '🏙️' },
         { id: 'satellite', label: 'Satélite', emoji: '🌅' },
@@ -1650,7 +1660,7 @@ const MobileDashboardView = ({
 
                     <div className="bg-white dark:bg-slate-800 p-2 border border-slate-200 shadow-sm border border-slate-100 dark:border-slate-700">
                         <div className={`h-80 w-full rounded-[26px] overflow-hidden bg-slate-100 relative z-0 ${mapStyle === 'satellite' ? 'leaflet-satellite-wrapper' : ''}`}>
-                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
+                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} maxZoom={22} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
                                 <CustomMapControls />
                                 <MapAutoBounds locations={filteredLocations} />
                                 {/* Map Style Toggle (Mobile - Absolute inside map) */}
@@ -1661,17 +1671,23 @@ const MobileDashboardView = ({
                                 </div>
 
 
+                                {mapStyle === 'google' && (
+                                    <TileLayer url="https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}" attribution="&copy; Google Maps" maxZoom={22} />
+                                )}
+                                {mapStyle === 'google_sat' && (
+                                    <TileLayer url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" attribution="&copy; Google Maps" maxZoom={22} />
+                                )}
                                 {mapStyle === 'street' && (
-                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={22} />
                                 )}
                                 {mapStyle === 'positron' && (
-                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" maxZoom={22} />
                                 )}
                                 {mapStyle === 'satellite' && (
-                                    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={22} />
                                 )}
                                 {mapStyle === 'dark' && (
-                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" maxZoom={22} />
                                 )}
                                 <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={mapStyle !== 'satellite'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
                                 <OrthofotsLayer />
@@ -2389,7 +2405,7 @@ const WebViewDashboardView = ({
                             </div>
                         </div>
                         <div className={`flex-1 min-h-[520px] w-full rounded-[24px] overflow-hidden relative z-0 border border-slate-100 dark:border-slate-800 shadow-inner ${mapStyle === 'satellite' ? 'leaflet-satellite-wrapper' : ''}`}>
-                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
+                            <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false} maxZoom={22} className={mapStyle === 'satellite' ? 'leaflet-satellite-view' : ''}>
                                 <CustomMapControls />
                                 <MapAutoBounds locations={filteredLocations} />
                                 {/* Map Style Toggle (Web - Below Zoom) */}
@@ -2398,17 +2414,23 @@ const WebViewDashboardView = ({
                                     <CamadasControl tiposAtivos={tiposRiscoAtivos} setTiposAtivos={setTiposRiscoAtivos} />
                                 </div>
 
+                                {mapStyle === 'google' && (
+                                    <TileLayer url="https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}" attribution="&copy; Google Maps" maxZoom={22} />
+                                )}
+                                {mapStyle === 'google_sat' && (
+                                    <TileLayer url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" attribution="&copy; Google Maps" maxZoom={22} />
+                                )}
                                 {mapStyle === 'street' && (
-                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={22} />
                                 )}
                                 {mapStyle === 'positron' && (
-                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" maxZoom={22} />
                                 )}
                                 {mapStyle === 'satellite' && (
-                                    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={22} />
                                 )}
                                 {mapStyle === 'dark' && (
-                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                                    <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" maxZoom={22} />
                                 )}
                                 <HeatmapLayer points={(filteredLocations || []).filter(l => l.lat && l.lng && Math.abs(l.lat) > 0.01 && !isNaN(l.lat))} show={mapStyle !== 'satellite'} options={{ radius: 25, blur: 15, opacity: 0.6 }} />
                                 <OrthofotsLayer />
@@ -2741,7 +2763,7 @@ const Dashboard = () => {
     const [viewMode, setViewMode] = useState('vistorias'); // 'vistorias' | 'ocorrencias' | 'interdicoes'
     const [chartMode, setChartMode] = useState('tipologia')
     const [mapFilter, setMapFilter] = useState('Todas')
-    const [mapStyle, setMapStyle] = useState('positron')
+    const [mapStyle, setMapStyle] = useState('google')
     const [timeFilter, setTimeFilter] = useState('Todas'); // 'Todas' | 'Hoje' | '24h' | '7d' | '30d' | 'Mes'
     const [climateLoading, setClimateLoading] = useState(true)
     const [pluvioLoading, setPluvioLoading] = useState(true)

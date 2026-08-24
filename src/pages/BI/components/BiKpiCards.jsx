@@ -1,190 +1,152 @@
 import React from 'react';
-import {
-  ShieldCheck, AlertTriangle, ShieldAlert, ArrowUpRight, ArrowDownRight,
-  ClipboardList, BellRing, Ban, FileCheck, MapPin, Activity
-} from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Line } from 'react-chartjs-2';
+import { ArrowUpRight, ArrowDownRight, Minus, FileText, AlertTriangle, Bell, Ban } from 'lucide-react';
 
-export default function BiKpiCards({ kpis, onCardClick }) {
-  if (!kpis) return null;
+export default function BiKpiCards({ kpis, data, onCardClick }) {
+  const sparklineOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: { x: { display: false }, y: { display: false, min: 0 } },
+    elements: {
+      point: { radius: 0, hitRadius: 0, hoverRadius: 0 },
+      line: { tension: 0.4 }
+    },
+    interaction: { mode: null },
+  };
 
-  // Mini dados para os micrográficos (sparklines)
-  const sparklineData = [
-    { v: 4 }, { v: 7 }, { v: 5 }, { v: 9 }, { v: 12 }, { v: 8 }, { v: 15 }
-  ];
+  const mockSparkData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  
+  // Extrai as sparklines dos dados reais (últimos 12 meses)
+  const sparkVistorias = data?.monthlySeries?.map(m => m.vistorias) || mockSparkData;
+  const sparkCriticos = data?.monthlySeries?.map(m => m.R4) || mockSparkData;
+  const sparkAlertas = data?.monthlySeries?.map(m => m.alertas) || mockSparkData;
 
-  const riskCards = [
-    {
-      key: 'R1',
-      title: 'R1 — Risco Baixo',
-      count: kpis.riscoR1 || 0,
-      pct: kpis.pctR1 || 0,
-      trend: kpis.trendR1 || '-2.1%',
-      trendUp: false,
-      color: '#10b981',
-      bgColor: 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/30 text-emerald-700 dark:text-emerald-300',
-      icon: <ShieldCheck size={22} className="text-emerald-500" />
-    },
-    {
-      key: 'R2',
-      title: 'R2 — Risco Médio',
-      count: kpis.riscoR2 || 0,
-      pct: kpis.pctR2 || 0,
-      trend: kpis.trendR2 || '+1.5%',
-      trendUp: true,
-      color: '#f59e0b',
-      bgColor: 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/30 text-amber-700 dark:text-amber-300',
-      icon: <AlertTriangle size={22} className="text-amber-500" />
-    },
-    {
-      key: 'R3',
-      title: 'R3 — Risco Alto',
-      count: kpis.riscoR3 || 0,
-      pct: kpis.pctR3 || 0,
-      trend: kpis.trendR3 || '+4.8%',
-      trendUp: true,
-      color: '#ea580c',
-      bgColor: 'bg-orange-500/10 dark:bg-orange-500/20 border-orange-500/30 text-orange-700 dark:text-orange-300',
-      icon: <ShieldAlert size={22} className="text-orange-500" />
-    },
-    {
-      key: 'R4',
-      title: 'R4 — Muito Alto / Iminente',
-      count: kpis.riscoR4 || 0,
-      pct: kpis.pctR4 || 0,
-      trend: kpis.trendR4 || '0.0%',
-      trendUp: kpis.riscoR4 > 0,
-      color: '#dc2626',
-      bgColor: 'bg-red-500/10 dark:bg-red-500/20 border-red-500/30 text-red-700 dark:text-red-300',
-      icon: <ShieldAlert size={22} className="text-red-600 dark:text-red-400 animate-pulse" />
-    }
-  ];
+  // Interdições não estão na monthlySeries padrão, vamos agrupar pelo created_at
+  const sparkInterdicoes = [...mockSparkData];
+  if (data?.interdicoesList) {
+    const now = new Date();
+    data.interdicoesList.forEach(i => {
+      const dt = new Date(i.data_interdicao || i.created_at);
+      if (!isNaN(dt.getTime())) {
+        const diffMonths = (now.getFullYear() - dt.getFullYear()) * 12 + (now.getMonth() - dt.getMonth());
+        if (diffMonths >= 0 && diffMonths < 12) {
+          const idx = 11 - diffMonths;
+          sparkInterdicoes[idx]++;
+        }
+      }
+    });
+  }
 
-  const generalCards = [
+  const cards = [
     {
-      key: 'totalVistorias',
-      title: 'Total de Vistorias',
-      count: kpis.totalVistorias,
-      subText: 'No período selecionado',
-      icon: <ClipboardList size={18} className="text-blue-600 dark:text-blue-400" />
+      key: 'vistorias',
+      title: 'Vistorias Realizadas',
+      value: kpis?.totalVistorias || 0,
+      trend: kpis?.variacaoVistorias || '0%',
+      trendStatus: (kpis?.variacaoVistorias || '').includes('-') ? 'negative' : 'positive',
+      icon: <FileText size={20} className="text-[#2F5FDB]" />,
+      iconBg: 'bg-[#2F5FDB]/10',
+      sparkColor: '#2F5FDB',
+      data: sparkVistorias
     },
     {
-      key: 'ocorrencias',
-      title: 'Ocorrências Abertas',
-      count: kpis.ocorrenciasAbertas,
-      subText: `${kpis.totalOcorrencias} totais registradas`,
-      icon: <Activity size={18} className="text-pink-600 dark:text-pink-400" />
-    },
-    {
-      key: 'interdicoes',
-      title: 'Interdições Vigentes',
-      count: kpis.interdicoesVigentes,
-      subText: `${kpis.interdicoesTotais} totais aplicadas`,
-      icon: <Ban size={18} className="text-purple-600 dark:text-purple-400" />
-    },
-    {
-      key: 'noprer',
-      title: 'NOPRER Emitidas',
-      count: kpis.noprersEmitidas,
-      subText: `${kpis.noprersPendentes || 0} pendentes de regularização`,
-      icon: <FileCheck size={18} className="text-indigo-600 dark:text-indigo-400" />
+      key: 'criticos',
+      title: 'Pontos Críticos (R4)',
+      value: kpis?.riscoR4 || 0,
+      trend: kpis?.trendR4 || '0%',
+      trendStatus: (kpis?.trendR4 || '').includes('-') ? 'positive' : ((kpis?.trendR4 || '0%') === '0.0%' ? 'neutral' : 'negative'),
+      icon: <AlertTriangle size={20} className="text-[#E0362B]" />,
+      iconBg: 'bg-[#E0362B]/10',
+      sparkColor: '#E0362B',
+      data: sparkCriticos
     },
     {
       key: 'alertas',
-      title: 'Alertas Ativos',
-      count: kpis.alertasAtivos,
-      subText: 'Monitoramento contínuo',
-      icon: <BellRing size={18} className="text-red-500" />
+      title: 'Alertas Vigentes',
+      value: kpis?.alertasAtivos || 0,
+      trend: kpis?.variacaoAlertas || '0%',
+      trendStatus: (kpis?.variacaoAlertas || '').includes('-') ? 'positive' : ((kpis?.variacaoAlertas || '0%') === '0.0%' ? 'neutral' : 'negative'),
+      icon: <Bell size={20} className="text-[#F5A623]" />,
+      iconBg: 'bg-[#F5A623]/10',
+      sparkColor: '#F5A623',
+      data: sparkAlertas
     },
     {
-      key: 'localidades',
-      title: 'Localidades Monitoradas',
-      count: kpis.localidadesMonitoradas,
-      subText: 'Mapeamento territorial',
-      icon: <MapPin size={18} className="text-emerald-600 dark:text-emerald-400" />
+      key: 'interdicoes',
+      title: 'Interdições Ativas',
+      value: kpis?.interdicoesVigentes || 0,
+      trend: 'Ao longo do ano',
+      trendStatus: 'neutral',
+      icon: <Ban size={20} className="text-[#2F5FDB]" />,
+      iconBg: 'bg-[#2F5FDB]/10',
+      sparkColor: '#2F5FDB',
+      data: sparkInterdicoes
     }
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Cards de Risco R1 - R4 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {riskCards.map(c => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {cards.map((c) => {
+        let trendIcon = <Minus size={14} />;
+        let trendColor = 'text-[#9AA2B6]';
+        
+        if (c.trendStatus === 'positive') {
+          trendIcon = <ArrowDownRight size={14} />;
+          if (c.key === 'vistorias') {
+             trendIcon = <ArrowUpRight size={14} />;
+          }
+          trendColor = 'text-[#12B981]';
+        } else if (c.trendStatus === 'negative') {
+          trendIcon = <ArrowUpRight size={14} />;
+          if (c.key === 'vistorias') {
+             trendIcon = <ArrowDownRight size={14} />;
+          }
+          trendColor = 'text-[#E0362B]';
+        }
+
+        const chartData = {
+          labels: c.data.map((_, i) => i),
+          datasets: [{
+            data: c.data,
+            borderColor: c.sparkColor,
+            backgroundColor: `${c.sparkColor}20`,
+            borderWidth: 2,
+            fill: true,
+          }]
+        };
+
+        return (
           <div
             key={c.key}
             onClick={() => onCardClick && onCardClick(c.key)}
-            className={`p-5 rounded-3xl border shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer active:scale-98 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 flex flex-col justify-between`}
+            className="bg-[#FFFFFF] p-5 rounded-[16px] shadow-[0_3px_14px_-4px_rgba(15,30,70,0.10),0_1px_3px_rgba(15,30,70,0.05)] cursor-pointer hover:shadow-lg transition-shadow flex flex-col justify-between"
           >
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-2">
-                  {c.icon}
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                    {c.title}
-                  </span>
-                </div>
-                <span className={`flex items-center text-[10px] font-black px-2 py-0.5 rounded-full ${c.trendUp ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'}`}>
-                  {c.trendUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                  {c.trend}
-                </span>
+            <div className="flex justify-between items-start mb-4">
+              <div className={`p-2.5 rounded-full ${c.iconBg}`}>
+                {c.icon}
               </div>
-
-              <div className="flex items-baseline gap-3 my-1">
-                <span className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                  {c.count}
-                </span>
-                <span className="text-xs font-bold text-slate-400">
-                  {c.pct}% do total
-                </span>
+              <div className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-50 ${trendColor}`}>
+                {trendIcon}
+                <span>{c.trend}</span>
               </div>
             </div>
 
-            {/* Sparkline Micrográfico */}
-            <div className="h-8 w-full mt-3">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={sparklineData}>
-                  <Area
-                    type="monotone"
-                    dataKey="v"
-                    stroke={c.color}
-                    fill={c.color}
-                    fillOpacity={0.15}
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="mb-2">
+              <div className="text-3xl font-extrabold font-manrope text-slate-900 leading-none">
+                {c.value}
+              </div>
+              <div className="text-xs font-semibold text-[#9AA2B6] mt-1 font-inter">
+                {c.title}
+              </div>
+            </div>
+
+            <div className="h-12 w-full mt-2">
+              <Line options={sparklineOptions} data={chartData} />
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Cards de Métricas Gerais */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {generalCards.map(g => (
-          <div
-            key={g.key}
-            onClick={() => onCardClick && onCardClick(g.key)}
-            className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-blue-500/40 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
-                {g.title}
-              </span>
-              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
-                {g.icon}
-              </div>
-            </div>
-            <div>
-              <div className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                {g.count}
-              </div>
-              <p className="text-[9px] font-medium text-slate-400 truncate mt-0.5">
-                {g.subText}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

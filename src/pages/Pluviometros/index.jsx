@@ -201,7 +201,7 @@ const Pluviometros = ({ hideHeader = false }) => {
     
     // Interactive Map States
     const [mapInstance, setMapInstance] = useState(null);
-    const [mapStyle, setMapStyle] = useState('osm');
+    const [mapStyle, setMapStyle] = useState('google');
     const [mouseCoords, setMouseCoords] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     
@@ -551,8 +551,10 @@ const Pluviometros = ({ hideHeader = false }) => {
                             onChange={e => setMapStyle(e.target.value)}
                             className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs px-2.5 py-1.5 rounded-xl border-none font-bold focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer shadow-sm"
                         >
+                            <option value="google">Google Maps</option>
+                            <option value="google_sat">Google Satélite</option>
                             <option value="osm">OpenStreetMap</option>
-                            <option value="satellite">Satélite</option>
+                            <option value="satellite">Satélite (Esri)</option>
                             <option value="carto">CartoDB Light</option>
                         </select>
                     </div>
@@ -571,20 +573,27 @@ const Pluviometros = ({ hideHeader = false }) => {
                         <MapContainer
                             center={[-20.0246, -40.7464]}
                             zoom={11}
+                            maxZoom={22}
                             zoomControl={false}
-                            style={{ height: '100%', width: '100%' }}
+                            style={{ height: '100%', width: '100%', borderRadius: 'inherit' }}
                         >
                             <MapInstanceCapture setMap={setMapInstance} />
                             <CoordsListener setCoords={setMouseCoords} />
                             
+                            {mapStyle === 'google' && (
+                                <TileLayer url="https://mt1.google.com/vt/lyrs=r&x={x}&y={y}&z={z}" attribution="&copy; Google Maps" maxZoom={22} />
+                            )}
+                            {mapStyle === 'google_sat' && (
+                                <TileLayer url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" attribution="&copy; Google Maps" maxZoom={22} />
+                            )}
                             {mapStyle === 'osm' && (
-                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={22} />
                             )}
                             {mapStyle === 'satellite' && (
-                                <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                                <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={22} />
                             )}
                             {mapStyle === 'carto' && (
-                                <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                                <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" maxZoom={22} />
                             )}
 
                             {/* Municipality Bounds */}
