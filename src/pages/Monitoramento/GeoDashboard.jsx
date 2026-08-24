@@ -90,7 +90,27 @@ const GeoDashboard = () => {
         loadWaze();
         const wazeInterval = setInterval(loadWaze, 5 * 60 * 1000); // Update every 5 min
 
-        return (
+        return () => clearInterval(wazeInterval);
+    }, [])
+
+    const filteredPoints = useMemo(() => {
+        return vistorias.filter(p => {
+            const matchesCat = filterCategory === 'all' || p.risk === filterCategory
+
+            let matchesTime = true
+            if (filterTime !== 'all') {
+                const pDate = new Date(p.date)
+                const now = new Date()
+                const hours = (now - pDate) / (1000 * 60 * 60)
+                if (filterTime === '24h') matchesTime = hours <= 24
+                if (filterTime === '48h') matchesTime = hours <= 48
+            }
+
+            return matchesCat && matchesTime
+        })
+    }, [vistorias, filterCategory, filterTime])
+
+    return (
         <div className="h-full flex flex-col bg-slate-950 overflow-hidden relative">
             {/* Top Left Floating Controls */}
             <div className="absolute top-6 left-4 z-[1000] flex flex-col gap-2">
