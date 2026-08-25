@@ -199,17 +199,17 @@ const VistoriaList = ({ onNew, onEdit }) => {
             // Prepare email
             const vistoriaId = fullVistoria.vistoria_id || fullVistoria.vistoriaId || 'N/A'
             const solicitante = fullVistoria.solicitante || 'Solicitante'
-            const endereco = fullVistoria.endereco || 'EndereÃ§o nÃ£o informado'
+            const endereco = fullVistoria.endereco || 'Endereço não informado'
 
-            const subject = encodeURIComponent(`RelatÃ³rio de Vistoria TÃ©cnica ${vistoriaId}`)
+            const subject = encodeURIComponent(`Relatório de Vistoria Técnica ${vistoriaId}`)
             const body = (
                 `Prezado(a),\n\n` +
-                `Segue em anexo o RelatÃ³rio de Vistoria TÃ©cnica ${vistoriaId}.\n\n` +
+                `Segue em anexo o Relatório de Vistoria Técnica ${vistoriaId}.\n\n` +
                 `Solicitante: ${solicitante}\n` +
                 `Local: ${endereco}\n\n` +
                 `O arquivo PDF foi baixado no seu dispositivo. Por favor, anexe-o a este email antes de enviar.\n\n` +
                 `Atenciosamente,\n` +
-                `Defesa Civil Municipal de Santa Maria de JetibÃ¡`
+                `Defesa Civil Municipal de Santa Maria de Jetibá`
             )
 
             // Open email client with mailto
@@ -274,7 +274,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                             <input
                                 type="text"
-                                placeholder="Buscar por endereÃ§o, solicitante ou ID..."
+                                placeholder="Buscar por endereço, solicitante ou ID..."
                                 className="w-full bg-white dark:bg-slate-800 p-3.5 pl-12 rounded-[16px] border border-slate-100 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 font-medium"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -312,7 +312,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Bairro Filter */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">RegiÃ£o / Bairro</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Região / Bairro</label>
                                     <select
                                         className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 p-3 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none transition-all"
                                         value={filters.bairro}
@@ -327,9 +327,9 @@ const VistoriaList = ({ onNew, onEdit }) => {
 
                                 {/* Risk Level Filter */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">NÃ­vel de Risco</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Nível de Risco</label>
                                     <div className="flex gap-2 flex-wrap">
-                                        {['Baixo', 'MÃ©dio', 'Alto', 'Iminente'].map(level => (
+                                        {['Baixo', 'Médio', 'Alto', 'Iminente'].map(level => (
                                             <button
                                                 key={level}
                                                 onClick={() => setFilters(prev => ({ ...prev, nivelRisco: prev.nivelRisco === level ? '' : level }))}
@@ -346,7 +346,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
 
                                 {/* Date Range Filter */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">PerÃ­odo de Registro</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider ml-1">Período de Registro</label>
                                     <div className="grid grid-cols-2 gap-2">
                                         <input
                                             type="date"
@@ -699,7 +699,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                 onClose={() => setDeleteModal({ open: false, vistoria: null })}
                 onConfirm={confirmDeletion}
                 title="Excluir Vistoria"
-                message={`Tem certeza que deseja excluir a vistoria #${deleteModal.vistoria?.vistoria_id}? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`}
+                message={`Tem certeza que deseja excluir a vistoria #${deleteModal.vistoria?.vistoria_id}? Esta ação não pode ser desfeita.`}
                 confirmText="Sim, Excluir"
                 cancelText="Mantenha para mim"
             />
