@@ -1438,7 +1438,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                             type="tel"
                                             className={`${inputClasses} pl-12`}
                                             placeholder="90000-0000"
-                                            value={formData.telefone.replace(/^\(27\) /, '')}
+                                            value={(formData.telefone || '').replace(/^\(27\) /, '')}
                                             onChange={e => {
                                                 let v = e.target.value.replace(/\D/g, '');
                                                 if (v.length > 9) v = v.slice(0, 9);

@@ -902,7 +902,7 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
         const file = new File([blob], filename, { type: 'application/pdf' });
 
         let shared = false;
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (!options.returnOnly && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
                 await navigator.share({ files: [file], title: title });
                 shared = true;
@@ -911,7 +911,7 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
             }
         }
 
-        if (!shared && options.autoOpen) {
+        if (!options.returnOnly && !shared && options.autoOpen) {
             const url = URL.createObjectURL(blob);
             window.open(url) || (location.href = url);
         }

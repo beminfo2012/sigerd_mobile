@@ -5,6 +5,7 @@ import { UserContext } from '../../App'
 import { supabase } from '../../services/supabase'
 import { generatePDF } from '../../utils/pdfGenerator'
 import { deleteVistoriaLocal, getLightweightVistoriasLocal, getVistoriaFull } from '../../services/db'
+import VistoriaDrawer from './VistoriaDrawer'
 import ConfirmModal from '../../components/ConfirmModal'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
@@ -27,6 +28,9 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const [emailModal, setEmailModal] = useState({ open: false, vistoria: null })
     const [emailAddress, setEmailAddress] = useState('')
     const [deleteModal, setDeleteModal] = useState({ open: false, vistoria: null })
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+    const [selectedVistoria, setSelectedVistoria] = useState(null)
+    const [mobileMenuVistoria, setMobileMenuVistoria] = useState(null)
 
     useEffect(() => {
         fetchVistorias()
@@ -243,7 +247,9 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans animate-in fade-in duration-500">
+        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans animate-in fade-in duration-500 flex">
+            {/* Main panel */}
+            <div className={`flex-1 min-w-0 overflow-y-auto transition-all duration-300 ${isDrawerOpen ? 'hidden md:block md:w-[45%] lg:w-[42%] xl:w-[40%] shrink-0' : 'w-full'}`}>
             {/* Header */}
             <div className="bg-slate-50 dark:bg-slate-900 px-4 sm:px-6 py-4 sticky top-0 z-20">
                 <div className="w-full mx-auto">
@@ -381,47 +387,147 @@ const VistoriaList = ({ onNew, onEdit }) => {
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-4">
+                    <div className={`gap-4 ${isDrawerOpen ? 'grid grid-cols-1 2xl:grid-cols-2' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
                         {filteredVistorias.map(vistoria => {
-                            let borderColor = 'border-l-blue-500';
-                            if (vistoria.nivelRisco === 'Alto' || vistoria.nivelRisco === 'Muito Alto') borderColor = 'border-l-orange-500';
-                            if (vistoria.nivelRisco === 'Iminente') borderColor = 'border-l-red-500';
-                            if (vistoria.nivelRisco === 'Baixo') borderColor = 'border-l-yellow-500';
+                            const getRiskBorderColor = (nivel) => {
+                                switch (nivel) {
+                                    case 'Iminente': return 'border-l-red-500';
+                                    case 'Alto': return 'border-l-orange-500';
+                                    case 'Médio': return 'border-l-amber-500';
+                                    default: return 'border-l-amber-500';
+                                }
+                            };
 
                             return (
                                 <div
                                     key={vistoria.id}
-                                    onClick={() => onEdit(vistoria)}
-                                    className={`bg-white dark:bg-slate-800 rounded-[16px] shadow-sm border border-slate-100 dark:border-slate-700 p-4 border-l-[6px] ${borderColor} relative active:scale-[0.98] transition-all cursor-pointer`}
+                                    onClick={() => { setSelectedVistoria(vistoria); setIsDrawerOpen(true); }}
+                                    className={`group relative bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-[22px] md:rounded-xl shadow-xs hover:shadow-xl hover:translate-y-[-4px] active:scale-[0.98] transition-all cursor-pointer border border-slate-100 dark:border-slate-700/60 border-l-[6px] ${getRiskBorderColor(vistoria.nivelRisco)} md:border-l-slate-100 md:dark:border-l-slate-700`}
                                 >
-                                    <div className="flex justify-between items-center mb-3">
-                                        <div className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[10px] font-bold px-2 py-1 rounded-md">
-                                            #{vistoria.vistoria_id || '---'}
+                                    <div>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className="bg-slate-100/80 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-200/50 dark:border-slate-700">
+                                                    #{vistoria.vistoria_id || '---'}
+                                                </span>
+                                                {vistoria.isLocal && (vistoria.synced === false || vistoria.synced === undefined || vistoria.synced === 0) && (
+                                                    <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase">
+                                                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                                                        Pendente
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
+                                                    <Calendar size={13} className="text-slate-400" />
+                                                    {new Date(vistoria.created_at).toLocaleDateString('pt-BR')}
+                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setMobileMenuVistoria(vistoria);
+                                                    }}
+                                                    className="md:hidden p-1 text-slate-400 hover:text-slate-600 rounded-lg active:bg-slate-100 dark:active:bg-slate-700 transition-colors ml-0.5"
+                                                    title="Mais Opções"
+                                                >
+                                                    <MoreVertical size={18} />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Calendar size={12} className="text-slate-400" />
-                                            <span className="text-[10px] text-slate-500 font-bold">{new Date(vistoria.created_at).toLocaleDateString('pt-BR')}</span>
-                                            <button onClick={(e) => { e.stopPropagation(); /* Optional context menu */ }} className="text-slate-400 hover:text-slate-600 ml-1 p-1">
-                                                <MoreVertical size={16} />
+
+                                        <div className="mb-3">
+                                            <h3 className="font-black text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-tight group-hover:text-blue-600 transition-colors">
+                                                {vistoria.solicitante || 'Solicitante Não Identificado'}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-blue-900/20 px-2.5 py-0.5 rounded-md">
+                                                    {vistoria.categoriaRisco || vistoria.tipo_info || 'Geral'}
+                                                </p>
+                                                {vistoria.nivelRisco && vistoria.nivelRisco !== 'Baixo' && (
+                                                    <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-md uppercase tracking-wider border ${vistoria.nivelRisco === 'Iminente' ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:border-red-800' :
+                                                        vistoria.nivelRisco === 'Alto' ? 'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/20 dark:border-orange-800' :
+                                                            'bg-yellow-50 text-yellow-600 border-yellow-100 dark:bg-yellow-900/20 dark:border-yellow-800'
+                                                        }`}>
+                                                        {vistoria.nivelRisco}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 bg-slate-50/80 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100/80 dark:border-slate-700/50 mb-1 sm:mb-4 md:h-[72px] overflow-hidden">
+                                            <MapPin size={16} className="shrink-0 text-blue-500" />
+                                            <p className="font-bold leading-snug line-clamp-1 md:line-clamp-2">
+                                                {vistoria.endereco || 'Endereço não informado'}
+                                                {vistoria.bairro && <span className="hidden md:block text-[10px] font-medium text-slate-400">{vistoria.bairro}</span>}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Row - Web Only */}
+                                    <div className="hidden md:flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
+                                        <div className="flex gap-1.5 px-1">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); { setSelectedVistoria(vistoria); setIsDrawerOpen(true); } }}
+                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
+                                                title="Visualizar Detalhes"
+                                            >
+                                                <Eye size={18} />
                                             </button>
+                                            
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setEmailModal({ open: true, vistoria }) }}
+                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all active:scale-95"
+                                                title="Enviar por Email"
+                                            >
+                                                <Mail size={18} />
+                                            </button>
+
+                                            {/* NOPRER Button */}
+                                            {(vistoria.nivelRisco === 'Médio' || vistoria.nivelRisco === 'Alto' || vistoria.nivelRisco === 'Muito Alto' || vistoria.nivelRisco === 'Iminente') && (
+                                                (() => {
+                                                    const linkedNoprer = noprers.find(n => String(n.origem_id) === String(vistoria.vistoria_id) || String(n.origem_id) === String(vistoria.id));
+                                                    if (linkedNoprer) {
+                                                        return (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); navigate(`/noprer/detalhes/${linkedNoprer.id}`); }}
+                                                                className="px-3 h-10 flex items-center gap-1 justify-center text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                                title="Ver NOPRER Gerada"
+                                                            >
+                                                                <ShieldAlert size={14} />
+                                                                {linkedNoprer.numero_noprer}
+                                                            </button>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <button
+                                                                onClick={(e) => { 
+                                                                    e.stopPropagation(); 
+                                                                    const vistoriaIdStr = encodeURIComponent(vistoria.id || vistoria.vistoria_id);
+                                                                    navigate(`/noprer/novo/vistoria/${vistoriaIdStr}`);
+                                                                }}
+                                                                className="px-3 h-10 flex items-center justify-center text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                                title="Emitir Notificação Preliminar de Risco"
+                                                            >
+                                                                Emitir NOPRER
+                                                            </button>
+                                                        );
+                                                    }
+                                                })()
+                                            )}
+
+                                            {userProfile?.role !== 'Operador' && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, vistoria }) }}
+                                                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all active:scale-95"
+                                                    title="Excluir Vistoria"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
                                         </div>
-                                    </div>
-                                    <h3 className="text-base font-black text-slate-800 dark:text-slate-100 mb-2 leading-tight">
-                                        {vistoria.solicitante || 'Solicitante NÃ£o Identificado'}
-                                    </h3>
-                                    <div className="mb-3 flex items-center gap-2">
-                                        <span className="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-[9px] font-black px-2 py-1 rounded uppercase">
-                                            {vistoria.categoriaRisco || vistoria.tipo_info || 'Geral'}
-                                        </span>
-                                        {vistoria.isLocal && (vistoria.synced === false || vistoria.synced === undefined || vistoria.synced === 0) && (
-                                            <span className="bg-orange-50 text-orange-600 dark:bg-orange-900/30 text-[9px] font-black px-2 py-1 rounded uppercase flex items-center gap-1">
-                                                <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" /> Pendente
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 flex items-start gap-2">
-                                        <MapPin size={16} className="text-blue-500 shrink-0 mt-0.5" />
-                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 line-clamp-1">{vistoria.endereco || 'EndereÃ§o nÃ£o informado'}</span>
+                                        <div className="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
+                                            <ChevronRight size={20} />
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -429,6 +535,9 @@ const VistoriaList = ({ onNew, onEdit }) => {
                     </div>
                 )}
             </div>
+
+            </div>
+            {/* End main panel */}
 
             {/* Email Share Modal */}
             {emailModal.open && (
@@ -442,16 +551,16 @@ const VistoriaList = ({ onNew, onEdit }) => {
                         </div>
 
                         <p className="text-sm text-gray-600 mb-4">
-                            Digite o email para enviar o relatÃ³rio da vistoria <span className="font-bold text-[#2a5299]">#{emailModal.vistoria?.vistoria_id}</span>
+                            Digite o email para enviar o relatório da vistoria <span className="font-bold text-[#2a5299]">#{emailModal.vistoria?.vistoria_id}</span>
                         </p>
 
                         <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-3 mb-4">
-                            <p className="text-xs font-bold text-blue-800">ðŸ“§ O PDF serÃ¡ anexado automaticamente</p>
-                            <p className="text-xs text-blue-700 mt-1">Funciona offline - o email serÃ¡ enviado quando houver conexÃ£o</p>
+                            <p className="text-xs font-bold text-blue-800">📧 O PDF será anexado automaticamente</p>
+                            <p className="text-xs text-blue-700 mt-1">Funciona offline - o email será enviado quando houver conexão</p>
                         </div>
 
                         <div className="mb-6">
-                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">EndereÃ§o de Email</label>
+                            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Endereço de Email</label>
                             <input
                                 type="email"
                                 inputMode="email"
@@ -484,6 +593,106 @@ const VistoriaList = ({ onNew, onEdit }) => {
                 </div>
             )}
 
+            {/* Mobile Action Menu Popup */}
+            {mobileMenuVistoria && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[6000] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setMobileMenuVistoria(null)}>
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-100 dark:border-slate-700">
+                            <div>
+                                <h3 className="font-black text-slate-800 dark:text-white text-base">Vistoria #{mobileMenuVistoria.vistoria_id || '---'}</h3>
+                                <p className="text-xs font-medium text-slate-400 truncate max-w-[180px]">{mobileMenuVistoria.solicitante || 'Solicitante não informado'}</p>
+                            </div>
+                            <button onClick={() => setMobileMenuVistoria(null)} className="p-2 text-slate-400 hover:text-slate-600 rounded-full">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="space-y-2">
+                            <button
+                                onClick={() => {
+                                    const v = mobileMenuVistoria;
+                                    setMobileMenuVistoria(null);
+                                    setSelectedVistoria(v);
+                                    setIsDrawerOpen(true);
+                                }}
+                                className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-200 font-bold text-sm transition-all"
+                            >
+                                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center shrink-0">
+                                    <Eye size={18} />
+                                </div>
+                                <span>Visualizar Relatório</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    const v = mobileMenuVistoria;
+                                    setMobileMenuVistoria(null);
+                                    setEmailModal({ open: true, vistoria: v });
+                                }}
+                                className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-slate-700 dark:text-slate-200 font-bold text-sm transition-all"
+                            >
+                                <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <Mail size={18} />
+                                </div>
+                                <span>Enviar por E-mail</span>
+                            </button>
+
+                            {/* NOPRER Option */}
+                            {(mobileMenuVistoria.nivelRisco === 'Médio' || mobileMenuVistoria.nivelRisco === 'Alto' || mobileMenuVistoria.nivelRisco === 'Muito Alto' || mobileMenuVistoria.nivelRisco === 'Iminente') && (() => {
+                                const linkedNoprer = noprers.find(n => String(n.origem_id) === String(mobileMenuVistoria.vistoria_id) || String(n.origem_id) === String(mobileMenuVistoria.id));
+                                if (linkedNoprer) {
+                                    return (
+                                        <button
+                                            onClick={() => {
+                                                setMobileMenuVistoria(null);
+                                                navigate(`/noprer/detalhes/${linkedNoprer.id}`);
+                                            }}
+                                            className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-slate-700 dark:text-slate-200 font-bold text-sm transition-all"
+                                        >
+                                            <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center shrink-0">
+                                                <ShieldAlert size={18} />
+                                            </div>
+                                            <span>Ver NOPRER ({linkedNoprer.numero_noprer})</span>
+                                        </button>
+                                    );
+                                } else {
+                                    return (
+                                        <button
+                                            onClick={() => {
+                                                const vid = encodeURIComponent(mobileMenuVistoria.id || mobileMenuVistoria.vistoria_id);
+                                                setMobileMenuVistoria(null);
+                                                navigate(`/noprer/novo/vistoria/${vid}`);
+                                            }}
+                                            className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-slate-700 dark:text-slate-200 font-bold text-sm transition-all"
+                                        >
+                                            <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center shrink-0">
+                                                <ShieldAlert size={18} />
+                                            </div>
+                                            <span>Emitir NOPRER</span>
+                                        </button>
+                                    );
+                                }
+                            })()}
+
+                            {userProfile?.role !== 'Operador' && (
+                                <button
+                                    onClick={() => {
+                                        const v = mobileMenuVistoria;
+                                        setMobileMenuVistoria(null);
+                                        setDeleteModal({ open: true, vistoria: v });
+                                    }}
+                                    className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 font-bold text-sm transition-all"
+                                >
+                                    <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center shrink-0">
+                                        <Trash2 size={18} />
+                                    </div>
+                                    <span>Excluir Vistoria</span>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Deletion Safety Modal */}
             <ConfirmModal
                 isOpen={deleteModal.open}
@@ -494,10 +703,16 @@ const VistoriaList = ({ onNew, onEdit }) => {
                 confirmText="Sim, Excluir"
                 cancelText="Mantenha para mim"
             />
+        {/* Side Panel Drawer */}
+        {isDrawerOpen && (
+            <VistoriaDrawer
+                vistoria={selectedVistoria}
+                onClose={() => { setIsDrawerOpen(false); setSelectedVistoria(null); }}
+                onEdit={onEdit}
+            />
+        )}
         </div>
     )
 }
 
-export default VistoriaList
-
-
+export default VistoriaList;

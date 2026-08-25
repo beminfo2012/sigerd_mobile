@@ -20,6 +20,7 @@ export default function PrintLayout({
     subtitle,
     isLoading = false,
     onPrint,
+    hideHeader = false,
     children
 }) {
     const [zoom, setZoom] = useState(1.0);
@@ -45,7 +46,7 @@ export default function PrintLayout({
     }
 
     return (
-        <div className="bg-slate-100 min-h-screen text-slate-800 print:bg-white print:p-0 p-8 flex justify-center report-root-wrapper">
+        <div className={`bg-slate-100 min-h-screen text-slate-800 print:bg-white print:p-0 ${hideHeader ? 'p-3 sm:p-6' : 'p-8'} flex justify-center report-root-wrapper`}>
             <style>{`
                 :root {
                     --navy:   #0B1F3A;
@@ -72,17 +73,23 @@ export default function PrintLayout({
                 @media screen and (max-width: 768px) {
                     .print-preview-wrapper { 
                         overflow-x: auto; 
-                        overflow-y: visible;
-                        padding: 10px; 
-                        display: block; 
+                        overflow-y: auto;
+                        padding: 8px; 
+                        display: flex; 
+                        flex-direction: column;
+                        align-items: center;
                         width: 100%;
                         -webkit-overflow-scrolling: touch;
                     }
                     .print-container { 
-                        min-width: 210mm; 
-                        transform: scale(0.45); 
-                        transform-origin: top center; 
-                        margin-bottom: -150mm;
+                        width: 100% !important;
+                        min-width: 0 !important; 
+                        max-width: 100% !important;
+                        transform: none !important; 
+                        margin: 0 auto !important;
+                        padding: 16px !important;
+                        border-radius: 16px !important;
+                        box-sizing: border-box !important;
                     }
                 }
 
@@ -178,31 +185,33 @@ export default function PrintLayout({
             `}</style>
 
             {/* BARRA DE OPÇÕES SUPERIOR (FIXA) */}
-            <div className="no-print fixed top-0 left-0 right-0 h-16 bg-[#0B1F3A]/95 backdrop-blur-md border-b border-white/10 z-[9999] flex items-center justify-between px-6 shadow-xl">
-                <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center border border-blue-500/20">
-                        <FileText size={16} className="text-blue-400" />
+            {!hideHeader && (
+                <div className="no-print fixed top-0 left-0 right-0 h-16 bg-[#0B1F3A]/95 backdrop-blur-md border-b border-white/10 z-[9999] flex items-center justify-between px-6 shadow-xl">
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center border border-blue-500/20">
+                            <FileText size={16} className="text-blue-400" />
+                        </div>
+                        <div>
+                            <h1 className="text-sm font-black text-white uppercase tracking-wider leading-none">Imprimir Relatório</h1>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Painel de Impressão Oficial SIGERD</span>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-sm font-black text-white uppercase tracking-wider leading-none">Imprimir Relatório</h1>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Painel de Impressão Oficial SIGERD</span>
+
+                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1.5 hidden md:flex">
+                        <button onClick={handleZoomOut} className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center text-slate-300"><ZoomOut size={16} /></button>
+                        <button onClick={handleResetZoom} className="h-8 px-3 rounded-lg hover:bg-white/10 flex items-center gap-1 text-xs font-bold text-slate-300"><RotateCcw size={12} /> {Math.round(zoom * 100)}%</button>
+                        <button onClick={handleZoomIn} className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center text-slate-300"><ZoomIn size={16} /></button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => window.close()} className="h-10 px-5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase text-white flex items-center gap-2"><X size={16} /> Fechar</button>
+                        <button onClick={handlePrintClick} className="h-10 px-6 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2"><Printer size={16} /> Imprimir</button>
                     </div>
                 </div>
+            )}
 
-                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1.5 hidden md:flex">
-                    <button onClick={handleZoomOut} className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center text-slate-300"><ZoomOut size={16} /></button>
-                    <button onClick={handleResetZoom} className="h-8 px-3 rounded-lg hover:bg-white/10 flex items-center gap-1 text-xs font-bold text-slate-300"><RotateCcw size={12} /> {Math.round(zoom * 100)}%</button>
-                    <button onClick={handleZoomIn} className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center text-slate-300"><ZoomIn size={16} /></button>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button onClick={() => window.close()} className="h-10 px-5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase text-white flex items-center gap-2"><X size={16} /> Fechar</button>
-                    <button onClick={handlePrintClick} className="h-10 px-6 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2"><Printer size={16} /> Imprimir</button>
-                </div>
-            </div>
-
-            <main className="flex flex-col items-center pt-20 print:pt-0 w-full print-preview-wrapper" style={{ '--report-zoom': zoom }}>
-                <div className="w-[210mm] bg-white print:shadow-none shadow-2xl min-h-[297mm] p-10 md:p-14 print:p-0 mb-10 print:mb-0 relative print-container flex flex-col justify-between">
+            <main className={`flex flex-col items-center ${hideHeader ? '' : 'pt-20'} print:pt-0 w-full print-preview-wrapper`} style={{ '--report-zoom': zoom }}>
+                <div className={`${hideHeader ? 'w-full md:w-[210mm]' : 'w-[210mm]'} max-w-full bg-white print:shadow-none shadow-2xl min-h-[297mm] p-4 sm:p-10 print:p-0 mb-10 print:mb-0 relative print-container flex flex-col justify-between mx-auto`}>
                     <div className="relative">
                         <header className="flex flex-col items-center mb-8 border-b-4 border-[#2a5299] pb-6">
                             <div className="w-full flex justify-between items-center mb-6 px-4">

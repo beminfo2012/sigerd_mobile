@@ -137,10 +137,11 @@ const MOCK_VISTORIA = {
     assinaturaAgente: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="50"><text x="10" y="30" font-family="cursive" font-size="20" fill="blue">Marcelo Dias P.</text></svg>'
 };
 
-const VistoriaPrint = () => {
-    const { id } = useParams();
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
+const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = null, onEdit = null }) => {
+    const params = useParams();
+    const id = isDrawerMode ? null : (params?.id || null);
+    const [data, setData] = useState(initialData || null);
+    const [loading, setLoading] = useState(!initialData);
     const [zoom, setZoom] = useState(1.0);
 
     const handleZoomIn = () => {
@@ -150,6 +151,11 @@ const VistoriaPrint = () => {
 
 
     useEffect(() => {
+        if (initialData) {
+            setData(initialData);
+            setLoading(false);
+            return;
+        }
         const fetchData = async () => {
             if (!id) return;
             if (id === 'mock') {
@@ -202,8 +208,9 @@ const VistoriaPrint = () => {
                 };
 
                 // 1. Try to fetch from Local DB first (support offline usage)
+                const decodedId = decodeURIComponent(id);
                 const localVistorias = await getAllVistoriasLocal().catch(() => []);
-                let localMatch = localVistorias.find(v => v.id === id || v.vistoria_id === id);
+                let localMatch = localVistorias.find(v => v.id === decodedId || v.vistoria_id === decodedId || v.id === id || v.vistoria_id === id);
 
                 if (localMatch) {
                     localMatch = await enrichWithAberturas(localMatch);
@@ -219,7 +226,7 @@ const VistoriaPrint = () => {
                 const { data: reportData, error } = await supabase
                     .from('vistorias')
                     .select('*')
-                    .or(`id.eq.${id},vistoria_id.eq.${id}`)
+                    .or(`id.eq.${decodedId},vistoria_id.eq.${decodedId}`)
                     .single();
 
                 if (reportData) {
@@ -238,7 +245,7 @@ const VistoriaPrint = () => {
             }
         };
         fetchData();
-    }, [id]);
+    }, [id, initialData]);
 
     const handlePrint = () => {
         window.dispatchEvent(new Event('trigger-map-print-resize'));
@@ -387,7 +394,7 @@ const VistoriaPrint = () => {
     };
 
     return (
-        <PrintLayout
+        <PrintLayout hideHeader={isDrawerMode}
             documentTitle={data.vistoriaId ? `Vistoria nº ${(data.vistoriaId || data.vistoria_id).replace('/', '-')} - ${data.solicitante || 'Sem Nome'}` : 'Relatório de Vistoria'}
             reportTitle="Relatório de Vistoria Técnica"
             subtitle={
