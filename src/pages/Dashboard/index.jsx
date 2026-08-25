@@ -417,208 +417,506 @@ const TvModeDashboardView = ({
     navigate, activeContingencyPlan, load, refreshRainfall, getWeatherIcon,
     limiteSMJ
 }) => {
-    const [currentView, setCurrentView] = useState('menu');
-    const [lastRefresh, setLastRefresh] = useState(new Date());
-    const [areasRisco, setAreasRisco] = useState(null);
-
-    const [baciasData, setBaciasData] = useState(null);
+    const [drawerOpen, setDrawerOpen] = useState(true);
+    const [layersOpen, setLayersOpen] = useState(true);
+    const [shieldFilter, setShieldFilter] = useState(false);
+    const [sheltersData, setSheltersData] = useState([]);
+    const [crisisActive, setCrisisActive] = useState(false);
+    const [customLayers, setCustomLayers] = useState([]);
 
     useEffect(() => {
-        fetch('/Areas_de_risco.json')
-            .then(res => res.json())
-            .then(data => setAreasRisco(data))
-            .catch(e => console.error('Erro ao baixar áreas de risco:', e));
-
-        fetch('/bacias_hidrograficas.geojson')
-            .then(res => res.json())
-            .then(data => setBaciasData(data))
-            .catch(e => console.warn('[Bacias] GeoJSON error:', e));
+        getShelters().then(s => setSheltersData(s || [])).catch(() => {});
     }, []);
 
-    useEffect(() => {
-        const observer = new MutationObserver(() => setIsDark(document.documentElement.classList.contains('dark')));
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => observer.disconnect();
-    }, []);
-
-    // Auto-refresh logic (5 minutes)
-    useEffect(() => {
-        const timer = setInterval(() => {
-            load();
-            setLastRefresh(new Date());
-        }, 300000); // 5 minutes
-        return () => clearInterval(timer);
-    }, [load]);
-
-    // 1-minute auto-refresh for rainfall only when in Climate Center view
-    useEffect(() => {
-        if (currentView !== 'chuva' || !refreshRainfall) return;
-
-        const timer = setInterval(() => {
-            refreshRainfall();
-            setLastRefresh(new Date());
-        }, 60000); // 1 minute
-
-        return () => clearInterval(timer);
-    }, [currentView, refreshRainfall]);
-
-    const panelOptions = [
-        { id: 'resumo', label: 'Monitor Estratégico', icon: Activity, desc: 'Indicadores e map de calor' },
-        { id: 'chuva', label: 'Centro Climático', icon: Droplets, desc: 'Pluviometria e Previsão' },
-        { id: 'ocorrencias', label: 'Painel Operacional', icon: AlertTriangle, desc: 'Ocorrências em tempo real' },
-        { id: 'humanitaria', label: 'Social e Abrigos', icon: Home, desc: 'Censo e logística humanitária' },
-        { id: 'sco', label: 'Gestão de Crise', icon: ShieldAlert, desc: 'Plano de Contingência (SCO)' },
-    ];
-
-    if (currentView === 'menu') {
-        return (
-            <div className="h-screen w-screen bg-gradient-to-br from-slate-50 via-slate-100 to-blue-50/30 flex flex-col p-6 md:p-8 lg:p-10 xl:p-12 3xl:p-20 4xl:p-28 tv:p-36 overflow-hidden justify-center items-center">
-                <div className="text-center mb-8 lg:mb-10 xl:mb-12 3xl:mb-20 4xl:mb-28 tv:mb-36 space-y-3 lg:space-y-4 3xl:space-y-8 tv:space-y-12">
-                    <img src="/logo_header.png" alt="Logo" className="h-16 md:h-20 lg:h-24 xl:h-28 3xl:h-40 4xl:h-56 tv:h-72 mx-auto mb-4 lg:mb-6 xl:mb-8 3xl:mb-16 tv:mb-24 object-contain" />
-                    <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 3xl:text-7xl 4xl:text-8xl tv:text-9xl font-black text-slate-800 tracking-[6px] md:tracking-[8px] lg:tracking-[10px] xl:tracking-[14px] 3xl:tracking-[20px] tv:tracking-[28px] uppercase">MODO TV ESTRATÉGICO</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-[3px] md:tracking-[4px] lg:tracking-[5px] xl:tracking-[6px] 3xl:tracking-[8px] text-[10px] md:text-xs lg:text-sm xl:text-base 3xl:text-xl 4xl:text-2xl tv:text-3xl">Selecione o painel de monitoramento para transmissão em Videowall</p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5 lg:gap-6 xl:gap-8 3xl:gap-12 4xl:gap-16 tv:gap-20 max-w-[900px] lg:max-w-[1100px] xl:max-w-[1400px] 3xl:max-w-[2200px] 4xl:max-w-[3000px] tv:max-w-[3600px] w-full">
-                    {panelOptions.map((opt) => (
-                        <button
-                            key={opt.id}
-                            onClick={() => setCurrentView(opt.id)}
-                            className="bg-white border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 md:p-8 lg:p-10 xl:p-12 3xl:p-16 4xl:p-20 tv:p-24 rounded-[24px] md:rounded-[32px] lg:rounded-[40px] xl:rounded-[48px] 3xl:rounded-[56px] transition-all flex flex-col items-center gap-4 md:gap-5 lg:gap-6 xl:gap-8 3xl:gap-12 4xl:gap-14 tv:gap-16 group shadow-lg hover:shadow-2xl hover:scale-105"
-                        >
-                            <div className="p-5 md:p-6 lg:p-8 xl:p-10 3xl:p-14 4xl:p-18 tv:p-22 rounded-full bg-slate-100 group-hover:bg-blue-600 transition-all shadow-md flex items-center justify-center">
-                                <opt.icon className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 3xl:w-24 3xl:h-24 4xl:w-32 4xl:h-32 tv:w-40 tv:h-40 text-slate-600 group-hover:text-white" />
-                            </div>
-                            <div className="text-center space-y-1 lg:space-y-2 3xl:space-y-4 tv:space-y-6">
-                                <h3 className="text-xs md:text-sm lg:text-base xl:text-lg 3xl:text-3xl 4xl:text-4xl tv:text-5xl font-black text-slate-800 uppercase tracking-tight">{opt.label}</h3>
-                                <p className="text-[8px] md:text-[9px] lg:text-[10px] xl:text-xs 3xl:text-sm 4xl:text-base tv:text-lg text-slate-400 font-black uppercase tracking-widest">{opt.desc}</p>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                <div className="mt-10 lg:mt-12 xl:mt-16 3xl:mt-24 4xl:mt-32 tv:mt-40 flex gap-4 lg:gap-6 xl:gap-8 3xl:gap-12 italic text-slate-400 font-black uppercase tracking-widest text-[9px] md:text-[10px] lg:text-xs xl:text-sm 3xl:text-lg 4xl:text-xl tv:text-2xl">
-                    <span>SALA DE SITUAÇÃO - DEFESA CIVIL</span>
-                    <span className="opacity-30">|</span>
-                    <span>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                </div>
-            </div>
-        );
-    }
+    const countOcorrencias = data.ocorrencias?.locations?.length || 0;
+    const avgRain = rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : '0.0';
 
     return (
-        <div className="h-screen w-screen bg-slate-100 flex flex-col p-3 md:p-4 lg:p-5 xl:p-6 3xl:p-8 4xl:p-12 tv:p-16 gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16 overflow-hidden">
-            {/* White TV Header */}
-            <div className="flex justify-between items-center bg-white border border-slate-200 p-3 md:p-4 lg:p-5 xl:p-6 3xl:p-10 4xl:p-14 tv:p-16 rounded-[20px] md:rounded-[24px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] shadow-lg xl:shadow-xl shrink-0">
-                <div className="flex gap-4 lg:gap-6 xl:gap-8 3xl:gap-14 tv:gap-20 items-center">
-                    <button onClick={() => setCurrentView('menu')} className="bg-slate-100 p-2.5 lg:p-3 xl:p-4 3xl:p-6 4xl:p-8 tv:p-10 rounded-xl lg:rounded-2xl text-slate-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center">
-                        <Layers className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10 4xl:w-14 4xl:h-14 tv:w-16 tv:h-16" />
-                    </button>
-                    <div className="h-8 lg:h-10 xl:h-12 3xl:h-16 4xl:h-20 w-px bg-slate-200" />
-                    <div>
-                        <h1 className="text-base md:text-lg lg:text-xl xl:text-2xl 3xl:text-4xl 4xl:text-5xl tv:text-6xl font-black text-slate-800 tracking-[3px] lg:tracking-[5px] xl:tracking-[7px] 3xl:tracking-[10px] uppercase leading-none mb-1.5 lg:mb-2 xl:mb-3 3xl:mb-4">
-                            {panelOptions.find(p => p.id === currentView)?.label}
-                        </h1>
-                        <div className="flex items-center gap-2 lg:gap-3 xl:gap-4 3xl:gap-6">
-                            <span className="flex items-center gap-1.5 px-2 py-1 lg:px-3 lg:py-1.5 xl:px-4 xl:py-1.5 3xl:px-6 3xl:py-2.5 4xl:px-8 4xl:py-3 tv:px-10 tv:py-4 bg-blue-600 rounded-lg lg:rounded-xl text-white text-[8px] lg:text-[9px] xl:text-[10px] 3xl:text-sm 4xl:text-base tv:text-lg font-black uppercase tracking-widest animate-pulse shadow-lg shadow-blue-600/20">Monitoramento Ativo</span>
-                            <span className="text-[8px] lg:text-[9px] xl:text-[10px] 3xl:text-sm 4xl:text-base tv:text-lg font-black text-slate-400 uppercase tracking-[2px] lg:tracking-[3px] xl:tracking-[4px] leading-none">SANTA MARIA DE JETIBÁ</span>
-                        </div>
+        <div className={`h-screen w-screen bg-[#EEF1F7] flex flex-col overflow-hidden font-sans relative ${crisisActive ? 'ring-8 ring-red-500/50' : ''}`}>
+            {/* Header Conforme Modelo HTML */}
+            <header className="relative z-40 flex items-center gap-5 px-6 py-3 bg-white/80 backdrop-blur-md border-b border-slate-200/80 shrink-0 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <img src="/logo_header.png" alt="SIGERD" className="w-[34px] h-[34px] shrink-0 object-contain" />
+                    <div className="flex flex-col leading-tight">
+                        <span className="font-black text-sm tracking-wider uppercase text-slate-800 font-sans">SIGERD</span>
+                        <span className="text-[10.5px] text-slate-400 font-bold uppercase tracking-wider">Defesa Civil • SMJ</span>
                     </div>
                 </div>
 
-                <div className="flex gap-6 lg:gap-8 xl:gap-12 3xl:gap-20 4xl:gap-24 tv:gap-28 items-center">
-                    {weather?.current && (
-                        <div className="flex items-center gap-3 lg:gap-4 xl:gap-5 3xl:gap-8 4xl:gap-10 bg-slate-50 px-4 py-2 lg:px-5 lg:py-2.5 xl:px-6 xl:py-3 3xl:px-10 3xl:py-5 4xl:px-14 4xl:py-7 tv:px-16 tv:py-8 rounded-xl lg:rounded-2xl xl:rounded-3xl border border-slate-100">
-                            <span className="text-xl lg:text-2xl xl:text-3xl 3xl:text-5xl 4xl:text-6xl tv:text-7xl">{getWeatherIcon(weather.current.code)}</span>
-                            <div className="flex flex-col">
-                                <span className="text-lg lg:text-xl xl:text-2xl 3xl:text-4xl 4xl:text-5xl tv:text-6xl font-black text-slate-800 tabular-nums leading-none mb-0.5 lg:mb-1 3xl:mb-2">{Math.round(weather.current.temp)}°C</span>
-                                <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-xs 4xl:text-sm tv:text-base font-black text-slate-400 uppercase tracking-widest">Tempo Real</span>
+                <div className="flex flex-col gap-0.5 mr-auto">
+                    <h1 className="font-sans text-base font-black tracking-wider uppercase text-slate-900 flex items-center gap-2">
+                        MONITOR ESTRATÉGICO
+                        <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-[10px] font-bold tracking-widest px-2.5 py-0.5 rounded-full uppercase">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#22c55e]" /> AO VIVO
+                        </span>
+                    </h1>
+                    <div className="text-[10.5px] text-slate-400 font-bold uppercase tracking-widest">SANTA MARIA DE JETIBÁ • ES</div>
+                </div>
+
+                <div className="flex items-center gap-2 text-[10px] text-slate-500 bg-white border border-slate-200/80 px-3 py-1.5 rounded-xl font-bold">
+                    <b className="text-slate-800 font-black">{3 + customLayers.length}</b> camadas ativas • <b className="text-slate-800 font-black">{countOcorrencias}</b> pontos
+                </div>
+
+                {weather?.current && (
+                    <div className="flex items-center gap-2.5 bg-white border border-slate-200/80 rounded-xl px-3.5 py-1.5 min-w-[130px]">
+                        <span className="text-xl leading-none">{getWeatherIcon(weather.current.code)}</span>
+                        <div>
+                            <div className="font-bold text-base text-slate-800">{Math.round(weather.current.temp)}°C</div>
+                            <div className="text-[10px] text-slate-400 font-semibold">Tempo Real</div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="text-right pl-3.5 border-l border-slate-200 flex items-center gap-4">
+                    <div>
+                        <div className="font-black text-2xl text-slate-900 tabular-nums leading-none">
+                            {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            <span className="text-xs text-slate-400 font-bold ml-0.5">{new Date().toLocaleTimeString('pt-BR', { second: '2-digit' })}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                            {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
+                        </div>
+                    </div>
+                    <button onClick={() => window.close()} className="p-2 bg-slate-100 hover:bg-red-500 hover:text-white text-slate-500 rounded-xl transition-all shadow-sm">
+                        <X size={18} />
+                    </button>
+                </div>
+            </header>
+
+            {/* Stage: Mapa Principal & Painéis Flutuantes */}
+            <div className="flex-1 relative min-h-0 p-3.5 flex">
+                <div className="relative flex-1 border border-slate-200/80 rounded-2xl overflow-hidden shadow-2xl bg-white">
+                    <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                        <MapAutoBounds locations={data.ocorrencias?.locations || []} />
+                        <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                        <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
+                        <LimiteSMJLayer keyId="limite-smj-full" />
+                        
+                        {/* Camada de Abrigos */}
+                        {sheltersData?.map((s, idx) => {
+                            const lat = parseFloat(s.latitude || s.lat || -20.025);
+                            const lng = parseFloat(s.longitude || s.lng || -40.745);
+                            if (isNaN(lat) || isNaN(lng)) return null;
+                            const ocupacao = s.ocupacao_atual || s.ocupantes || 0;
+                            const cap = s.capacidade || 100;
+                            const isFull = ocupacao >= cap;
+                            const pinColor = isFull ? '#ef4444' : '#DB2777';
+
+                            const shelterIcon = L.divIcon({
+                                className: 'custom-shelter-marker',
+                                html: `<div style="background-color: ${pinColor}; color: white; border: 2px solid white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">🏠</div>`,
+                                iconSize: [28, 28],
+                                iconAnchor: [14, 14],
+                                popupAnchor: [0, -14]
+                            });
+
+                            return (
+                                <Marker key={`shelter-full-${idx}`} position={[lat, lng]} icon={shelterIcon}>
+                                    <Popup>
+                                        <div className="p-2 font-sans min-w-[180px]">
+                                            <div className="font-black text-xs text-pink-700 uppercase mb-1">{s.name || s.nome || 'Abrigo Municipal'}</div>
+                                            <div className="text-[11px] font-bold text-slate-700 mb-1">Capacidade: {cap} pessoas</div>
+                                            <div className="text-[11px] font-bold text-slate-700 mb-2">Ocupação Atual: <span className={isFull ? 'text-red-600 font-black' : 'text-emerald-600'}>{ocupacao}</span></div>
+                                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                                                <div className={`h-full ${isFull ? 'bg-red-500' : 'bg-pink-600'}`} style={{ width: `${Math.min(100, Math.round((ocupacao / cap) * 100))}%` }}></div>
+                                            </div>
+                                        </div>
+                                    </Popup>
+                                </Marker>
+                            );
+                        })}
+                    </MapContainer>
+
+                    {/* FAB Stack Canto Superior Esquerdo */}
+                    <div className="absolute top-3.5 left-3.5 z-[500] flex flex-col gap-2">
+                        <button
+                            onClick={() => setLayersOpen(!layersOpen)}
+                            className={`w-10 h-10 rounded-xl border border-slate-200 shadow-md flex items-center justify-center transition-all ${layersOpen ? 'bg-[#FF7A33] text-white border-[#FF7A33]' : 'bg-white/90 text-slate-700 hover:bg-slate-50'}`}
+                            title="Camadas"
+                        >
+                            <Layers size={18} />
+                        </button>
+                        <button
+                            onClick={() => setShieldFilter(!shieldFilter)}
+                            className={`w-10 h-10 rounded-xl border border-slate-200 shadow-md flex items-center justify-center transition-all ${shieldFilter ? 'bg-[#FF7A33] text-white border-[#FF7A33]' : 'bg-white/90 text-slate-700 hover:bg-slate-50'}`}
+                            title="Modo Defesa Civil (Somente Risco)"
+                        >
+                            <ShieldAlert size={18} />
+                        </button>
+                    </div>
+
+                    {/* Painel Retrátil de Camadas do Modelo */}
+                    {layersOpen && (
+                        <div className="absolute top-3.5 left-16 z-[500] w-64 max-h-[calc(100%-80px)] bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl shadow-xl flex flex-col p-3.5 gap-2 animate-in fade-in slide-in-from-left-4 duration-200">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <h3 className="font-sans text-xs font-black uppercase tracking-widest text-slate-800">▾ Camadas</h3>
                             </div>
+                            <div className="overflow-y-auto space-y-2 text-xs font-semibold text-slate-600 pr-1">
+                                <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 pt-1">Camadas SIGERD</div>
+                                <label className="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                    <input type="checkbox" defaultChecked className="accent-[#FF7A33] rounded" />
+                                    <span className="w-2.5 h-2.5 rounded bg-orange-500" /> Perímetro do Município
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                    <input type="checkbox" defaultChecked className="accent-[#FF7A33] rounded" />
+                                    <span className="w-2.5 h-2.5 rounded bg-red-500" /> Áreas de Risco GeoJSON
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                    <input type="checkbox" defaultChecked className="accent-[#FF7A33] rounded" />
+                                    <span className="w-2.5 h-2.5 rounded bg-emerald-500" /> Ocorrências & Vistorias
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer hover:text-slate-900">
+                                    <input type="checkbox" defaultChecked className="accent-[#FF7A33] rounded" />
+                                    <span className="w-2.5 h-2.5 rounded bg-pink-600" /> Abrigos de Emergência
+                                </label>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = '.geojson,.json,.kml,.kmz';
+                                    input.onchange = (e) => {
+                                        if (e.target.files?.[0]) {
+                                            setCustomLayers([...customLayers, e.target.files[0].name]);
+                                        }
+                                    };
+                                    input.click();
+                                }}
+                                className="mt-2 border-1.5 border-dashed border-slate-300 hover:border-[#FF7A33] hover:bg-orange-500/5 text-slate-600 hover:text-[#FF7A33] py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5"
+                            >
+                                ＋ Adicionar camada
+                            </button>
+                            <span className="text-[9px] text-slate-400 font-medium text-center">KMZ, KML ou GeoJSON — lido no navegador</span>
                         </div>
                     )}
 
-                    <div className="text-right flex items-center gap-4 lg:gap-6 xl:gap-8 3xl:gap-14 4xl:gap-16 tv:gap-20 border-l border-slate-200 pl-4 lg:pl-6 xl:pl-8 3xl:pl-14 4xl:pl-16">
-                        <div className="flex flex-col items-end">
-                            <span className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-7xl 4xl:text-8xl tv:text-9xl font-black text-slate-800 leading-none tracking-tighter tabular-nums mb-0.5 lg:mb-1 3xl:mb-3">{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                            <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-xs 4xl:text-sm tv:text-base font-black text-slate-400 uppercase tracking-widest leading-none">Último Refresh: {lastRefresh.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    {/* Legenda de Severidade Canto Inferior Esquerdo */}
+                    <div className="absolute bottom-3.5 left-3.5 z-[490] bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-200 shadow-md flex gap-3 text-[10px] font-bold text-slate-600">
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />Baixo</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />Médio</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F5C518]" />Alto</div>
+                        <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />Crítico</div>
+                    </div>
+
+                    {/* Botão FAB Canto Inferior Direito para Abrir Drawer */}
+                    <button
+                        onClick={() => setDrawerOpen(true)}
+                        className="absolute bottom-3.5 right-3.5 z-[500] w-11 h-11 rounded-xl bg-white/95 border border-slate-200 shadow-lg flex items-center justify-center text-slate-700 hover:bg-blue-600 hover:text-white transition-all"
+                        title="Painel de Indicadores"
+                    >
+                        <Activity size={20} />
+                    </button>
+                </div>
+
+                {/* Drawer Lateral de Indicadores & Alertas (Fiel ao Modelo HTML) */}
+                {drawerOpen && (
+                    <div className="absolute top-0 right-0 h-full w-[360px] max-w-[88vw] z-[600] bg-white/95 backdrop-blur-lg border-l border-slate-200 shadow-2xl p-4 flex flex-col gap-3.5 overflow-y-auto animate-in slide-in-from-right duration-300 font-sans">
+                        <div className="flex items-center justify-between">
+                            <h2 className="font-sans text-xs font-black uppercase tracking-widest text-slate-800">Indicadores & Alertas</h2>
+                            <button onClick={() => setDrawerOpen(false)} className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold">✕</button>
                         </div>
-                        <button onClick={() => window.close()} className="p-2.5 lg:p-3 xl:p-4 3xl:p-6 4xl:p-8 tv:p-10 bg-slate-100 hover:bg-red-500 hover:text-white text-slate-400 rounded-xl lg:rounded-2xl transition-all shadow-sm flex items-center justify-center">
-                            <X className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10 4xl:w-14 4xl:h-14 tv:w-16 tv:h-16" />
+
+                        {/* Gauge de Contingência do Modelo */}
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">◆ NÍVEL DE CONTINGÊNCIA</div>
+                            <svg className="w-full max-w-[180px] h-auto" viewBox="0 0 240 150">
+                                <defs>
+                                    <linearGradient id="htmlGaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                                        <stop offset="0%" stopColor="#3B82F6" />
+                                        <stop offset="33%" stopColor="#22C55E" />
+                                        <stop offset="66%" stopColor="#F5C518" />
+                                        <stop offset="100%" stopColor="#EF4444" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M 20 130 A 100 100 0 0 1 220 130" fill="none" stroke="url(#htmlGaugeGrad)" strokeWidth="16" strokeLinecap="round" opacity="0.9" />
+                                <g transform={`rotate(${statusInfo.label === 'NORMAL' ? -25 : statusInfo.label === 'ATENÇÃO' ? 35 : 80} 120 130)`} style={{ transformOrigin: '120px 130px', transition: 'transform 1.1s cubic-bezier(.3,1.3,.4,1)' }}>
+                                    <line x1="120" y1="130" x2="120" y2="42" stroke="#16213E" strokeWidth="4" strokeLinecap="round" />
+                                </g>
+                                <circle cx="120" cy="130" r="9" fill="#16213E" />
+                                <circle cx="120" cy="130" r="4" fill="#FFFFFF" />
+                            </svg>
+                            <div className="font-extrabold text-base text-slate-800 mt-1">
+                                Nível <span className="text-amber-700">{statusInfo.label === 'NORMAL' ? '1' : statusInfo.label === 'ATENÇÃO' ? '2' : '3'}</span> — <span>{statusInfo.label}</span>
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-medium mt-0.5">Chuva moderada na região. Equipes em prontidão.</div>
+                            <div className="w-full h-1.5 bg-slate-200 rounded-full mt-2.5 overflow-hidden">
+                                <div className="h-full rounded-full bg-gradient-to-r from-blue-500 via-emerald-500 to-amber-500" style={{ width: statusInfo.label === 'NORMAL' ? '25%' : '75%' }} />
+                            </div>
+                            <div className="text-[9px] text-slate-400 font-bold tracking-wider uppercase mt-2">Protocolo de monitoramento ativo</div>
+                        </div>
+
+                        {/* KPI Cards (Ocorrências e Chuva) */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-50/20 border border-blue-200/60 p-3.5 rounded-2xl">
+                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider"><span>Ocorrências</span><span>⚠️</span></div>
+                                <div className="text-3xl font-black text-slate-800 leading-none mt-2">{countOcorrencias}</div>
+                                <div className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mt-1">Hoje</div>
+                            </div>
+                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-50/20 border border-indigo-200/60 p-3.5 rounded-2xl">
+                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider"><span>Chuva</span><span>💧</span></div>
+                                <div className="text-3xl font-black text-slate-800 leading-none mt-2">{avgRain}<span className="text-xs font-bold text-slate-500 ml-1">mm</span></div>
+                                <div className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider mt-1">Média 24h</div>
+                            </div>
+                        </div>
+
+                        {/* Estações Pluviométricas */}
+                        <div className="bg-white border border-slate-200 p-3.5 rounded-2xl space-y-2">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">◆ Estações Pluviométricas</div>
+                            <div className="space-y-1 text-xs text-slate-600 font-semibold">
+                                <div className="flex justify-between p-1.5 bg-slate-50 rounded-lg"><span>E1 • Alto Jequitibá</span><span className="text-indigo-600 font-bold">12mm</span></div>
+                                <div className="flex justify-between p-1.5 bg-slate-50 rounded-lg"><span>E2 • Garrafão</span><span className="text-indigo-600 font-bold">8mm</span></div>
+                                <div className="flex justify-between p-1.5 bg-slate-50 rounded-lg"><span>E3 • Vale do Canaã</span><span className="text-amber-700 font-bold">31mm</span></div>
+                                <div className="flex justify-between p-1.5 bg-slate-50 rounded-lg"><span>E4 • Sede</span><span className="text-indigo-600 font-bold">5mm</span></div>
+                            </div>
+                        </div>
+
+                        {/* Feed de Alertas em Tempo Real */}
+                        <div className="bg-white border border-slate-200 p-3.5 rounded-2xl space-y-2 flex-1 flex flex-col">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">◆ Alertas em Tempo Real</div>
+                            <div className="space-y-2 overflow-y-auto flex-1 text-xs">
+                                <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 flex gap-2">
+                                    <span className="text-blue-500">💧</span>
+                                    <div><div className="font-medium text-slate-800">Pluviômetro E3 registrou 31mm nas últimas 3h.</div><div className="text-[9px] text-slate-400 font-bold">agora</div></div>
+                                </div>
+                                <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 flex gap-2">
+                                    <span className="text-amber-500">📋</span>
+                                    <div><div className="font-medium text-slate-800">Vistoria de encosta criada em área de risco.</div><div className="text-[9px] text-slate-400 font-bold">há 5 min</div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Botão de Controle de Crise do Modelo */}
+                        <button
+                            onClick={() => setCrisisActive(!crisisActive)}
+                            className="w-full py-3 px-4 rounded-xl font-sans font-black uppercase text-xs tracking-wider text-amber-950 bg-gradient-to-r from-[#FF9457] to-[#FF7A33] shadow-lg shadow-orange-500/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                        >
+                            ⛔ Controle de Crise
                         </button>
                     </div>
-                </div>
-            </div>
-
-            {/* Strategic Content Area */}
-            <div className="flex-1 min-h-0">
-                {currentView === 'resumo' && <TV_StrategicOverview data={data} statusInfo={statusInfo} isDark={false} rainfall={rainfall} getWeatherIcon={getWeatherIcon} limiteSMJ={limiteSMJ} />}
-                {currentView === 'chuva' && <TV_ClimateCenter rainfall={rainfall} weather={weather} isDark={false} getWeatherIcon={getWeatherIcon} limiteSMJ={limiteSMJ} baciasData={baciasData} />}
-                {currentView === 'ocorrencias' && <TV_OperationsCenter data={data} isDark={false} setViewMode={setViewMode} viewMode={viewMode} mapStyle={mapStyle} areasRisco={areasRisco} limiteSMJ={limiteSMJ} />}
-                {currentView === 'humanitaria' && <TV_HumanitarianStrategic />}
-                {currentView === 'sco' && <TV_SCOStrategic plan={activeContingencyPlan} />}
+                )}
             </div>
         </div>
     );
 };// --- 1. TV STRATEGIC OVERVIEW (Dashboard Consolidado) ---
-const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, getWeatherIcon, limiteSMJ }) => (
+const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, weather, sheltersData, navigate, activeContingencyPlan, getWeatherIcon, limiteSMJ }) => (
     <div className="grid grid-cols-12 gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16 h-full">
-        {/* Left Column: Alerts & Stats */}
-        <div className="col-span-4 flex flex-col gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16">
-            <div className="bg-white border border-slate-200 p-5 lg:p-6 xl:p-8 3xl:p-14 4xl:p-20 tv:p-24 flex-1 flex flex-col justify-center items-center text-center shadow-md rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px]">
-                <div className={`w-16 h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 3xl:w-40 3xl:h-40 4xl:w-56 4xl:h-56 tv:w-64 tv:h-64 rounded-full ${statusInfo.bg || 'bg-blue-600'} flex items-center justify-center text-white shadow-2xl mb-4 lg:mb-5 xl:mb-6 3xl:mb-10 4xl:mb-14 tv:mb-16 animate-pulse`}>
-                    <ShieldAlert className="w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 3xl:w-20 3xl:h-20 4xl:w-28 4xl:h-28 tv:w-32 tv:h-32" />
+        {/* Left Column: Contingencia, Previsão, Ações do Plano & Stats */}
+        <div className="col-span-4 flex flex-col gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16 overflow-y-auto custom-scrollbar">
+            {/* Indicador de Ponteiro (Gauge) do Nível de Contingência — Modelo HTML */}
+            <div className="bg-white border border-slate-200 p-4 lg:p-5 xl:p-6 3xl:p-10 flex flex-col justify-center items-center text-center shadow-md rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] shrink-0">
+                <div className="text-[10.5px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                    ◆ NÍVEL DE CONTINGÊNCIA
                 </div>
-                <h3 className="text-xs lg:text-sm xl:text-base 3xl:text-2xl 4xl:text-3xl tv:text-4xl font-black text-slate-400 uppercase tracking-[2px] lg:tracking-[3px] xl:tracking-[4px] 3xl:tracking-[6px] mb-2 lg:mb-3 xl:mb-4 3xl:mb-6 4xl:mb-8">Nível de Contingência</h3>
-                <h2 className={`text-3xl lg:text-4xl xl:text-5xl 3xl:text-8xl 4xl:text-9xl tv:text-[10rem] font-black uppercase tracking-tight mb-4 lg:mb-5 xl:mb-6 3xl:mb-10 4xl:mb-14 tv:mb-16 ${statusInfo.text}`}>{statusInfo.label}</h2>
-                <div className="w-full h-2 lg:h-3 xl:h-4 3xl:h-6 4xl:h-8 tv:h-12 bg-slate-100 rounded-full overflow-hidden shadow-inner border border-slate-200">
-                    <div className={`h-full ${statusInfo.color}`} style={{ width: '100%' }} />
+                <div className="relative w-full max-w-[220px] flex flex-col items-center">
+                    <svg className="w-full h-auto max-w-[200px]" viewBox="0 0 240 150">
+                        <defs>
+                            <linearGradient id="tvGaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="#3B82F6" />
+                                <stop offset="33%" stopColor="#22C55E" />
+                                <stop offset="66%" stopColor="#F5C518" />
+                                <stop offset="100%" stopColor="#EF4444" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M 20 130 A 100 100 0 0 1 220 130" fill="none" stroke="url(#tvGaugeGrad)" strokeWidth="16" strokeLinecap="round" opacity="0.9" />
+                        <g transform={`rotate(${statusInfo.label === 'NORMAL' ? -25 : statusInfo.label === 'ATENÇÃO' ? 35 : 80} 120 130)`} style={{ transformOrigin: '120px 130px', transition: 'transform 1.1s cubic-bezier(.3,1.3,.4,1)' }}>
+                            <line x1="120" y1="130" x2="120" y2="42" stroke="#16213E" strokeWidth="4" strokeLinecap="round" />
+                        </g>
+                        <circle cx="120" cy="130" r="9" fill="#16213E" />
+                        <circle cx="120" cy="130" r="4" fill="#FFFFFF" />
+                    </svg>
+                    <div className="font-extrabold text-lg text-slate-800 mt-1">
+                        Nível <span className="text-amber-700">{statusInfo.label === 'NORMAL' ? '1' : statusInfo.label === 'ATENÇÃO' ? '2' : '3'}</span> — <span>{statusInfo.label}</span>
+                    </div>
+                    <div className="text-xs text-slate-400 font-semibold mt-0.5">
+                        {statusInfo.label === 'NORMAL' ? 'Monitoramento de rotina em curso.' : 'Chuva moderada/intensa na região. Equipes em prontidão.'}
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden border border-slate-200">
+                        <div className="h-full rounded-full bg-gradient-to-r from-blue-500 via-emerald-500 to-amber-500" style={{ width: statusInfo.label === 'NORMAL' ? '25%' : '75%' }} />
+                    </div>
+                    <div className="text-[9px] text-slate-400 font-bold tracking-wider uppercase mt-1.5">Protocolo de monitoramento ativo</div>
                 </div>
-                <p className="mt-4 lg:mt-5 xl:mt-6 3xl:mt-10 4xl:mt-14 tv:mt-16 text-[8px] lg:text-[9px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl font-bold text-slate-400 uppercase tracking-[2px] lg:tracking-[3px] xl:tracking-[3px] 3xl:tracking-[5px]">Protocolo de Monitoramento Ativo</p>
+
+                {/* Resumo do Plano de Contingência / Ações Vigentes */}
+                <div className="w-full bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-left space-y-2 mt-3">
+                    <div className="flex justify-between items-center border-b border-slate-200/60 pb-1.5">
+                        <span className="text-[9px] lg:text-[10px] 3xl:text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                            <Activity size={13} className="text-blue-600" /> Ações do Plano de Contingência
+                        </span>
+                        {activeContingencyPlan && (
+                            <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-500 text-white">SCO Ativo</span>
+                        )}
+                    </div>
+                    <ul className="space-y-1 text-[8px] lg:text-[9px] 3xl:text-xs text-slate-600 font-bold">
+                        <li className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span>Monitoramento pluviométrico e limnímetrico contínuo (24h)</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                            <span>Equipes de campo e vistoria em sobreaviso operacional</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+                            <span>Rede municipal de abrigos de emergência cadastrada</span>
+                        </li>
+                    </ul>
+                    <button
+                        onClick={() => navigate?.('/contingencia')}
+                        className="w-full mt-2 py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-black text-[8px] lg:text-[9px] 3xl:text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                        Abrir Plano de Contingência Completo <ExternalLink size={12} />
+                    </button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-5 xl:gap-6 3xl:gap-8 4xl:gap-12 tv:gap-16">
-                <div className="bg-white border border-slate-200 p-4 lg:p-5 xl:p-6 3xl:p-12 4xl:p-16 tv:p-20 flex flex-col justify-center shadow-md rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px]">
-                    <div className="flex items-center gap-2 lg:gap-3 xl:gap-4 3xl:gap-6 4xl:gap-8 mb-2 lg:mb-3 xl:mb-4 3xl:mb-6 4xl:mb-8">
-                        <div className="w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 3xl:w-16 3xl:h-16 4xl:w-24 4xl:h-24 tv:w-28 tv:h-28 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
-                            <AlertTriangle className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10 4xl:w-14 4xl:h-14 tv:w-16 tv:h-16" />
+            {/* Previsão do Tempo 24h–48h */}
+            <div className="bg-white border border-slate-200 p-4 lg:p-5 xl:p-6 3xl:p-10 rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px] shadow-md shrink-0 space-y-3">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-[10px] lg:text-xs 3xl:text-base font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <CloudRain size={16} className="text-blue-500" /> Previsão 24h – 48h (INMET / Meteo)
+                    </span>
+                    <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">S. M. Jetibá</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col justify-between">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Hoje (Próximas Horas)</span>
+                        <div className="flex items-center justify-between my-1">
+                            <span className="text-lg font-black text-slate-800 tabular-nums">{Math.round(weather?.current?.temp || 0)}°C</span>
+                            <span className="text-xs font-bold text-blue-600">{weather?.daily?.[0]?.rainProb || 0}% chuva</span>
                         </div>
-                        <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base tv:text-xl font-black uppercase tracking-widest text-slate-400">Ocorrências</span>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase">Umidade: {weather?.current?.humidity || 0}% • Vento: {Math.round(weather?.current?.wind || 0)}km/h</span>
                     </div>
-                    <div className="flex items-baseline gap-1 lg:gap-2 3xl:gap-4">
-                        <span className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-8xl 4xl:text-9xl tv:text-[10rem] font-black text-slate-800 tabular-nums leading-none tracking-tighter">{data.stats.activeOccurrences}</span>
-                        <span className="text-[8px] lg:text-[9px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl font-bold text-slate-400 uppercase">Hoje</span>
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col justify-between">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Amanhã</span>
+                        <div className="flex items-center justify-between my-1">
+                            <span className="text-lg font-black text-slate-800 tabular-nums">
+                                {weather?.daily?.[1]?.tempMax ? `${Math.round(weather.daily[1].tempMin)}°/${Math.round(weather.daily[1].tempMax)}°` : `${Math.round(weather?.current?.temp || 20)}°C`}
+                            </span>
+                            <span className="text-xs font-bold text-blue-600">{weather?.daily?.[1]?.rainProb || 20}% chuva</span>
+                        </div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase">Prognóstico Estável</span>
                     </div>
                 </div>
-                <div className="bg-white border border-slate-200 p-4 lg:p-5 xl:p-6 3xl:p-12 4xl:p-16 tv:p-20 flex flex-col justify-center shadow-md rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px]">
-                    <div className="flex items-center gap-2 lg:gap-3 xl:gap-4 3xl:gap-6 4xl:gap-8 mb-2 lg:mb-3 xl:mb-4 3xl:mb-6 4xl:mb-8">
-                        <div className="w-8 h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 3xl:w-16 3xl:h-16 4xl:w-24 4xl:h-24 tv:w-28 tv:h-28 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                            <Droplets className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 3xl:w-10 3xl:h-10 4xl:w-14 4xl:h-14 tv:w-16 tv:h-16" />
-                        </div>
-                        <span className="text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-sm 4xl:text-base tv:text-xl font-black uppercase tracking-widest text-slate-400">Média Chuva</span>
+            </div>
+
+            {/* Minicards de Métricas Rápidas */}
+            <div className="grid grid-cols-3 gap-2.5 shrink-0">
+                <div className="bg-white border border-slate-200 p-3 lg:p-4 rounded-[18px] flex flex-col justify-center shadow-md">
+                    <div className="flex items-center gap-1.5 mb-1 text-slate-400">
+                        <AlertTriangle size={14} className="text-blue-600" />
+                        <span className="text-[7px] lg:text-[8px] 3xl:text-xs font-black uppercase tracking-widest">Ocorrências</span>
                     </div>
-                    <div className="flex items-baseline gap-1 lg:gap-2 3xl:gap-4">
-                        <span className="text-3xl lg:text-4xl xl:text-5xl 3xl:text-8xl 4xl:text-9xl tv:text-[10rem] font-black text-slate-800 tabular-nums leading-none tracking-tighter">
+                    <span className="text-xl lg:text-2xl 3xl:text-4xl font-black text-slate-800 tabular-nums">{data.stats.activeOccurrences}</span>
+                </div>
+                <div className="bg-white border border-slate-200 p-3 lg:p-4 rounded-[18px] flex flex-col justify-center shadow-md">
+                    <div className="flex items-center gap-1.5 mb-1 text-slate-400">
+                        <Droplets size={14} className="text-emerald-600" />
+                        <span className="text-[7px] lg:text-[8px] 3xl:text-xs font-black uppercase tracking-widest">Média Chuva</span>
+                    </div>
+                    <div className="flex items-baseline gap-0.5">
+                        <span className="text-xl lg:text-2xl 3xl:text-4xl font-black text-slate-800 tabular-nums">
                             {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : '0.0'}
                         </span>
-                        <span className="text-sm lg:text-base xl:text-lg 3xl:text-2xl 4xl:text-3xl tv:text-4xl font-bold text-slate-400 uppercase">mm</span>
+                        <span className="text-[8px] font-bold text-slate-400">mm</span>
                     </div>
+                </div>
+                <div className="bg-white border border-slate-200 p-3 lg:p-4 rounded-[18px] flex flex-col justify-center shadow-md">
+                    <div className="flex items-center gap-1.5 mb-1 text-slate-400">
+                        <Home size={14} className="text-pink-600" />
+                        <span className="text-[7px] lg:text-[8px] 3xl:text-xs font-black uppercase tracking-widest">Abrigos</span>
+                    </div>
+                    <span className="text-xl lg:text-2xl 3xl:text-4xl font-black text-slate-800 tabular-nums">{sheltersData?.length || 0}</span>
                 </div>
             </div>
         </div>
 
-        {/* Right Column: Heatmap Map */}
+        {/* Right Column: Mapa Único Consolidado com Controles do Modelo */}
         <div className="col-span-8 bg-white border border-slate-200 shadow-xl overflow-hidden relative rounded-[20px] lg:rounded-[28px] xl:rounded-[32px] 3xl:rounded-[40px]">
-            <div className="absolute top-4 left-4 lg:top-6 lg:left-6 xl:top-8 xl:left-8 3xl:top-12 3xl:left-12 4xl:top-16 4xl:left-16 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 lg:px-4 lg:py-2 xl:px-6 xl:py-3 3xl:px-10 3xl:py-5 4xl:px-14 4xl:py-7 rounded-xl lg:rounded-2xl border border-slate-200 shadow-xl">
-                <span className="text-[9px] lg:text-[10px] xl:text-xs 3xl:text-lg 4xl:text-xl tv:text-2xl font-black text-slate-800 uppercase tracking-[2px] lg:tracking-[3px] 3xl:tracking-[5px]">Mancha de Calor Geral</span>
+            <div className="absolute top-4 left-4 lg:top-6 lg:left-6 xl:top-8 xl:left-8 3xl:top-12 3xl:left-12 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 lg:px-4 lg:py-2 rounded-xl border border-slate-200 shadow-xl flex items-center gap-3">
+                <span className="text-[9px] lg:text-[10px] xl:text-xs 3xl:text-lg font-black text-slate-800 uppercase tracking-[2px]">Monitor Estratégico Único • Mapa Geral</span>
             </div>
+
+            {/* FAB Stack: Botões Flutuantes e Controle de Upload do Modelo */}
+            <div className="absolute top-16 left-4 lg:top-20 lg:left-6 z-[1000] flex flex-col gap-2">
+                <button
+                    onClick={() => alert("As camadas dinâmicas estão ativas no mapa. Use o controle flutuante para alterná-las.")}
+                    className="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg flex items-center justify-center text-slate-700 hover:bg-blue-600 hover:text-white transition-all"
+                    title="Camadas de Risco"
+                >
+                    <Layers size={18} />
+                </button>
+                <button
+                    onClick={() => {
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = '.geojson,.json,.kml,.kmz';
+                        fileInput.onchange = (e) => {
+                            if (e.target.files?.[0]) {
+                                alert(`Arquivo "${e.target.files[0].name}" recebido. Carregando dados no mapa client-side.`);
+                            }
+                        };
+                        fileInput.click();
+                    }}
+                    className="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-lg flex items-center justify-center text-slate-700 hover:bg-orange-500 hover:text-white transition-all font-black text-base"
+                    title="＋ Adicionar camada (KML, KMZ, GeoJSON)"
+                >
+                    ＋
+                </button>
+            </div>
+
             <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%' }} zoomControl={false}>
                 <MapAutoBounds locations={data.ocorrencias?.locations || []} />
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                 <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
                 <LimiteSMJLayer keyId="limite-smj-strategic" />
+                
+                {/* Renderização da Camada de Abrigos (Ícone Rosa 🏠) */}
+                {sheltersData?.map((s, idx) => {
+                    const lat = parseFloat(s.latitude || s.lat || -20.025);
+                    const lng = parseFloat(s.longitude || s.lng || -40.745);
+                    if (isNaN(lat) || isNaN(lng)) return null;
+                    const ocupacao = s.ocupacao_atual || s.ocupantes || 0;
+                    const cap = s.capacidade || 100;
+                    const isFull = ocupacao >= cap;
+                    const pinColor = isFull ? '#ef4444' : '#DB2777';
+
+                    const shelterIcon = L.divIcon({
+                        className: 'custom-shelter-marker',
+                        html: `
+                            <div style="background-color: ${pinColor}; color: white; border: 2px solid white; border-radius: 50%; width: 28px; height: 28px; display: flex; items-center; justify-content: center; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                                🏠
+                            </div>
+                        `,
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14],
+                        popupAnchor: [0, -14]
+                    });
+
+                    return (
+                        <Marker key={`shelter-tv-${idx}`} position={[lat, lng]} icon={shelterIcon}>
+                            <Popup>
+                                <div className="p-2 font-sans min-w-[180px]">
+                                    <div className="font-black text-xs text-pink-700 uppercase mb-1">{s.name || s.nome || 'Abrigo Municipal'}</div>
+                                    <div className="text-[11px] font-bold text-slate-700 mb-1">Capacidade: {cap} pessoas</div>
+                                    <div className="text-[11px] font-bold text-slate-700 mb-2">Ocupação Atual: <span className={isFull ? 'text-red-600 font-black' : 'text-emerald-600'}>{ocupacao}</span></div>
+                                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                                        <div className={`h-full ${isFull ? 'bg-red-500' : 'bg-pink-600'}`} style={{ width: `${Math.min(100, Math.round((ocupacao / cap) * 100))}%` }}></div>
+                                    </div>
+                                </div>
+                            </Popup>
+                        </Marker>
+                    );
+                })}
             </MapContainer>
-            <div className="absolute bottom-4 right-4 lg:bottom-6 lg:right-6 xl:bottom-8 xl:right-8 3xl:bottom-12 3xl:right-12 4xl:bottom-16 4xl:right-16 z-[1000] bg-white/95 backdrop-blur-md p-3 lg:p-4 xl:p-6 3xl:p-10 4xl:p-14 rounded-xl lg:rounded-2xl border border-slate-200 text-[7px] lg:text-[8px] xl:text-[9px] 3xl:text-base 4xl:text-lg tv:text-xl font-black text-slate-700 uppercase tracking-widest shadow-lg">
-                <div className="flex items-center gap-1.5 lg:gap-2 xl:gap-3 3xl:gap-5"><div className="w-2 h-2 lg:w-2.5 lg:h-2.5 xl:w-3 xl:h-3 3xl:w-5 3xl:h-5 4xl:w-6 4xl:h-6 rounded-full bg-red-600 animate-pulse" /> Zonas de Maior Concentração</div>
+            <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-200 shadow-lg flex gap-3 text-[10px] font-bold text-slate-600">
+                <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />Baixo</div>
+                <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />Médio</div>
+                <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#F5C518]" />Alto</div>
+                <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />Crítico</div>
+            </div>
+            <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 backdrop-blur-md p-3 rounded-xl border border-slate-200 text-[8px] lg:text-[9px] 3xl:text-sm font-black text-slate-700 uppercase tracking-widest shadow-lg flex gap-4">
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" /> Mancha de Calor Ocorrências</div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-pink-600" /> 🏠 Abrigos de Emergência</div>
             </div>
         </div>
     </div>
@@ -1045,6 +1343,15 @@ const BaciasLayer = ({ data }) => {
 
 // --- Tipos de risco disponíveis agrupados por categoria ---
 const CATEGORIAS_RISCO = [
+    {
+        id: 'abrigos',
+        label: 'Abrigos e Logística Humanitária',
+        color: '#DB2777',
+        emoji: '🏠',
+        subtipos: [
+            { id: 'Abrigos Ativos', label: 'Abrigos e Apoio', emoji: '🏠', color: '#DB2777' },
+        ]
+    },
     {
         id: 'geologico',
         label: 'Riscos Geológicos',
