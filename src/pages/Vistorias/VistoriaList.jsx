@@ -33,6 +33,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const [mobileMenuVistoria, setMobileMenuVistoria] = useState(null)
 
     useEffect(() => {
+        document.title = 'SIGERD WEB';
         fetchVistorias()
 
         // [SYNC FIX] Refresh list when background sync completes
@@ -707,7 +708,11 @@ const VistoriaList = ({ onNew, onEdit }) => {
         {isDrawerOpen && (
             <VistoriaDrawer
                 vistoria={selectedVistoria}
-                onClose={() => { setIsDrawerOpen(false); setSelectedVistoria(null); }}
+                onClose={() => { 
+                    setIsDrawerOpen(false); 
+                    setSelectedVistoria(null); 
+                    document.title = 'SIGERD WEB';
+                }}
                 onEdit={onEdit}
             />
         )}

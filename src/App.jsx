@@ -191,6 +191,12 @@ const AppContent = ({
     const isTvMode = location.search.includes('tvMode=true');
 
     useEffect(() => {
+        if (!isPrintPage) {
+            document.title = 'SIGERD WEB';
+        }
+    }, [location.pathname, isPrintPage]);
+
+    useEffect(() => {
         const checkRedirect = async () => {
             if (isAuthenticated && userProfile?.email) {
                 // Determine if user has ONLY Redap role

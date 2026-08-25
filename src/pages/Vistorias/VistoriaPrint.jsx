@@ -435,7 +435,7 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
             onPrint={handlePrint}
         >
             <style>{`
-                @media screen {
+                @media screen and (min-width: 769px) {
                     .print-container {
                         transform: scale(${activeZoom}) !important;
                         transform-origin: top center !important;
