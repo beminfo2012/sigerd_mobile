@@ -247,9 +247,9 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans animate-in fade-in duration-500 flex pl-2 md:pl-4">
+        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans animate-in fade-in duration-500 flex w-full overflow-hidden">
             {/* Main panel */}
-            <div className={`flex-1 min-w-0 overflow-y-auto transition-all duration-300 ${isDrawerOpen ? 'hidden md:block md:w-[380px] lg:w-[420px] xl:w-[460px] 2xl:w-[500px] shrink-0 pr-4' : 'w-full'}`}>
+            <div className={`transition-all duration-300 ${isDrawerOpen ? 'hidden md:flex flex-col w-full md:w-[320px] lg:w-[360px] xl:w-[400px] shrink-0 border-r border-slate-200/60 dark:border-slate-800' : 'w-full'}`}>
             {/* Header */}
             <div className="bg-slate-50 dark:bg-slate-900 px-4 sm:px-6 py-4 sticky top-0 z-20">
                 <div className="w-full mx-auto">

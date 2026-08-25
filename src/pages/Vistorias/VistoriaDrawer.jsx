@@ -45,7 +45,7 @@ const VistoriaDrawer = ({ vistoria, onClose, onEdit }) => {
     };
 
     return (
-        <div className="fixed top-0 md:top-10 right-0 h-full md:h-[calc(100vh-40px)] z-[4000] flex flex-col bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-700 w-full md:w-[calc(100%-460px)] lg:w-[calc(100%-500px)] xl:w-[calc(100%-540px)] 2xl:w-[calc(100%-580px)] min-w-[320px] transition-all">
+        <div className="fixed md:static inset-y-0 right-0 z-[4000] flex-1 min-w-[320px] flex flex-col bg-white dark:bg-slate-900 shadow-xl border-l border-slate-200 dark:border-slate-700 h-full md:h-[calc(100vh-40px)] transition-all overflow-hidden">
             {/* Toolbar */}
             <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shrink-0 shadow-sm print:hidden">
                 <div className="flex items-center gap-3">
