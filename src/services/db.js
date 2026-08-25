@@ -1239,8 +1239,6 @@ export const syncSingleItem = async (storeName, item, db) => {
                             if (aberturasModificadas) {
                                 record.aberturas = currentAberturas;
                             }
-                            const updateTx = db.transaction(storeName, 'readwrite');
-                            await updateTx.objectStore(storeName).put(record);
                         } catch (abErr) {
                             console.error('[Sync] Erro Crítico ao sincronizar aberturas:', abErr);
                         }
@@ -1256,9 +1254,11 @@ export const syncSingleItem = async (storeName, item, db) => {
                 record.ocorrencia_id_format = payload.ocorrencia_id_format;
                 record.ocorrencia_id = payload.ocorrencia_id;
             }
-            await store.put(record);
+
+            const updateTx = db.transaction(storeName, 'readwrite');
+            await updateTx.objectStore(storeName).put(record);
+            await updateTx.done;
         }
-        await tx.done;
         console.log(`[Sync] Successfully synced ${storeName} item: ${item.id}`);
         return true;
     } catch (e) {

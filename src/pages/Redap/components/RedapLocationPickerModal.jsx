@@ -54,6 +54,7 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
     const [loadingGPS, setLoadingGPS] = useState(false);
     const [bairrosList, setBairrosList] = useState([]);
     const [bairrosData, setBairrosData] = useState(null);
+    const [mapType, setMapType] = useState('satelite'); // 'satelite' | 'vetorial' | 'ortofoto'
     const [popupConfig, setPopupConfig] = useState({ isOpen: false, title: '', message: '', type: 'alert', onConfirm: null, onCancel: null });
 
     const showPopup = (title, message, type = 'alert', onConfirm = null, onCancel = null) => {
@@ -375,9 +376,41 @@ const RedapLocationPickerModal = ({ isOpen, onClose, onSave, initialLat, initial
                 </div>
 
                 <div className="flex-1 relative bg-slate-150">
+                    {/* Botões de Troca de Tipo de Mapa */}
+                    <div className="absolute top-4 right-4 z-[400] bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-slate-200/60 dark:border-slate-800 flex gap-1">
+                        <button
+                            onClick={() => setMapType('satelite')}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${mapType === 'satelite' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                        >
+                            Satélite ESRI
+                        </button>
+                        <button
+                            onClick={() => setMapType('vetorial')}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${mapType === 'vetorial' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                        >
+                            Rua (OpenStreetMap)
+                        </button>
+                        <button
+                            onClick={() => setMapType('ortofoto')}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${mapType === 'ortofoto' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                        >
+                            Ortofoto SMJ
+                        </button>
+                    </div>
+
                     <MapContainer center={mapCenter} zoom={15} style={{ height: '100%', width: '100%' }}>
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                        <OrthofotsLayer />
+                        {mapType === 'satelite' && (
+                            <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" attribution="Esri" />
+                        )}
+                        {mapType === 'vetorial' && (
+                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="OpenStreetMap" />
+                        )}
+                        {mapType === 'ortofoto' && (
+                            <>
+                                <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" attribution="Esri" />
+                                <OrthofotsLayer />
+                            </>
+                        )}
                         {polygons.map((poly, idx) => (
                             <Polygon key={`poly-${idx}`} positions={poly.coords || poly} pathOptions={{ color: '#4f46e5', fillOpacity: 0.2 }} />
                         ))}

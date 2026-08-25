@@ -26,6 +26,7 @@ import RiskAreaModal from '../../components/RiskAreaModal'
 import RichTextEditor from '../../components/Editor/RichTextEditor'
 import DocumentReferencesManager from '../../components/DocumentReferencesManager'
 import AberturaRegistro from '../../components/AberturaRegistro'
+import RedapLocationPickerModal from '../Redap/components/RedapLocationPickerModal'
 import MarcadorQRModal from '../../components/MarcadorQRModal'
 import { classificarAbertura } from '../../services/classificacaoPatologia'
 import bairrosDataRaw from '../../data/Bairros.json'
@@ -379,13 +380,15 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             frequencia_ocupacao_alvo: ''
         },
         referencias_normativas: [],
-        temApoioTecnico: false
+        temApoioTecnico: false,
+        polygon_coords: null
     })
 
     const [docType, setDocType] = useState('CPF')
     const [processoType, setProcessoType] = useState('Digital')
 
     const [showSignaturePad, setShowSignaturePad] = useState(false)
+    const [showLocationPickerModal, setShowLocationPickerModal] = useState(false)
     const [activeSignatureType, setActiveSignatureType] = useState('agente') // 'agente' ou 'apoio'
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [showDespachoModal, setShowDespachoModal] = useState(false)
@@ -535,6 +538,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 },
                 checklistRespostas: migratedChecklist,
                 avaliacaoArborea: parsedAvaliacao,
+                polygon_coords: initialData.polygon_coords || initialData.polygonCoords || null,
                 referencias_normativas: Array.isArray(initialData.referencias_normativas) ? initialData.referencias_normativas : [],
                 temApoioTecnico: !!(apoio?.nome || apoio?.assinatura),
                 fotos: (parseJSON(initialData.fotos, [])).map((f, i) =>
@@ -1533,8 +1537,20 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                             onClick={getLocation}
                                             disabled={gettingLoc}
                                             className="p-3.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all hover:bg-blue-700 disabled:opacity-50"
+                                            title="Obter localização atual via GPS"
                                         >
                                             <Crosshair size={20} className={gettingLoc ? 'animate-spin' : ''} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowLocationPickerModal(true)}
+                                            className={`px-4 py-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 shrink-0 ${formData.polygon_coords ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20' : 'bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white shadow-slate-800/20'}`}
+                                            title="Mapear ponto ou desenhar poligonal da área vistoriada"
+                                        >
+                                            <MapPin size={18} />
+                                            <span>
+                                                {formData.polygon_coords ? 'Poligonal Mapeada ✓' : 'Desenhar Poligonal'}
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
@@ -2841,6 +2857,45 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 initialDespacho={selectedDespachoForEdit}
                 onDespachoCreated={loadDespachos}
             />
+
+            {/* Modal de Mapeamento de Local e Poligonal */}
+            {showLocationPickerModal && (
+                <RedapLocationPickerModal
+                    isOpen={showLocationPickerModal}
+                    onClose={() => setShowLocationPickerModal(false)}
+                    initialLat={parseFloat(formData.latitude) || null}
+                    initialLng={parseFloat(formData.longitude) || null}
+                    initialPolygonCoords={formData.polygon_coords}
+                    onSave={(arg1, arg2, arg3) => {
+                        let lat, lng, polygon_coords;
+                        if (typeof arg1 === 'object' && arg1 !== null) {
+                            lat = arg1.lat;
+                            lng = arg1.lng;
+                            polygon_coords = arg1.polygon_coords || arg1.polygonCoords || arg1.polygons;
+                        } else {
+                            lat = arg1;
+                            lng = arg2;
+                            polygon_coords = arg3;
+                        }
+                        const latStr = (lat !== undefined && lat !== null && !isNaN(parseFloat(lat))) ? String(lat) : '';
+                        const lngStr = (lng !== undefined && lng !== null && !isNaN(parseFloat(lng))) ? String(lng) : '';
+                        const parsedLat = parseFloat(latStr);
+                        const parsedLng = parseFloat(lngStr);
+
+                        setFormData(prev => ({
+                            ...prev,
+                            latitude: latStr || prev.latitude,
+                            longitude: lngStr || prev.longitude,
+                            coordenadas: (!isNaN(parsedLat) && !isNaN(parsedLng)) ? `${parsedLat.toFixed(6)}, ${parsedLng.toFixed(6)}` : prev.coordenadas,
+                            polygon_coords: polygon_coords || prev.polygon_coords || null
+                        }));
+                        if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+                            handleRiskDetection(parsedLat, parsedLng);
+                        }
+                        setShowLocationPickerModal(false);
+                    }}
+                />
+            )}
 
             {/* AI Comparison Modal - Safe & Explicit */}
             {

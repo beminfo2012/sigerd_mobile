@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 import { getAllVistoriasLocal } from '../../services/db';
@@ -282,6 +282,28 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
     const lng = parseFloat(data.longitude || data.lng || data.long);
     const hasMap = !isNaN(lat) && !isNaN(lng);
 
+    // Normalize Polygon Coords
+    const polygonCoordsList = (() => {
+        let rawPoly = data.polygon_coords || data.polygonCoords || data.poligonal;
+        if (!rawPoly) return [];
+        if (typeof rawPoly === 'string') {
+            try { rawPoly = JSON.parse(rawPoly); } catch (e) { return []; }
+        }
+        if (rawPoly && typeof rawPoly === 'object' && !Array.isArray(rawPoly)) {
+            if (Array.isArray(rawPoly.polygons)) {
+                return rawPoly.polygons;
+            }
+        }
+        if (Array.isArray(rawPoly) && rawPoly.length > 0) {
+            if (Array.isArray(rawPoly[0]) && Array.isArray(rawPoly[0][0])) {
+                return rawPoly;
+            } else if (Array.isArray(rawPoly[0]) && typeof rawPoly[0][0] === 'number') {
+                return [rawPoly];
+            }
+        }
+        return [];
+    })();
+
     // Normalize Risk Level
     let nivelRiscoNormalizado = data.nivel_risco || data.nivelRisco || 'Baixo';
     if (nivelRiscoNormalizado === 'Moderado') nivelRiscoNormalizado = 'Médio';
@@ -341,12 +363,13 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
     const hasChecklist = checklistItems.length > 0;
     const hasObs = !!(data.observacoes && data.observacoes !== '---');
     const hasPhotos = photos.length > 0;
+    const hasEncaminhamentos = (data.encaminhamentos || []).length > 0;
 
     let secNum = 4;
     const numChecklist = hasChecklist ? secNum++ : null;
     const numAberturas = hasAberturas ? secNum++ : null;
     const numMedidas = secNum++;
-    const numEncaj = secNum++;
+    const numEncaj = hasEncaminhamentos ? secNum++ : null;
     const numObs = hasObs ? secNum++ : null;
     const numRefs = hasRefs ? secNum++ : null;
     const numFotos = hasPhotos ? secNum++ : null;
@@ -591,58 +614,54 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                             </div>
                             
                             <div className="flex flex-col md:flex-row print:flex-row gap-4">
-                                <div className="w-full md:w-7/12 print:w-7/12">
-                                    <table className="report-table" style={{ marginBottom: 0 }}>
-                                        <tbody>
-                                            <tr>
-                                                <th style={{ width: '40%' }}>Solicitante</th>
-                                                <th style={{ width: '30%' }}>Telefone de Contato</th>
-                                                <th style={{ width: '30%' }}>CPF / Documento</th>
-                                            </tr>
-                                            <tr>
-                                                <td>{data.solicitante || 'Não identificado'}</td>
-                                                <td>{data.telefone || '---'}</td>
-                                                <td>{data.cpf || 'Não informado'}</td>
-                                            </tr>
-                                            <tr>
-                                                <th style={{ width: '40%' }}>Endereço da Vistoria</th>
-                                                <th style={{ width: '30%' }}>Bairro</th>
-                                                <th style={{ width: '30%' }}>Município / UF</th>
-                                            </tr>
-                                            <tr>
-                                                <td>{data.endereco || '---'}</td>
-                                                <td>{data.bairro || '---'}</td>
-                                                <td>Santa Maria de Jetibá / ES</td>
-                                            </tr>
-                                            <tr>
-                                                <th style={{ width: '40%' }}>Referência</th>
-                                                <th style={{ width: '30%' }}>Coordenadas GPS</th>
-                                                <th style={{ width: '30%' }}>Nº de Processo / CIODES</th>
-                                            </tr>
-                                            <tr>
-                                                <td>{data.pontoReferencia || data.informacoes_complementares || '---'}</td>
-                                                <td style={{ fontFamily: 'monospace', fontSize: '9px', lineHeight: '1.2' }}>
-                                                    {hasMap ? (
-                                                        <div className="flex flex-col">
-                                                            <span>LAT: {lat.toFixed(6)}</span>
-                                                            <span>LNG: {lng.toFixed(6)}</span>
-                                                        </div>
-                                                    ) : '---'}
-                                                </td>
-                                                <td>{data.boletim_ciodes || data.processo || '---'}</td>
-                                            </tr>
-                                            <tr>
-                                                <th style={{ width: '40%' }}>Data da Vistoria de Campo</th>
-                                                <th style={{ width: '30%' }}>Data de Emissão</th>
-                                                <th style={{ width: '30%' }}>Residências em Risco</th>
-                                            </tr>
-                                            <tr>
-                                                <td>{formatDateOnly(data.dataHora || data.data_hora)}</td>
-                                                <td>{formatDateOnly(data.dataHora || data.data_hora)}</td>
-                                                <td>{data.residencias_em_risco || data.residenciasEmRisco || 'A definir'}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                <div className="w-full md:w-7/12 print:w-7/12 flex flex-col gap-4">
+                                    {/* 2.1 Solicitante */}
+                                    <div>
+                                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">2.1 Solicitante</div>
+                                        <table className="report-table" style={{ marginBottom: 0 }}>
+                                            <tbody>
+                                                <tr>
+                                                    <th style={{ width: '40%' }}>Solicitante</th>
+                                                    <th style={{ width: '30%' }}>Telefone de Contato</th>
+                                                    <th style={{ width: '30%' }}>CPF / Documento</th>
+                                                </tr>
+                                                <tr>
+                                                    <td>{data.solicitante || 'Não identificado'}</td>
+                                                    <td>{data.telefone || '---'}</td>
+                                                    <td>{data.cpf || 'Não informado'}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* 2.2 Local da Vistoria */}
+                                    <div>
+                                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">2.2 Local da Vistoria</div>
+                                        <table className="report-table" style={{ marginBottom: 0 }}>
+                                            <tbody>
+                                                <tr>
+                                                    <th style={{ width: '40%' }}>Endereço da Vistoria</th>
+                                                    <th style={{ width: '30%' }}>Bairro</th>
+                                                    <th style={{ width: '30%' }}>Município / UF</th>
+                                                </tr>
+                                                <tr>
+                                                    <td>{data.endereco || '---'}</td>
+                                                    <td>{data.bairro || '---'}</td>
+                                                    <td>Santa Maria de Jetibá / ES</td>
+                                                </tr>
+                                                <tr>
+                                                    <th style={{ width: '40%' }}>Referência / Compl.</th>
+                                                    <th style={{ width: '30%' }}>Nº de Processo / CIODES</th>
+                                                    <th style={{ width: '30%' }}>Data da Vistoria</th>
+                                                </tr>
+                                                <tr>
+                                                    <td>{data.pontoReferencia || data.informacoes_complementares || '---'}</td>
+                                                    <td>{data.boletim_ciodes || data.processo || '---'}</td>
+                                                    <td>{formatDateOnly(data.dataHora || data.data_hora)}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
 
                                 {/* Map Box */}
@@ -660,13 +679,18 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                                                 doubleClickZoom={false}
                                             >
                                                 <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-                                                <Marker 
-                                                    position={[lat, lng]} 
-                                                    icon={createCustomPin(
-                                                        (nivelRiscoNormalizado === 'Alto' || nivelRiscoNormalizado === 'Iminente') ? '#dc2626' : 
-                                                        (nivelRiscoNormalizado === 'Médio') ? '#ea580c' : '#3b82f6'
-                                                    )}
-                                                />
+                                                {polygonCoordsList.map((poly, pIdx) => (
+                                                    <Polygon key={pIdx} positions={poly} pathOptions={{ color: '#dc2626', fillColor: '#ef4444', fillOpacity: 0.35, weight: 2 }} />
+                                                ))}
+                                                {polygonCoordsList.length === 0 && (
+                                                    <Marker 
+                                                        position={[lat, lng]} 
+                                                        icon={createCustomPin(
+                                                            (nivelRiscoNormalizado === 'Alto' || nivelRiscoNormalizado === 'Iminente') ? '#dc2626' : 
+                                                            (nivelRiscoNormalizado === 'Médio') ? '#ea580c' : '#3b82f6'
+                                                        )}
+                                                    />
+                                                )}
                                                 <MapController lat={lat} lng={lng} />
                                             </MapContainer>
                                         ) : (
@@ -719,26 +743,6 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                                             }`} style={{ padding: '8px', fontSize: '10px' }}>
                                                 {(data.situacaoObservada || 'Estabilizado').toUpperCase()}
                                         </td>
-                                    </tr>
-                                    <tr>
-                                        <th style={{ width: '40%' }}>Alertas e Danos Secundários</th>
-                                        <th style={{ width: '30%' }}>Área Afetada Estimada (m²)</th>
-                                        <th style={{ width: '30%' }}>Vítimas</th>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div className="flex flex-wrap gap-1">
-                                                {(data.subtiposRisco || data.subtipos_risco || []).length > 0 ? (
-                                                    (data.subtiposRisco || data.subtipos_risco).map((tag, i) => (
-                                                        <span key={i} className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-                                                            {tag}
-                                                        </span>
-                                                    ))
-                                                ) : <span className="text-slate-400 italic">Nenhum subtipo listado.</span>}
-                                            </div>
-                                        </td>
-                                        <td>{data.area_afetada || data.areaAfetada || 'A dimensionar'}</td>
-                                        <td>{data.vitimas || 'Nenhuma'}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -977,23 +981,23 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                             </table>
                         </section>
 
-                        {/* 6. Encaminhamentos e Responsabilidades */}
-                        <section className="mb-6 avoid-break">
-                            <div className="section-header">
-                                <span className="section-header-title">{numEncaj}. Encaminhamentos e Responsabilidades</span>
-                                <div className="section-header-line"></div>
-                            </div>
-                            <table className="report-table">
-                                <thead>
-                                    <tr>
-                                        <th style={{ width: '10%', backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center' }}>#</th>
-                                        <th style={{ width: '50%', backgroundColor: '#0B1F3A', color: 'white' }}>Encaminhamento</th>
-                                        <th style={{ width: '40%', backgroundColor: '#0B1F3A', color: 'white' }}>Responsável</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(data.encaminhamentos || []).length > 0 ? (
-                                        (data.encaminhamentos || []).map((e, i) => {
+                        {/* Encaminhamentos e Responsabilidades (Opcional) */}
+                        {hasEncaminhamentos && (
+                            <section className="mb-6 avoid-break">
+                                <div className="section-header">
+                                    <span className="section-header-title">{numEncaj}. Encaminhamentos e Responsabilidades</span>
+                                    <div className="section-header-line"></div>
+                                </div>
+                                <table className="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th style={{ width: '10%', backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center' }}>#</th>
+                                            <th style={{ width: '50%', backgroundColor: '#0B1F3A', color: 'white' }}>Encaminhamento</th>
+                                            <th style={{ width: '40%', backgroundColor: '#0B1F3A', color: 'white' }}>Responsável</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {(data.encaminhamentos || []).map((e, i) => {
                                             let responsible = e;
                                             let action = '';
                                             if (e && typeof e === 'string' && e.includes(':')) {
@@ -1013,17 +1017,11 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                                                     <td>{responsible}</td>
                                                 </tr>
                                             );
-                                        })
-                                    ) : (
-                                        <tr>
-                                            <td style={{ textAlign: 'center' }}>1</td>
-                                            <td>Nenhum encaminhamento crítico registrado no momento.</td>
-                                            <td>Defesa Civil Municipal</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </section>
+                                        })}
+                                    </tbody>
+                                </table>
+                            </section>
+                        )}
 
                         {/* 7. Observações Técnicas */}
                         {(data.observacoes && data.observacoes !== '---') && (

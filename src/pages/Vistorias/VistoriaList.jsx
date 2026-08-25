@@ -247,9 +247,9 @@ const VistoriaList = ({ onNew, onEdit }) => {
     const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans animate-in fade-in duration-500 flex">
+        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-24 font-sans animate-in fade-in duration-500 flex pl-2 md:pl-4">
             {/* Main panel */}
-            <div className={`flex-1 min-w-0 overflow-y-auto transition-all duration-300 ${isDrawerOpen ? 'hidden md:block md:w-[45%] lg:w-[42%] xl:w-[40%] shrink-0' : 'w-full'}`}>
+            <div className={`flex-1 min-w-0 overflow-y-auto transition-all duration-300 ${isDrawerOpen ? 'hidden md:block md:w-[42%] lg:w-[38%] xl:w-[35%] max-w-[500px] shrink-0 pr-4' : 'w-full'}`}>
             {/* Header */}
             <div className="bg-slate-50 dark:bg-slate-900 px-4 sm:px-6 py-4 sticky top-0 z-20">
                 <div className="w-full mx-auto">
@@ -387,7 +387,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                         </Button>
                     </div>
                 ) : (
-                    <div className={`gap-4 ${isDrawerOpen ? 'grid grid-cols-1 2xl:grid-cols-2' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                    <div className={`gap-4 ${isDrawerOpen ? 'grid grid-cols-1' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
                         {filteredVistorias.map(vistoria => {
                             const getRiskBorderColor = (nivel) => {
                                 switch (nivel) {
@@ -402,24 +402,24 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                 <div
                                     key={vistoria.id}
                                     onClick={() => { setSelectedVistoria(vistoria); setIsDrawerOpen(true); }}
-                                    className={`group relative bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-[22px] md:rounded-xl shadow-xs hover:shadow-xl hover:translate-y-[-4px] active:scale-[0.98] transition-all cursor-pointer border border-slate-100 dark:border-slate-700/60 border-l-[6px] ${getRiskBorderColor(vistoria.nivelRisco)} md:border-l-slate-100 md:dark:border-l-slate-700`}
+                                    className={`group relative bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-[18px] md:rounded-xl shadow-xs hover:shadow-lg hover:translate-y-[-2px] active:scale-[0.98] transition-all cursor-pointer border border-slate-100 dark:border-slate-700/60 border-l-[5px] ${getRiskBorderColor(vistoria.nivelRisco)} md:border-l-slate-100 md:dark:border-l-slate-700`}
                                 >
                                     <div>
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div className="flex flex-wrap gap-2">
-                                                <span className="bg-slate-100/80 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-200/50 dark:border-slate-700">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <span className="bg-slate-100/80 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-200/50 dark:border-slate-700">
                                                     #{vistoria.vistoria_id || '---'}
                                                 </span>
                                                 {vistoria.isLocal && (vistoria.synced === false || vistoria.synced === undefined || vistoria.synced === 0) && (
-                                                    <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase">
+                                                    <span className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-orange-100 dark:border-orange-800 flex items-center gap-1 uppercase">
                                                         <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
                                                         Pendente
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
-                                                    <Calendar size={13} className="text-slate-400" />
+                                            <div className="flex items-center gap-1">
+                                                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                                                    <Calendar size={12} className="text-slate-400" />
                                                     {new Date(vistoria.created_at).toLocaleDateString('pt-BR')}
                                                 </div>
                                                 <button
@@ -427,24 +427,24 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                                         e.stopPropagation();
                                                         setMobileMenuVistoria(vistoria);
                                                     }}
-                                                    className="md:hidden p-1 text-slate-400 hover:text-slate-600 rounded-lg active:bg-slate-100 dark:active:bg-slate-700 transition-colors ml-0.5"
+                                                    className="md:hidden p-0.5 text-slate-400 hover:text-slate-600 rounded-lg active:bg-slate-100 dark:active:bg-slate-700 transition-colors ml-0.5"
                                                     title="Mais Opções"
                                                 >
-                                                    <MoreVertical size={18} />
+                                                    <MoreVertical size={16} />
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className="mb-3">
-                                            <h3 className="font-black text-slate-900 dark:text-slate-100 text-base sm:text-lg leading-tight group-hover:text-blue-600 transition-colors">
+                                        <div className="mb-2">
+                                            <h3 className="font-black text-slate-900 dark:text-slate-100 text-sm sm:text-base leading-tight group-hover:text-blue-600 transition-colors">
                                                 {vistoria.solicitante || 'Solicitante Não Identificado'}
                                             </h3>
-                                            <div className="flex items-center gap-2 mt-1.5">
-                                                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-blue-900/20 px-2.5 py-0.5 rounded-md">
+                                            <div className="flex items-center gap-1.5 mt-1">
+                                                <p className="text-[9px] text-blue-600 dark:text-blue-400 font-extrabold uppercase tracking-wider bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md">
                                                     {vistoria.categoriaRisco || vistoria.tipo_info || 'Geral'}
                                                 </p>
                                                 {vistoria.nivelRisco && vistoria.nivelRisco !== 'Baixo' && (
-                                                    <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-md uppercase tracking-wider border ${vistoria.nivelRisco === 'Iminente' ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:border-red-800' :
+                                                    <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider border ${vistoria.nivelRisco === 'Iminente' ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:border-red-800' :
                                                         vistoria.nivelRisco === 'Alto' ? 'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/20 dark:border-orange-800' :
                                                             'bg-yellow-50 text-yellow-600 border-yellow-100 dark:bg-yellow-900/20 dark:border-yellow-800'
                                                         }`}>
@@ -454,32 +454,32 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 bg-slate-50/80 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100/80 dark:border-slate-700/50 mb-1 sm:mb-4 md:h-[72px] overflow-hidden">
-                                            <MapPin size={16} className="shrink-0 text-blue-500" />
-                                            <p className="font-bold leading-snug line-clamp-1 md:line-clamp-2">
+                                        <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 bg-slate-50/80 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100/80 dark:border-slate-700/50 mb-1 sm:mb-2 min-h-[44px] overflow-hidden">
+                                            <MapPin size={14} className="shrink-0 text-blue-500" />
+                                            <p className="font-bold leading-tight line-clamp-1 md:line-clamp-2">
                                                 {vistoria.endereco || 'Endereço não informado'}
-                                                {vistoria.bairro && <span className="hidden md:block text-[10px] font-medium text-slate-400">{vistoria.bairro}</span>}
+                                                {vistoria.bairro && <span className="hidden md:block text-[9px] font-medium text-slate-400">{vistoria.bairro}</span>}
                                             </p>
                                         </div>
                                     </div>
 
                                     {/* Action Row - Web Only */}
-                                    <div className="hidden md:flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-700/50">
-                                        <div className="flex gap-1.5 px-1">
+                                    <div className="hidden md:flex justify-between items-center pt-2 mt-1 border-t border-slate-50 dark:border-slate-700/50">
+                                        <div className="flex gap-1 px-0.5">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); { setSelectedVistoria(vistoria); setIsDrawerOpen(true); } }}
-                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
+                                                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-all active:scale-95"
                                                 title="Visualizar Detalhes"
                                             >
-                                                <Eye size={18} />
+                                                <Eye size={16} />
                                             </button>
                                             
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setEmailModal({ open: true, vistoria }) }}
-                                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all active:scale-95"
+                                                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-xl transition-all active:scale-95"
                                                 title="Enviar por Email"
                                             >
-                                                <Mail size={18} />
+                                                <Mail size={16} />
                                             </button>
 
                                             {/* NOPRER Button */}
@@ -490,10 +490,10 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                                         return (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); navigate(`/noprer/detalhes/${linkedNoprer.id}`); }}
-                                                                className="px-3 h-10 flex items-center gap-1 justify-center text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                                className="px-2 h-8 flex items-center gap-1 justify-center text-[10px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg transition-all active:scale-95 ml-0.5"
                                                                 title="Ver NOPRER Gerada"
                                                             >
-                                                                <ShieldAlert size={14} />
+                                                                <ShieldAlert size={12} />
                                                                 {linkedNoprer.numero_noprer}
                                                             </button>
                                                         );
@@ -505,7 +505,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                                                     const vistoriaIdStr = encodeURIComponent(vistoria.id || vistoria.vistoria_id);
                                                                     navigate(`/noprer/novo/vistoria/${vistoriaIdStr}`);
                                                                 }}
-                                                                className="px-3 h-10 flex items-center justify-center text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-all active:scale-95 ml-1"
+                                                                className="px-2 h-8 flex items-center justify-center text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-all active:scale-95 ml-0.5"
                                                                 title="Emitir Notificação Preliminar de Risco"
                                                             >
                                                                 Emitir NOPRER
@@ -518,15 +518,15 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                             {userProfile?.role !== 'Operador' && (
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, vistoria }) }}
-                                                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-2xl transition-all active:scale-95"
+                                                    className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all active:scale-95"
                                                     title="Excluir Vistoria"
                                                 >
-                                                    <Trash2 size={18} />
+                                                    <Trash2 size={16} />
                                                 </button>
                                             )}
                                         </div>
-                                        <div className="w-8 h-8 flex items-center justify-center text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
-                                            <ChevronRight size={20} />
+                                        <div className="w-6 h-6 flex items-center justify-center text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
+                                            <ChevronRight size={18} />
                                         </div>
                                     </div>
                                 </div>

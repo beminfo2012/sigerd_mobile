@@ -326,15 +326,18 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                 ${renderField('Matrícula do Agente', data.matricula)}
             </div>
 
-            ${sectionTitle(`${secNum++}. Localização e Solicitante`)}
+            ${sectionTitle(`${secNum++}. Solicitante`)}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
                 <div style="grid-column: span 2;">${renderField('Nome do Solicitante', data.solicitante)}</div>
                 ${renderField('CPF/CNPJ', data.cpf)}
                 ${renderField('Telefone', data.telefone)}
-                <div style="grid-column: span 2;">${renderField('Endereço da Ocorrência', data.endereco)}</div>
+            </div>
+
+            ${sectionTitle(`${secNum++}. Local da Vistoria`)}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px;">
+                <div style="grid-column: span 2;">${renderField('Endereço', data.endereco)}</div>
                 <div style="grid-column: span 2;">${renderField('Informações Complementares', data.informacoes_complementares)}</div>
                 ${renderField('Bairro / Localidade', data.bairro)}
-                ${renderField('Coordenadas', `${data.latitude}, ${data.longitude}`)}
             </div>
 
             ${sectionTitle(`${secNum++}. ${type === 'ocorrencia' ? 'Tipo de Ocorrência' : 'Diagnóstico de Risco'}`)}
@@ -343,9 +346,6 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                 <div style="padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
                     <div style="font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 3px;">Nível de Risco</div>
                     <div>${getNivelBadge(data.nivelRisco)}</div>
-                </div>
-                <div style="grid-column: span 2;">
-                    ${renderField('Tipologia / Subtipos', data.subtiposRisco.map(s => s === 'Outros' ? `Outros (${data.subtipoRiscoOutros})` : s).join(', ') || '---')}
                 </div>
             </div>
 
