@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Edit2, Printer } from 'lucide-react';
+import { X, Edit2, Printer, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import VistoriaPrint from './VistoriaPrint';
 import { getVistoriaFull } from '../../services/db';
 import { supabase } from '../../services/supabase';
@@ -34,9 +34,20 @@ const VistoriaDrawer = ({ vistoria, onClose, onEdit }) => {
 
     if (!vistoria) return null;
 
+    const [zoom, setZoom] = useState(1.0);
+
+    const handleZoomIn = () => setZoom(prev => Math.min(1.5, prev + 0.1));
+    const handleZoomOut = () => setZoom(prev => Math.max(0.5, prev - 0.1));
+    const handleResetZoom = () => setZoom(1.0);
+
     const handlePrint = () => {
-        window.dispatchEvent(new Event('trigger-map-print-resize'));
-        setTimeout(() => window.print(), 600);
+        if (vistoria?.id || vistoria?.vistoria_id) {
+            const vid = encodeURIComponent(vistoria.id || vistoria.vistoria_id);
+            window.open(`/vistorias/imprimir/${vid}`, '_blank');
+        } else {
+            window.dispatchEvent(new Event('trigger-map-print-resize'));
+            setTimeout(() => window.print(), 600);
+        }
     };
 
     const handleEdit = () => {
@@ -57,12 +68,44 @@ const VistoriaDrawer = ({ vistoria, onClose, onEdit }) => {
                         <p className="text-xs text-slate-500">#{vistoria.vistoria_id || '---'} • {vistoria.solicitante || 'Sem nome'}</p>
                     </div>
                 </div>
+                
+                {/* Controles centrais de Zoom */}
+                <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-700/50 p-1 rounded-xl gap-1 border border-slate-200/60 dark:border-slate-600">
+                    <button
+                        onClick={handleZoomOut}
+                        disabled={zoom <= 0.5}
+                        className="w-7 h-7 rounded-lg hover:bg-white dark:hover:bg-slate-600 flex items-center justify-center text-slate-600 dark:text-slate-200 disabled:opacity-30 transition-all"
+                        title="Diminuir Zoom"
+                    >
+                        <ZoomOut size={15} />
+                    </button>
+                    <span className="text-[11px] font-black text-slate-600 dark:text-slate-200 px-2 min-w-[42px] text-center">
+                        {Math.round(zoom * 100)}%
+                    </span>
+                    <button
+                        onClick={handleZoomIn}
+                        disabled={zoom >= 1.5}
+                        className="w-7 h-7 rounded-lg hover:bg-white dark:hover:bg-slate-600 flex items-center justify-center text-slate-600 dark:text-slate-200 disabled:opacity-30 transition-all"
+                        title="Aumentar Zoom"
+                    >
+                        <ZoomIn size={15} />
+                    </button>
+                    <button
+                        onClick={handleResetZoom}
+                        disabled={zoom === 1.0}
+                        className="w-7 h-7 rounded-lg hover:bg-white dark:hover:bg-slate-600 flex items-center justify-center text-slate-600 dark:text-slate-200 disabled:opacity-30 transition-all ml-0.5 border-l border-slate-200 dark:border-slate-600 pl-1"
+                        title="Restaurar Zoom 100%"
+                    >
+                        <RotateCcw size={14} />
+                    </button>
+                </div>
+
                 <div className="flex items-center gap-2">
                     <button onClick={handleEdit} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-xs font-bold transition-colors shadow-sm">
                         <Edit2 size={14} />
                         <span>Editar</span>
                     </button>
-                    <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-bold transition-colors">
+                    <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white hover:bg-slate-900 rounded-lg text-xs font-bold transition-colors shadow-sm">
                         <Printer size={14} />
                         <span>Imprimir</span>
                     </button>
@@ -76,7 +119,7 @@ const VistoriaDrawer = ({ vistoria, onClose, onEdit }) => {
                         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : (
-                    fullData && <VistoriaPrint initialData={fullData} isDrawerMode={true} />
+                    fullData && <VistoriaPrint initialData={fullData} isDrawerMode={true} externalZoom={zoom} />
                 )}
             </div>
         </div>

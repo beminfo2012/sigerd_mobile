@@ -137,16 +137,14 @@ const MOCK_VISTORIA = {
     assinaturaAgente: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="50"><text x="10" y="30" font-family="cursive" font-size="20" fill="blue">Marcelo Dias P.</text></svg>'
 };
 
-const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = null, onEdit = null }) => {
+const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = null, onEdit = null, externalZoom = null }) => {
     const params = useParams();
     const id = isDrawerMode ? null : (params?.id || null);
     const [data, setData] = useState(initialData || null);
     const [loading, setLoading] = useState(!initialData);
     const [zoom, setZoom] = useState(1.0);
 
-    const handleZoomIn = () => {
-        setZoom(prev => Math.min(1.5, prev + 0.1));
-    };
+    const activeZoom = externalZoom !== null ? externalZoom : zoom;
 
 
 
@@ -437,6 +435,13 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
             onPrint={handlePrint}
         >
             <style>{`
+                @media screen {
+                    .print-container {
+                        transform: scale(${activeZoom}) !important;
+                        transform-origin: top center !important;
+                        margin-bottom: calc(-297mm * (1 - ${activeZoom}) + 20px) !important;
+                    }
+                }
 
 
                     .running-header {
