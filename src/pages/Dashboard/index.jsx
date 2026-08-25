@@ -6,7 +6,7 @@ import {
     ClipboardList, ClipboardCheck, AlertTriangle, Timer, CloudRain, BarChart3,
     CloudUpload, Trash2, FileText, Flame, Zap, RefreshCw, Home, X, Users,
     ShieldAlert, Activity, Droplets, MapPin, Gauge, CheckCircle, Layers,
-    Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield, Waves
+    Download, ChevronDown, ChevronRight, ExternalLink, Bell, MonitorPlay, Clock, Shield, Waves, Droplet, Wind
 } from 'lucide-react'
 import { MapContainer, TileLayer, CircleMarker, Popup, GeoJSON, useMap, Marker } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
@@ -1400,10 +1400,10 @@ const MobileDashboardView = ({
     if (othersCount > 0) {
         const total = currentData?.stats?.total || 1;
         topItems.push({
-            label: 'OUtros',
+            label: 'Outros',
             count: othersCount,
             percentage: Math.round((othersCount / total) * 100),
-            color: 'bg-slate-300'
+            color: 'bg-indigo-400'
         });
     }
 
@@ -1454,49 +1454,53 @@ const MobileDashboardView = ({
                     </div>
                 )}
 
-                {/* 1. Weather Widget (Image 1 Style) */}
+                {/* 1. Weather Widget (Image 1 Style - Mobile Exclusive) */}
                 {weather?.current ? (
                     <div
                         onClick={() => setShowForecast(true)}
-                        className="bg-white dark:bg-slate-800 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between cursor-pointer active:scale-95 transition-all mb-4"
+                        className="bg-white dark:bg-slate-800 rounded-[24px] p-6 shadow-md shadow-slate-100 dark:shadow-none border border-slate-100 dark:border-slate-700/60 flex items-center justify-between cursor-pointer active:scale-98 transition-all mb-4"
                     >
-                        <div className="flex items-center gap-6">
-                            <div className="text-6xl drop-shadow-sm">{getWeatherIcon(weather.current.code)}</div>
+                        <div className="flex items-center gap-5">
+                            <div className="text-5xl sm:text-6xl drop-shadow-sm shrink-0">{getWeatherIcon(weather.current.code)}</div>
                             <div>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-5xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
-                                    <span className="text-2xl font-bold text-slate-400">°C</span>
+                                    <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-slate-100 tabular-nums">{Math.round(weather.current.temp || 0)}</span>
+                                    <span className="text-2xl font-bold text-slate-400 dark:text-slate-500">°C</span>
                                 </div>
-                                <div className="text-[11px] font-black text-slate-400 uppercase tracking-[2px] mt-1">SANTA MARIA DE JETIBÁ</div>
+                                <div className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 mt-1">Santa Maria de Jetibá</div>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-3 text-slate-500 text-xs font-bold">
-                                <CloudRain size={16} className="text-blue-500 shrink-0" />
-                                <span className="text-slate-600 dark:text-slate-300">Chuva: <span className="font-bold">{weather.daily?.[0]?.rainProb || 0}%</span></span>
+                        <div className="flex flex-col gap-2.5">
+                            <div className="flex items-center gap-2.5 text-xs">
+                                <Droplet size={18} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                <span className="text-slate-400 dark:text-slate-400 font-medium">Chuva</span>
+                                <span className="font-extrabold text-slate-900 dark:text-white ml-2">{weather.daily?.[0]?.rainProb || 0}%</span>
                             </div>
-                            <div className="flex items-center gap-3 text-slate-500 text-xs font-bold">
-                                <Timer size={16} className="text-blue-400 shrink-0" />
-                                <span className="text-slate-600 dark:text-slate-300">Umidade: <span className="font-bold">{weather.current.humidity || 0}%</span></span>
+                            <div className="flex items-center gap-2.5 text-xs">
+                                <Clock size={18} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                <span className="text-slate-400 dark:text-slate-400 font-medium">Umidade</span>
+                                <span className="font-extrabold text-slate-900 dark:text-white ml-2">{weather.current.humidity || 0}%</span>
                             </div>
-                            <div className="flex items-center gap-3 text-slate-500 text-xs font-bold">
-                                <Activity size={16} className="text-slate-400 shrink-0" />
-                                <span className="text-slate-600 dark:text-slate-300">Vento: <span className="font-bold">{Math.round(weather.current.wind || 6)} km/h</span></span>
+                            <div className="flex items-center gap-2.5 text-xs">
+                                <Wind size={18} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                <span className="text-slate-400 dark:text-slate-400 font-medium">Vento</span>
+                                <span className="font-extrabold text-slate-900 dark:text-white ml-2">{Math.round(weather.current.wind || 6)} km/h</span>
                             </div>
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white/50 dark:bg-slate-800/50 border border-slate-200 p-8 border border-white dark:border-slate-700 shadow-sm animate-pulse mb-4 flex justify-between items-center">
-                        <div className="flex items-center gap-6">
+                    <div className="bg-white/50 dark:bg-slate-800/50 rounded-[24px] p-6 border border-slate-100 dark:border-slate-700 shadow-sm animate-pulse mb-4 flex justify-between items-center">
+                        <div className="flex items-center gap-5">
                             <div className="w-14 h-14 bg-slate-200 dark:bg-slate-700 rounded-full" />
                             <div className="space-y-2">
-                                <div className="w-20 h-8 bg-slate-200 dark:bg-slate-700 rounded" />
+                                <div className="w-20 h-8 bg-slate-200 dark:bg-slate-700 rounded-lg" />
                                 <div className="w-32 h-3 bg-slate-200 dark:bg-slate-700 rounded" />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <div className="w-24 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
-                            <div className="w-24 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+                        <div className="space-y-2.5 w-32">
+                            <div className="w-full h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+                            <div className="w-full h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+                            <div className="w-full h-4 bg-slate-200 dark:bg-slate-700 rounded" />
                         </div>
                     </div>
                 )}
@@ -2060,27 +2064,33 @@ const AlertasCemadenCard = ({ navigate }) => {
 
     const style = nivelMaisCritico ? (NIVEL_CARD_STYLES[nivelMaisCritico] || NIVEL_CARD_STYLES['OBSERVACAO']) : { bg: 'bg-orange-500/10', text: 'text-orange-600', icon: 'bg-orange-500/10', label: '—' };
 
+    const isAlerting = count > 0;
+
     return (
         <div
             onClick={() => navigate('/alertas-cemaden')}
-            className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]"
+            className={`p-4 rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-md h-full min-h-[140px] text-white ${
+                isAlerting
+                    ? 'bg-gradient-to-br from-[#cf4436] to-[#9c2620]'
+                    : 'bg-gradient-to-br from-[#254776] to-[#15294d]'
+            }`}
         >
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                    <ShieldAlert size={16} className={`${count > 0 ? style.text : 'text-slate-400'} opacity-70`} />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Alertas CEMADEN</span>
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider opacity-90">
+                    <ShieldAlert size={16} className="text-white shrink-0" />
+                    <span className="uppercase">ALERTAS CEMADEN</span>
                 </div>
                 {count === null ? (
-                    <span className="text-4xl font-black text-slate-300 tabular-nums leading-none animate-pulse">—</span>
+                    <span className="text-3xl font-extrabold leading-none animate-pulse opacity-40">—</span>
                 ) : (
-                    <span className={`text-4xl font-black tabular-nums leading-none ${count > 0 ? style.text : 'text-slate-800 dark:text-slate-100'}`}>{count}</span>
+                    <span className="text-3xl font-extrabold leading-none">{count}</span>
                 )}
-                <p className={`text-[10px] font-bold uppercase opacity-80 ${count > 0 && nivelMaisCritico ? style.text : 'text-slate-400'}`}>
-                    {count === null ? 'Carregando...' : count === 0 ? 'Sem alertas vigentes' : `Nível: ${style.label}`}
+                <p className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">
+                    {count === null ? 'Carregando...' : count === 0 ? 'SEM ALERTAS VIGENTES' : `NÍVEL: ${style.label}`}
                 </p>
             </div>
             {count > 0 && (
-                <div className={`absolute bottom-0 left-0 right-0 h-1 ${nivelMaisCritico === 'MUITO_ALTO' ? 'bg-red-500' : nivelMaisCritico === 'ALTO' ? 'bg-orange-500' : nivelMaisCritico === 'MODERADO' ? 'bg-amber-400' : 'bg-blue-500'} opacity-60 rounded-b-3xl`} />
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/40 opacity-80" />
             )}
         </div>
     );
@@ -2150,197 +2160,205 @@ const WebViewDashboardView = ({
             <div className="max-w-[1700px] mx-auto w-full p-6 space-y-6 flex-1">
 
                 {/* --- 🏁 1. HEADER & TOP CARDS CONTAINER --- */}
-                <div className="bg-white dark:bg-slate-900 rounded-[24px] shadow-lg shadow-orange-500/20 border border-orange-400 dark:border-orange-500/50 p-6 space-y-6">
-
-                    {/* Header: Title */}
-                    <div className="flex justify-between items-center px-2">
-                        <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
-                            Monitoramento em Tempo Real
-                        </h2>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => window.open('/?tvMode=true', '_blank', 'toolbar=no,scrollbars=yes,resizable=yes,top=50,left=50,width=1280,height=800')}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-sm"
-                            >
-                                <MonitorPlay size={16} /> Modo TV
-                            </button>
+                <div className="bg-white dark:bg-slate-900 rounded-[18px] shadow-lg shadow-orange-500/10 border-2 border-[#e79a52] overflow-hidden flex flex-col">
+                    {/* Inner Padded Section */}
+                    <div className="p-6 flex flex-col gap-5">
+                        {/* Header: Title */}
+                        <div className="flex justify-between items-center px-1">
+                            <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+                                Monitoramento em Tempo Real
+                            </h2>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => window.open('/?tvMode=true', '_blank', 'toolbar=no,scrollbars=yes,resizable=yes,top=50,left=50,width=1280,height=800')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-[#2a4f8c] hover:bg-[#15294d] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-sm"
+                                >
+                                    <MonitorPlay size={16} /> Modo TV
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* CONTINGENCY BANNER (WEB) */}
-                    {activeContingencyPlan && (
-                        <div className="mt-4 animate-in slide-in-from-top-4 duration-500 px-2">
-                            <div
-                                className={`overflow-hidden rounded-[26px] border shadow-2xl flex items-center cursor-pointer hover:scale-[1.01] transition-all group ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/10' :
-                                    activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500' : 'bg-amber-500 border-amber-400 shadow-orange-500/10'
-                                    }`}
-                                onClick={() => navigate('/contingencia')}
-                            >
-                                <div className="flex-1 p-6 flex items-center gap-6">
-                                    <div className="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center text-white backdrop-blur-md shadow-inner">
-                                        <ShieldAlert size={32} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="bg-white/10 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">SCO Ativo</span>
-                                            <span className="bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Nível {activeContingencyPlan.nivel}</span>
+                        {/* CONTINGENCY BANNER (WEB) */}
+                        {activeContingencyPlan && (
+                            <div className="animate-in slide-in-from-top-4 duration-500 px-1">
+                                <div
+                                    className={`overflow-hidden rounded-[26px] border shadow-2xl flex items-center cursor-pointer hover:scale-[1.01] transition-all group ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/10' :
+                                        activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500' : 'bg-amber-500 border-amber-400 shadow-orange-500/10'
+                                        }`}
+                                    onClick={() => navigate('/contingencia')}
+                                >
+                                    <div className="flex-1 p-6 flex items-center gap-6">
+                                        <div className="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center text-white backdrop-blur-md shadow-inner">
+                                            <ShieldAlert size={32} />
                                         </div>
-                                        <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none mb-1">Operação em Andamento (SCO)</h3>
-                                        <p className="text-white/80 text-xs font-bold truncate max-w-lg">{activeContingencyPlan.motivo}</p>
-                                    </div>
-                                </div>
-                                <div className="bg-black/10 backdrop-blur-sm p-6 flex items-center justify-center gap-4 text-white border-l border-white/10 group-hover:bg-black/20 transition-colors px-10">
-                                    <button className="bg-white text-slate-900 px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg flex items-center gap-2 whitespace-nowrap active:scale-95 transition-all">
-                                        Acessar Central SCO <Activity size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Top 5 Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                        {/* Card 1: Risk Level */}
-                        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group shadow-sm hover:shadow-xl transition-all h-full min-h-[140px]">
-                            <div className="flex flex-col gap-3">
-                                <div className="flex items-center gap-2">
-                                    <Shield size={16} className={`${statusInfo.text} opacity-70`} />
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Status Civil</span>
-                                </div>
-                                <span className={`text-2xl font-black ${statusInfo.text} uppercase tracking-tighter leading-none`}>{statusInfo.label}</span>
-                                <div className="flex flex-col gap-2 w-full">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase opacity-70">Condição Geral</p>
-                                    <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden shadow-inner">
-                                        <div className={`h-full rounded-full transition-all duration-1000 ${statusInfo.color}`} style={{ width: '100%' }} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Card 2: INMET Alerts */}
-                        {!isOperador && (() => {
-                            const inmetAlerts = data.alerts || [];
-                            const totalCount = inmetAlerts.length;
-                            // Determina o nível mais severo dos alertas INMET
-                            const hasGrandePerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande perigo'));
-                            const hasPerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('perigo') && !(a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande'));
-                            const hasPerigoPotencial = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('potencial'));
-                            const inmetIconStyle = hasGrandePerigo
-                                ? { bg: 'bg-red-500/10', text: 'text-red-600', bar: 'bg-red-500', label: 'Grande Perigo' }
-                                : hasPerigo
-                                    ? { bg: 'bg-orange-500/10', text: 'text-orange-600', bar: 'bg-orange-500', label: 'Perigo' }
-                                    : hasPerigoPotencial
-                                        ? { bg: 'bg-amber-400/10', text: 'text-amber-600', bar: 'bg-amber-400', label: 'Perigo Potencial' }
-                                        : { bg: 'bg-slate-100', text: 'text-slate-400', bar: null, label: 'Sem avisos vigentes' };
-                            return (
-                                <div onClick={() => navigate('/alerts')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
-                                    <div className="flex flex-col gap-3">
-                                        <div className="flex items-center gap-2">
-                                            <Zap size={16} className={`${totalCount > 0 ? inmetIconStyle.text : 'text-slate-400'} opacity-70`} />
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Avisos INMET</span>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="bg-white/10 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white/20">SCO Ativo</span>
+                                                <span className="bg-white text-slate-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Nível {activeContingencyPlan.nivel}</span>
+                                            </div>
+                                            <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none mb-1">Operação em Andamento (SCO)</h3>
+                                            <p className="text-white/80 text-xs font-bold truncate max-w-lg">{activeContingencyPlan.motivo}</p>
                                         </div>
-                                        <span className={`text-4xl font-black tabular-nums leading-none ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-800 dark:text-slate-100'}`}>{totalCount}</span>
-                                        <p className={`text-[10px] font-bold uppercase opacity-80 ${totalCount > 0 ? inmetIconStyle.text : 'text-slate-400'}`}>
-                                            {totalCount === 0 ? 'Sem avisos vigentes' : inmetIconStyle.label}
-                                        </p>
                                     </div>
-                                    {totalCount > 0 && inmetIconStyle.bar && (
-                                        <div className={`absolute bottom-0 left-0 right-0 h-1 ${inmetIconStyle.bar} opacity-60 rounded-b-3xl`} />
-                                    )}
+                                    <div className="bg-black/10 backdrop-blur-sm p-6 flex items-center justify-center gap-4 text-white border-l border-white/10 group-hover:bg-black/20 transition-colors px-10">
+                                        <button className="bg-white text-slate-900 px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg flex items-center gap-2 whitespace-nowrap active:scale-95 transition-all">
+                                            Acessar Central SCO <Activity size={16} />
+                                        </button>
+                                    </div>
                                 </div>
-                            );
-                        })()}
-
-                        {/* Card 3: Alertas CEMADEN Ativos */}
-                        <AlertasCemadenCard navigate={navigate} />
-
-                        {/* Card 4: Vistorias */}
-                        <div onClick={() => navigate('/vistorias')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
-                            <div className="flex flex-col gap-3">
-                                <div className="flex items-center gap-2">
-                                    <ClipboardList size={16} className="text-blue-600 opacity-70" />
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Vistorias</span>
-                                </div>
-                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">{data.stats.totalVistorias}</span>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase opacity-70">Total Registrado</p>
                             </div>
-                            <BILinkFooter modulo="vistorias" contexto={{ visao: 'tipologia' }} />
-                        </div>
+                        )}
 
-                        {/* Card 5: Pluviometria */}
-                        <div onClick={() => navigate('/pluviometros')} className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 p-6 rounded-3xl flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-sm h-full min-h-[140px]">
-                            <div className="flex flex-col gap-3">
-                                <div className="flex items-center gap-2">
-                                    <Droplets size={16} className="text-indigo-600 opacity-70" />
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[2.5px]">Pluviometria</span>
+                        {/* Top 5 Cards Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
+                            {/* Card 1: Risk Level */}
+                            <div className={`p-4 rounded-[14px] flex flex-col justify-between relative overflow-hidden group transition-all shadow-md h-full min-h-[140px] text-white ${
+                                statusInfo.loading || statusInfo.label === 'CONSULTANDO...'
+                                    ? 'bg-gradient-to-br from-[#64748b] to-[#334155]'
+                                    : statusInfo.label === 'NORMAL'
+                                        ? 'bg-gradient-to-br from-[#22b57e] to-[#0e9668]'
+                                        : 'bg-gradient-to-br from-[#cf4436] to-[#9c2620]'
+                            }`}>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider opacity-90">
+                                        <Shield size={16} className="text-white shrink-0" />
+                                        <span className="uppercase">STATUS</span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-white opacity-80 animate-pulse ml-0.5" />
+                                    </div>
+                                    <span className="text-3xl font-extrabold leading-none uppercase tracking-tight">{statusInfo.label}</span>
+                                    <div className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">CONDIÇÃO GERAL</div>
                                 </div>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tabular-nums leading-none">
-                                        {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : 0}
-                                    </span>
-                                    <span className="text-xs font-black text-slate-400 uppercase">mm</span>
+                                <div className="h-1.5 rounded-full bg-white/30 overflow-hidden mt-auto">
+                                    <div className="h-full rounded-full bg-white transition-all duration-500" style={{ width: '100%' }} />
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase opacity-70">Média 24h</p>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Clima Horizontal - Abaixo dos Minicards */}
-                    {weather?.current && (
-                        <div onClick={() => setShowForecast(true)} className="flex w-full flex-col md:flex-row items-center justify-between py-2.5 px-6 rounded-[16px] bg-slate-50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/60 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all group overflow-hidden">
-                            <div className="flex items-center gap-4 relative z-10 w-full md:w-auto mb-3 md:mb-0">
-                                <div className="text-3xl drop-shadow-sm text-blue-500 group-hover:scale-110 transition-transform">{getWeatherIcon(weather.current.code)}</div>
-                                <div>
+                            {/* Card 2: INMET Alerts */}
+                            {!isOperador && (() => {
+                                const inmetAlerts = data.alerts || [];
+                                const totalCount = inmetAlerts.length;
+                                const hasGrandePerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande perigo'));
+                                const hasPerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('perigo') && !(a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande'));
+                                const hasPerigoPotencial = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('potencial'));
+                                const inmetIconStyle = hasGrandePerigo
+                                    ? { bg: 'bg-red-500/10', text: 'text-red-600', bar: 'bg-red-500', label: 'Grande Perigo' }
+                                    : hasPerigo
+                                        ? { bg: 'bg-orange-500/10', text: 'text-orange-600', bar: 'bg-orange-500', label: 'Perigo' }
+                                        : hasPerigoPotencial
+                                            ? { bg: 'bg-amber-400/10', text: 'text-amber-600', bar: 'bg-amber-400', label: 'Perigo Potencial' }
+                                            : { bg: 'bg-slate-100', text: 'text-slate-400', bar: null, label: 'SEM AVISOS VIGENTES' };
+                                return (
+                                    <div onClick={() => navigate('/alerts')} className={`p-4 rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-md h-full min-h-[140px] text-white ${
+                                        totalCount === 0
+                                            ? 'bg-gradient-to-br from-[#3a66ac] to-[#2a4f8c]'
+                                            : 'bg-gradient-to-br from-[#e79a52] to-[#c9762f]'
+                                    }`}>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider opacity-90">
+                                                <Zap size={16} className="text-white shrink-0" />
+                                                <span className="uppercase">AVISOS INMET</span>
+                                            </div>
+                                            <span className="text-3xl font-extrabold leading-none">{totalCount}</span>
+                                            <p className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">
+                                                {totalCount === 0 ? 'SEM AVISOS VIGENTES' : inmetIconStyle.label}
+                                            </p>
+                                        </div>
+                                        {totalCount > 0 && (
+                                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/40 opacity-80" />
+                                        )}
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Card 3: Alertas CEMADEN Ativos */}
+                            <AlertasCemadenCard navigate={navigate} />
+
+                            {/* Card 4: Vistorias */}
+                            <div onClick={() => navigate('/vistorias')} className="p-4 rounded-[14px] bg-gradient-to-br from-[#254776] to-[#15294d] text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-md h-full min-h-[140px]">
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider opacity-90">
+                                        <ClipboardList size={16} className="text-white shrink-0" />
+                                        <span className="uppercase">VISTORIAS</span>
+                                    </div>
+                                    <span className="text-3xl font-extrabold leading-none">{data.stats.totalVistorias}</span>
+                                    <p className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">TOTAL REGISTRADO</p>
+                                </div>
+                            </div>
+
+                            {/* Card 5: Pluviometria */}
+                            <div onClick={() => navigate('/pluviometros')} className="p-4 rounded-[14px] bg-gradient-to-br from-[#7d6dcf] to-[#54459c] text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-md h-full min-h-[140px]">
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider opacity-90">
+                                        <Droplets size={16} className="text-white shrink-0" />
+                                        <span className="uppercase">PLUVIOMETRIA</span>
+                                    </div>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-2xl font-black text-slate-800 dark:text-slate-100 leading-none tracking-tighter">{Math.round(weather.current.temp || 0)}°C</span>
+                                        <span className="text-3xl font-extrabold leading-none">
+                                            {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : '0.0'}
+                                        </span>
+                                        <span className="text-xs font-bold uppercase opacity-85">mm</span>
                                     </div>
-                                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Previsão • Santa Maria de Jetibá</div>
-                                </div>
-                            </div>
-                            <div className="flex gap-6 relative z-10 w-full md:w-auto">
-                                <div className="flex items-center gap-1.5">
-                                    <CloudRain size={16} className="text-blue-500" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none uppercase">{weather.daily?.[0]?.rainProb || 0}%</span>
-                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Chuva</span>
-                                    </div>
-                                </div>
-                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-                                <div className="flex items-center gap-1.5">
-                                    <Timer size={16} className="text-blue-400" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none uppercase">{weather.current.humidity || 0}%</span>
-                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Umidade</span>
-                                    </div>
-                                </div>
-                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-                                <div className="flex items-center gap-1.5">
-                                    <Activity size={16} className="text-slate-400" />
-                                    <div className="flex flex-col">
-                                        <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-none uppercase">{Math.round(weather.current.wind || 6)} km/h</span>
-                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Vento</span>
-                                    </div>
+                                    <p className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">MÉDIA 24H</p>
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Blue Horizontal Nav Bar */}
-                    <div className="bg-[#2a5299] rounded-[12px] p-0.5 flex items-center justify-between overflow-x-auto custom-scrollbar gap-1.5">
+                        {/* Clima Horizontal - Abaixo dos Minicards */}
+                        {weather?.current && (
+                            <div onClick={() => setShowForecast(true)} className="flex w-full flex-col md:flex-row items-center justify-between py-3 px-6 rounded-[14px] bg-[#f8fafc] dark:bg-slate-800/40 border border-[#eef1f5] dark:border-slate-700/60 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all group overflow-hidden">
+                                <div className="flex items-center gap-4 relative z-10 w-full md:w-auto mb-3 md:mb-0">
+                                    <div className="text-3xl drop-shadow-sm text-blue-500 group-hover:scale-110 transition-transform">{getWeatherIcon(weather.current.code)}</div>
+                                    <div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xl font-extrabold text-slate-800 dark:text-slate-100 leading-none tracking-tight">{Math.round(weather.current.temp || 0)}°C</span>
+                                        </div>
+                                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">PREVISÃO • SANTA MARIA DE JETIBÁ</div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-6 relative z-10 w-full md:w-auto">
+                                    <div className="flex items-center gap-1.5">
+                                        <CloudRain size={16} className="text-blue-500" />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 leading-none uppercase">{weather.daily?.[0]?.rainProb || 0}%</span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Chuva</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Timer size={16} className="text-blue-400" />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 leading-none uppercase">{weather.current.humidity || 0}%</span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Umidade</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Activity size={16} className="text-slate-400" />
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 leading-none uppercase">{Math.round(weather.current.wind || 6)} km/h</span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Vento</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Blue Horizontal Nav Bar - Positioned at absolute bottom of container */}
+                    <div className="bg-[#254776] text-white flex w-full divide-x divide-white/10 border-t border-white/10 mt-auto">
                         {[
-                            { label: 'Ocorrências', icon: ClipboardList, path: '/ocorrencias' },
-                            { label: 'Vistorias', icon: ClipboardList, path: '/vistorias' },
-                            { label: 'Interdições', icon: Home, path: '/interdicao' },
-                            { label: 'REDAP', icon: ClipboardCheck, path: '/redap' },
-                            { label: 'Rel. Situacional', icon: FileText, action: () => setShowReportMenu(!showReportMenu) }
+                            { label: 'OCORRÊNCIAS', path: '/ocorrencias' },
+                            { label: 'VISTORIAS', path: '/vistorias' },
+                            { label: 'INTERDIÇÕES', path: '/interdicao' },
+                            { label: 'REDAP', path: '/redap' },
+                            { label: 'REL. SITUACIONAL', action: () => setShowReportMenu(!showReportMenu) }
                         ].map((item, idx) => (
                             <button
                                 key={idx}
                                 onClick={item.action || (() => navigate(item.path))}
-                                className="flex flex-1 justify-center items-center gap-1.5 px-6 py-1 rounded-lg text-white/90 hover:bg-white/10 hover:text-white transition-all group shrink-0"
+                                className="flex-1 py-2 px-2 text-center text-[10px] md:text-[11px] font-extrabold tracking-wider hover:bg-white/10 transition-colors cursor-pointer flex items-center justify-center whitespace-nowrap"
                             >
-                                <item.icon size={14} className={`opacity-70 group-hover:opacity-100 ${item.spin ? 'animate-spin' : ''}`} />
-                                <span className="text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">{item.label}</span>
+                                {item.label}
                             </button>
                         ))}
                     </div>
@@ -2521,7 +2539,7 @@ const WebViewDashboardView = ({
                                 const rest = list.slice(10);
                                 const restCount = rest.reduce((acc, c) => acc + c.count, 0);
                                 if (restCount > 0) {
-                                    top.push({ label: 'Outros', count: restCount, percentage: Math.round((restCount / (currentData?.stats?.total || 1)) * 100), color: 'bg-slate-300' });
+                                    top.push({ label: 'Outros', count: restCount, percentage: Math.round((restCount / (currentData?.stats?.total || 1)) * 100), color: 'bg-indigo-400' });
                                 }
                                 return top.map((item, idx) => (
                                     <div key={idx} className="group cursor-default">
@@ -2956,11 +2974,15 @@ const Dashboard = () => {
             const initialAllV = deduplicate([...(cachedVistorias || []), ...(localVistorias || [])]);
             const initialAllO = deduplicate(localOcorrencias || []);
 
-            // Extract interdicoes from vistorias AND combine with local interdicoes table
+            // Extract interdicoes from vistorias AND combine with local interdicoes table (Filtering out desinterditadas)
             const vistoriasWithI = (initialAllV || []).filter(v =>
                 v && (v.interdicao_id || v.interdicaoId || v.tipo_interdicao || v.id_interdicao || v.risco_tipo || v.medida_tipo || v.motivo_interdicao)
             );
-            const initialAllI = deduplicate([...(localInterdicoes || []), ...vistoriasWithI]);
+            const initialAllI = deduplicate([...(localInterdicoes || []), ...vistoriasWithI]).filter(i => {
+                if (!i) return false;
+                const statusStr = String(i.status || i.status_interdicao || i.situacao || i.tipo_documento || '').toLowerCase();
+                return !(statusStr.includes('desinterdit') || statusStr.includes('liberad') || statusStr.includes('revogad') || statusStr === 'cancelada' || statusStr === 'excluido');
+            });
 
             const vProcessed = processLocations(initialAllV, 'v');
             const oProcessed = processLocations(initialAllO, 'o');

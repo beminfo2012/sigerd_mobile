@@ -3,28 +3,69 @@ import { getRemoteVistoriasCache, saveRemoteVistoriasCache, getAllVistoriasLocal
 import { getOcorrenciasLocal } from './ocorrenciasDb'
 
 const colorPalette = {
+    // Ocorrências Tipologias
+    'Eventos Naturais / Climáticos': 'bg-sky-500',
+    'EVENTOS NATURAIS / CLIMÁTICOS': 'bg-sky-500',
+    'Climático / Meteorológico': 'bg-sky-500',
+    'Quedas e Desabamentos': 'bg-orange-500',
+    'QUEDAS E DESABAMENTOS': 'bg-orange-500',
+    'Desabamento': 'bg-orange-500',
+    'Reclamação de Rachadura/Trinca': 'bg-purple-500',
+    'RECLAMAÇÃO DE RACHADURA/TRINCA': 'bg-purple-500',
+    'Rachadura': 'bg-purple-500',
+    'Salvamentos': 'bg-emerald-500',
+    'SALVAMENTOS': 'bg-emerald-500',
+
+    // Vistorias & Riscos Tipologias
     'Geológico / Geotécnico': 'bg-orange-500',
     'Risco Geológico': 'bg-orange-500',
+    'Deslizamento': 'bg-orange-500',
     'Hidrológico': 'bg-blue-500',
     'Inundação': 'bg-blue-500',
-    'Alagamento': 'bg-blue-400',
+    'Alagamento': 'bg-sky-400',
     'Inundação/Alagamento': 'bg-blue-500',
     'Enxurrada': 'bg-blue-600',
-    'Estrutural': 'bg-slate-400',
-    'Estrutural/Predial': 'bg-slate-400',
+    'Estrutural': 'bg-purple-500',
+    'Estrutural/Predial': 'bg-purple-500',
     'Ambiental': 'bg-emerald-500',
     'Tecnológico': 'bg-amber-500',
-    'Climático / Meteorológico': 'bg-sky-500',
     'Infraestrutura Urbana': 'bg-indigo-500',
     'Sanitário': 'bg-rose-500',
-    'Deslizamento': 'bg-orange-500',
     'Vendaval': 'bg-sky-600',
     'Granizo': 'bg-indigo-400',
     'Incêndio': 'bg-red-500',
-    'Outros': 'bg-slate-400'
+
+    // Interdições Níveis / Grau de Risco
+    'Muito Alto': 'bg-red-600',
+    'MUITO ALTO': 'bg-red-600',
+    'Alto': 'bg-red-500',
+    'ALTO': 'bg-red-500',
+    'Moderado': 'bg-amber-500',
+    'MODERADO': 'bg-amber-500',
+    'Baixo': 'bg-emerald-500',
+    'BAIXO': 'bg-emerald-500',
+    'Observação': 'bg-sky-500',
+    'OBSERVAÇÃO': 'bg-sky-500',
+    'Interdição': 'bg-rose-500',
+    'Total': 'bg-red-600',
+    'Parcial': 'bg-orange-500',
+
+    'Outros': 'bg-indigo-400',
+    'Outro': 'bg-indigo-400'
 };
 
-const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-500'];
+const defaultVibrantColors = [
+    'bg-blue-500',
+    'bg-orange-500',
+    'bg-purple-500',
+    'bg-emerald-500',
+    'bg-sky-500',
+    'bg-amber-500',
+    'bg-rose-500',
+    'bg-indigo-500',
+    'bg-teal-500',
+    'bg-red-500'
+];
 
 const processListToMapData = (list) => {
     return (list || [])
@@ -69,7 +110,7 @@ const processListToMapData = (list) => {
             else if (v.vistoria_id || v.vistoriaId) type = 'v';
 
             const subtypes = v.subtipos_risco || v.subtiposRisco || [];
-            const category = v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || (type === 'o' ? 'Ocorrência' : type === 'i' ? (v.risco_tipo || 'Interdição') : 'Vistoria');
+            const category = v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || v.tipo_ocorrencia || v.tipoOcorrencia || (type === 'o' ? 'Ocorrência' : type === 'i' ? (v.risco_tipo || v.risco_grau || 'Interdição') : 'Vistoria');
 
             return {
                 id: v.id,
@@ -92,15 +133,16 @@ const processListToMapData = (list) => {
 const processBreakdown = (list) => {
     const counts = {};
     list.forEach(v => {
-        const cat = v.categoria_risco || v.categoriaRisco || 'Outros';
-        counts[cat] = (counts[cat] || 0) + 1;
+        const cat = v.categoria_risco || v.categoriaRisco || v.tipo_ocorrencia || v.tipoOcorrencia || v.risco_grau || v.riscoGrau || v.risk || 'Outros';
+        const label = String(cat).trim() || 'Outros';
+        counts[label] = (counts[label] || 0) + 1;
     });
 
     return Object.keys(counts).map((label, idx) => ({
         label,
         count: counts[label],
         percentage: list.length > 0 ? Math.round((counts[label] / list.length) * 100) : 0,
-        color: colorPalette[label] || defaultColors[idx % defaultColors.length]
+        color: colorPalette[label] || defaultVibrantColors[idx % defaultVibrantColors.length]
     })).sort((a, b) => b.count - a.count);
 };
 
@@ -131,7 +173,7 @@ export const api = {
     async getDashboardData() {
         try {
             // 1. Fetch data from Supabase in parallel with specific columns and limits
-            const [remoteVistorias, remoteOcorrencias, remoteInterdicoes, localVistorias, localOcorrencias, localInterdicoes, inmetResp] = await Promise.all([
+            const [remoteVistorias, remoteOcorrencias, remoteInterdicoes, remoteDesinterdicoes, localVistorias, localOcorrencias, localInterdicoes, inmetResp] = await Promise.all([
                 navigator.onLine ? supabase.from('vistorias')
                     .select('*')
                     .order('created_at', { ascending: false })
@@ -144,6 +186,8 @@ export const api = {
                     .select('*')
                     .order('created_at', { ascending: false })
                     .limit(100) : Promise.resolve({ data: [] }),
+                navigator.onLine ? supabase.from('desinterdicoes')
+                    .select('*') : Promise.resolve({ data: [] }),
                 getAllVistoriasLocal().catch(() => []),
                 getOcorrenciasLocal().catch(() => []),
                 getAllInterdicoesLocal().catch(() => []),
@@ -179,7 +223,7 @@ export const api = {
             });
             const allOcorrencias = Array.from(oMap.values());
 
-            // 4. Process Interdicoes (Improved deduplication)
+            // 4. Process Interdicoes (Filter out desinterdições to count ONLY active interdictions)
             const iData = remoteInterdicoes.data || [];
             const iMap = new Map();
             iData.forEach(i => {
@@ -190,7 +234,33 @@ export const api = {
                 const key = i.id || i.interdicaoId || i.interdicao_id;
                 if (key) iMap.set(key, i);
             });
-            const allInterdicoes = Array.from(iMap.values());
+            const rawInterdicoes = Array.from(iMap.values());
+
+            const desintData = remoteDesinterdicoes.data || [];
+            const localDesint = await (async () => {
+                try {
+                    const { initDB } = await import('./db');
+                    const db = await initDB();
+                    return (await db.getAll('desinterdicoes')) || [];
+                } catch { return []; }
+            })().catch(() => []);
+            const allDesint = [...desintData, ...localDesint];
+
+            const allInterdicoes = rawInterdicoes.filter(i => {
+                if (!i) return false;
+                const st = String(i.status || i.status_interdicao || i.situacao || i.tipo_documento || '').toLowerCase();
+                if (st.includes('desinterdit') || st.includes('liberad') || st.includes('revogad') || st === 'cancelada' || st === 'excluido') {
+                    return false;
+                }
+                const curId = String(i.interdicao_id || i.interdicaoId || i.id || '');
+                const hasTotalDesint = allDesint.some(d => {
+                    if (!d) return false;
+                    const parentId = String(d.interdicao_id || d.interdicaoId || d.id_interdicao || '');
+                    const tipoD = String(d.tipo_desinterdicao || d.tipoDesinterdicao || '').toUpperCase();
+                    return (parentId && parentId === curId) && (tipoD === 'TOTAL' || tipoD.includes('TOTAL'));
+                });
+                return !hasTotalDesint;
+            });
 
             // 5. INMET (fetch local with production fallback and database fallback)
             let inmetAlerts = [];
