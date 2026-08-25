@@ -636,6 +636,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 latitude: (item.latitude === "" || item.latitude == null) ? null : Number(item.latitude),
                 longitude: (item.longitude === "" || item.longitude == null) ? null : Number(item.longitude),
                 coordenadas: item.coordenadas || (item.latitude && item.longitude ? `${item.latitude},${item.longitude}` : ''),
+                polygon_coords: item.polygon_coords || item.polygonCoords || null,
                 data_hora: item.dataHora || item.data_hora || new Date().toISOString(),
                 tipo_info: item.tipo_info || item.tipoInfo || item.categoriaRisco || 'Vistoria Geral',
 
