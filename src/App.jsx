@@ -119,8 +119,8 @@ const NortisModule = lazy(() => import('./pages/Nortis'))
 // Business Intelligence (BI)
 const BusinessIntelligence = lazy(() => import('./pages/BI'))
 
-
-
+// Global Search Page
+const SearchResultsPage = lazy(() => import('./pages/Search/SearchResultsPage'))
 
 // Create context for user profile
 export const UserContext = createContext(null)
@@ -354,6 +354,11 @@ const AppContent = ({
                                 <Route path="/bi" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Secretário']}>
                                         <BusinessIntelligence />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/busca" element={
+                                    <ProtectedRoute user={userProfile}>
+                                        <SearchResultsPage />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/usuarios" element={

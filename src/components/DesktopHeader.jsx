@@ -1,10 +1,10 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronRight, Search, Bell, Settings, HelpCircle, User } from 'lucide-react';
+import GlobalSearchBar from './GlobalSearchBar';
 
 const DesktopHeader = ({ userProfile }) => {
     const location = useLocation();
-
 
     return (
         <header
@@ -30,6 +30,9 @@ const DesktopHeader = ({ userProfile }) => {
                     </div>
                 </Link>
             </div>
+
+            {/* Barra de Pesquisa Global Centralizada (~36% da largura) */}
+            <GlobalSearchBar />
 
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
