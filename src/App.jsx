@@ -125,61 +125,7 @@ const SearchResultsPage = lazy(() => import('./pages/Search/SearchResultsPage'))
 // Create context for user profile
 export const UserContext = createContext(null)
 
-class ErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
-
-    static getDerivedStateFromError(error) {
-        return { hasError: true, error };
-    }
-
-    componentDidCatch(error, errorInfo) {
-        console.error("Critical Error caught by Boundary:", error, errorInfo);
-    }
-
-    handleClearCache = () => {
-        localStorage.clear();
-        window.location.reload();
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-                    <h2 style={{ color: '#dc2626' }}>⚠️ Oops! Algo deu errado.</h2>
-                    <p style={{ color: '#64748b' }}>O aplicativo encontrou um erro e não pôde continuar.</p>
-                    <div style={{
-                        background: '#f1f5f9',
-                        padding: '15px',
-                        borderRadius: '8px',
-                        textAlign: 'left',
-                        margin: '20px 0',
-                        fontSize: '12px',
-                        overflowX: 'auto',
-                        fontFamily: 'monospace'
-                    }}>
-                        {this.state.error?.toString()}
-                    </div>
-                    <button
-                        onClick={() => window.location.reload()}
-                        style={{ padding: '10px 20px', background: '#2a5299', color: 'white', border: 'none', borderRadius: '8px', marginRight: '10px' }}
-                    >
-                        Tentar Novamente
-                    </button>
-                    <button
-                        onClick={this.handleClearCache}
-                        style={{ padding: '10px 20px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '8px' }}
-                    >
-                        Limpar Cache e Sair
-                    </button>
-                </div>
-            );
-        }
-        return this.props.children;
-    }
-}
+import ErrorBoundary from './components/ErrorBoundary'
 
 const AppContent = ({
     isAuthenticated, userProfile, setUserProfile, activeTab, setActiveTab, handleLogout,

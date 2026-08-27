@@ -34,7 +34,8 @@ const HeatmapLayer = ({ points, show = true, options = {} }) => {
             radius: 20,
             blur: 15,
             maxZoom: 17,
-            gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red' }
+            gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1: 'red' },
+            willReadFrequently: true
         }
 
         const heatLayer = window.L.heatLayer(heatData, { ...defaultOptions, ...options }).addTo(map)
