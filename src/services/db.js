@@ -1323,7 +1323,8 @@ export const pullAllData = async (force = false) => {
             try {
                 let query = supabase.from(mod.table).select('*');
                 if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(mod.table)) {
-                    query = query.order('created_at', { ascending: false }).limit(200);
+                    const limitVal = mod.table === 'vistorias' ? 100 : 200;
+                    query = query.order('created_at', { ascending: false }).limit(limitVal);
                 }
 
                 // Individual timeout per table (30s each)
