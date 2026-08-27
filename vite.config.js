@@ -22,26 +22,33 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Defesa Civil Municipal',
-        short_name: 'DefesaCivil',
-        description: 'Aplicativo de uso em campo para Defesa Civil',
+        name: 'SIGERD - Defesa Civil',
+        short_name: 'SIGERD',
+        description: 'Sistema de Gerenciamento de Emergências e Riscos para Defesa Civil Municipal',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
         theme_color: '#2a5299',
-        version: '1.46.24',
+        lang: 'pt-BR',
+        scope: '/',
+        version: '1.01.18',
         icons: [
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ],
         shortcuts: [
           {
-            name: 'Iniciar Vistoria',
+            name: 'Iniciar Checklist de Saída',
             short_name: 'Checklist',
             description: 'Verificar equipamentos antes de sair',
             url: '/checklist-saida',
@@ -50,7 +57,7 @@ export default defineConfig({
           {
             name: 'Nova Vistoria',
             short_name: 'Vistoria',
-            description: 'Criar nova vistoria',
+            description: 'Criar nova vistoria de campo',
             url: '/vistorias',
             icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
           }

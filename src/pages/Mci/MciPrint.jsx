@@ -3,7 +3,7 @@ import { Printer, X, Activity, ZoomIn, ZoomOut, CheckCircle2, AlertTriangle, Clo
 import { UserContext } from '../../App';
 
 const LOGO_DEFESA_CIVIL = '/logo_defesa_civil.png';
-const LOGO_SIGERD = '/logo_sigerd.png';
+const LOGO_SIGERD = '/logo_prefeitura.png';
 
 const MciPrint = () => {
     const userProfile = useContext(UserContext);

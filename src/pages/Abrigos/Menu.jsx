@@ -700,14 +700,6 @@ export default function ShelterMenu() {
 
                     <GestaoOperacoesBlock userProfile={userProfile} />
 
-                {/* Footer Info */}
-                <div className="text-center pt-8 border-t border-slate-100 dark:border-slate-800 mt-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">
-                        <Info size={12} className="text-slate-400 dark:text-slate-500" />
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">SIGERD Mobile v1.40.0</span>
-                    </div>
-                </div>
-
             </main>
         </div>
     );

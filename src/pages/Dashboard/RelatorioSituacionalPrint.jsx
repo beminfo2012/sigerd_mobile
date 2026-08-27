@@ -6,7 +6,7 @@ import LimiteSMJLayer from '../../components/LimiteSMJLayer';
 import L from 'leaflet';
 import { UserContext } from '../../App';
 const LOGO_DEFESA_CIVIL_SITUACIONAL = '/logo_defesa_civil.png';
-const LOGO_SIGERD_SITUACIONAL = '/logo_sigerd.png';
+const LOGO_SIGERD_SITUACIONAL = '/logo_prefeitura.png';
 
 // Utility component to recalibrate map size and center
 const MapController = ({ center, markers }) => {

@@ -18,6 +18,7 @@ import 'leaflet/dist/leaflet.css'
 import HeatmapLayer from '../../components/HeatmapLayer'
 import OrthofotsLayer from '../../components/OrthofotsLayer'
 import { BILinkFooter } from '../../components/dashboard/BILinkFooter'
+import { APP_VERSION } from '../../version'
 
 
 const createCustomPin = (color) => {
@@ -177,7 +178,6 @@ import { cemadenService, STATION_METADATA } from '../../services/cemaden'
 import { getAlertasCemaden } from '../../services/alertasCemadenService'
 import CemadenAlertBanner from '../../components/CemadenAlertBanner'
 import { useToast } from '../../components/ToastNotification'
-import { APP_VERSION } from '../../version'
 import { contingencyDb } from '../../services/contingencyDb'
 import { supabase } from '../../services/supabase'
 import { useNoprer } from '../Noprer/hooks/useNoprer'

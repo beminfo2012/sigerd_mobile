@@ -72,7 +72,8 @@ const OcorrenciasPrint = () => {
         const fetchData = async () => {
             if (!id) return;
             try {
-                const reportData = await getOcorrenciaById(id);
+                const decodedId = decodeURIComponent(id);
+                const reportData = await getOcorrenciaById(decodedId);
                 
                 if (reportData) {
                     setData(reportData);

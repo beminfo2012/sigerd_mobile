@@ -5,7 +5,6 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/pwa-icon.png">
-  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2a5299">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,7 +27,7 @@
 
     // NUCLEAR CACHE RESET 
     (async function () {
-      const TARGET_VERSION = '1.01.18.04';
+      const TARGET_VERSION = '1.01.18';
       if (localStorage.getItem('app_version') !== TARGET_VERSION) {
         console.log("Nuclear Reset Triggered: Version Mismatch");
         if ('serviceWorker' in navigator) {

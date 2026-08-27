@@ -365,7 +365,7 @@ async function performOnlineTableSearch(query, type, limit) {
                 .then(({ data, error }) => {
                     if (error) return [];
                     return (data || []).map(item => {
-                        const targetId = item.ocorrencia_id_format || item.ocorrencia_id || item.id;
+                        const targetId = item.ocorrencia_id || item.ocorrencia_id_format || item.id;
                         return {
                             id: String(item.id || item.ocorrencia_id),
                             record_type: 'ocorrencia',
@@ -597,7 +597,7 @@ async function performOfflineSearch(query, type, limit) {
     if ((type === 'all' || type === 'ocorrencia') && db.objectStoreNames.contains('ocorrencias_operacionais')) {
         const items = await db.getAll('ocorrencias_operacionais');
         items.forEach(o => {
-            const targetId = o.ocorrencia_id_format || o.ocorrencia_id || o.id;
+            const targetId = o.ocorrencia_id || o.ocorrencia_id_format || o.id;
             const itemObj = {
                 id: String(o.id || o.ocorrencia_id),
                 record_type: 'ocorrencia',

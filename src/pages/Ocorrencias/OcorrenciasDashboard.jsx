@@ -318,7 +318,8 @@ const OcorrenciasDashboard = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    window.open(`/ocorrencias/imprimir/${record.id || record.ocorrencia_id}`, '_blank');
+                                                    const targetUuid = record.ocorrencia_id || (typeof record.id === 'string' && record.id.includes('-') ? record.id : (record.ocorrencia_id_format || record.id));
+                                                    window.open(`/ocorrencias/imprimir/${encodeURIComponent(targetUuid)}`, '_blank');
                                                 }}
                                                 className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
                                                 title="Visualizar Detalhes"
