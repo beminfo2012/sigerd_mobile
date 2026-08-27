@@ -111,12 +111,14 @@ const processListToMapData = (list) => {
 
             const subtypes = v.subtipos_risco || v.subtiposRisco || [];
             const category = v.categoria_risco || v.categoriaRisco || v.risco_grau || v.riscoGrau || v.tipo_ocorrencia || v.tipoOcorrencia || (type === 'o' ? 'Ocorrência' : type === 'i' ? (v.risco_tipo || v.risco_grau || 'Interdição') : 'Vistoria');
+            const nivelRisco = v.nivel_risco || v.nivelRisco || v.risco_grau || v.riscoGrau || category || 'Outros';
 
             return {
                 id: v.id,
                 formattedId: v.ocorrencia_id_format || v.ocorrencia_id || v.vistoria_id || v.vistoriaId || v.interdicao_id || v.interdicaoId || (v.id ? String(v.id).split('-')[0].toUpperCase() : ''),
                 lat, lng,
                 risk: category,
+                nivelRisco,
                 status: v.status || 'Pendente',
                 details: subtypes.length > 0 ? (Array.isArray(subtypes) ? subtypes.join(', ') : subtypes) : (String(category || '')),
                 date: v.created_at || v.data_hora || v.dataHora || new Date().toISOString(),
@@ -172,20 +174,20 @@ const processLocalidadeBreakdown = (list) => {
 export const api = {
     async getDashboardData() {
         try {
-            // 1. Fetch data from Supabase in parallel with specific columns and limits
+            // 1. Fetch data from Supabase in parallel with extended limits
             const [remoteVistorias, remoteOcorrencias, remoteInterdicoes, remoteDesinterdicoes, localVistorias, localOcorrencias, localInterdicoes, inmetResp] = await Promise.all([
                 navigator.onLine ? supabase.from('vistorias')
                     .select('*')
                     .order('created_at', { ascending: false })
-                    .limit(100) : Promise.resolve({ data: [] }),
+                    .limit(1000) : Promise.resolve({ data: [] }),
                 navigator.onLine ? supabase.from('ocorrencias_operacionais')
                     .select('*')
                     .order('created_at', { ascending: false })
-                    .limit(100) : Promise.resolve({ data: [] }),
+                    .limit(1000) : Promise.resolve({ data: [] }),
                 navigator.onLine ? supabase.from('interdicoes')
                     .select('*')
                     .order('created_at', { ascending: false })
-                    .limit(100) : Promise.resolve({ data: [] }),
+                    .limit(1000) : Promise.resolve({ data: [] }),
                 navigator.onLine ? supabase.from('desinterdicoes')
                     .select('*') : Promise.resolve({ data: [] }),
                 getAllVistoriasLocal().catch(() => []),
@@ -194,28 +196,26 @@ export const api = {
                 fetch('/api/inmet').catch(() => null)
             ]);
 
-            // 2. Process Vistorias (Improved deduplication to avoid data loss)
+            // 2. Process Vistorias (Supabase is source of truth when online)
             const vData = remoteVistorias.data || [];
             if (navigator.onLine && vData.length > 0) await saveRemoteVistoriasCache(vData).catch(() => { });
             const vistoriasCache = (!vData.length) ? await getRemoteVistoriasCache() : vData;
+            const pendingLocalVistorias = (localVistorias || []).filter(v => v && !v.synced);
 
-            // Use Map to merge to avoid duplicates but keep local entries if remote query is limited
             const vMap = new Map();
-            // First pass: add all items. IMPORTANT: Prioritize the formatted Business ID for deduplication
-            [...vistoriasCache, ...localVistorias].forEach(v => {
+            [...vistoriasCache, ...pendingLocalVistorias].forEach(v => {
                 if (!v) return;
-                // Formatted ID is the strongest key for deduplication across local and remote
                 const businessId = v.vistoria_id || v.vistoriaId || v.id_vistoria;
-                // If we have a business ID, use it. Otherwise fall back to technical ID or random
                 const key = businessId ? String(businessId) : (v.id ? `tech-${v.id}` : `rnd-${Math.random()}`);
                 vMap.set(key, v);
             });
             const allVistorias = Array.from(vMap.values());
 
-            // 3. Process Ocorrencias (Improved deduplication)
+            // 3. Process Ocorrencias
             const oData = remoteOcorrencias.data || [];
+            const pendingLocalOcorrencias = (localOcorrencias || []).filter(o => o && !o.synced);
             const oMap = new Map();
-            [...oData, ...localOcorrencias].forEach(o => {
+            [...oData, ...pendingLocalOcorrencias].forEach(o => {
                 if (!o) return;
                 const businessId = o.ocorrencia_id_format || o.ocorrencia_id || o.id_ocorrencia;
                 const key = businessId ? String(businessId) : (o.id ? `tech-${o.id}` : `rnd-${Math.random()}`);
@@ -225,12 +225,13 @@ export const api = {
 
             // 4. Process Interdicoes (Filter out desinterdições to count ONLY active interdictions)
             const iData = remoteInterdicoes.data || [];
+            const pendingLocalInterdicoes = (localInterdicoes || []).filter(i => i && !i.synced);
             const iMap = new Map();
             iData.forEach(i => {
-                const key = i.id || i.interdicao_id;
+                const key = i.id || i.interdicao_id || i.interdicaoId;
                 if (key) iMap.set(key, i);
             });
-            localInterdicoes.forEach(i => {
+            pendingLocalInterdicoes.forEach(i => {
                 const key = i.id || i.interdicaoId || i.interdicao_id;
                 if (key) iMap.set(key, i);
             });

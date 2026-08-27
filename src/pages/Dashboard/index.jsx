@@ -41,6 +41,7 @@ const createCustomPin = (color) => {
 const createCustomDot = (color) => {
     return L.divIcon({
         className: 'custom-dot-marker',
+        markerColor: color,
         html: `
             <div class="marker-hover-effect" style="
                 width: 16px;
@@ -88,7 +89,21 @@ const createClusterIcon = (cluster) => {
     let maxColor = '#10b981'; // default green
 
     childMarkers.forEach(marker => {
-        const color = marker.options.markerColor || '#10b981';
+        let color = marker.options.markerColor
+                 || marker.options.icon?.options?.markerColor
+                 || (marker.options.loc ? getMarkerColor(marker.options.loc) : null);
+
+        if (!color && marker.options.icon?.options?.html) {
+            const html = String(marker.options.icon.options.html);
+            if (html.includes('#dc2626') || html.includes('#ef4444') || html.includes('rgb(220, 38, 38)') || html.includes('rgb(239, 68, 68)')) color = '#dc2626';
+            else if (html.includes('#ea580c') || html.includes('#f97316') || html.includes('rgb(234, 88, 12)') || html.includes('rgb(249, 115, 22)')) color = '#ea580c';
+            else if (html.includes('#f59e0b') || html.includes('rgb(245, 158, 11)')) color = '#f59e0b';
+            else if (html.includes('#10b981') || html.includes('#22c55e')) color = '#10b981';
+            else if (html.includes('#3b82f6') || html.includes('#64748b')) color = '#3b82f6';
+        }
+
+        if (!color) color = '#10b981';
+
         let rank = 1;
         if (color === '#dc2626' || color === '#ef4444') {
             rank = 4;
@@ -151,16 +166,17 @@ const getMarkerColor = (loc) => {
             default: return '#ef4444'; // Pendente
         }
     } else if (loc.type === 'i') { // Interdição
-        return loc.risk === 'Total' ? '#dc2626' : loc.risk === 'Parcial' ? '#ea580c' : '#f59e0b';
+        const risk = String(loc.risk || loc.risco_tipo || loc.riscoTipo || loc.details || '').toLowerCase();
+        return risk.includes('total') ? '#dc2626' : risk.includes('parcial') ? '#ea580c' : '#f59e0b';
     } else { // Vistoria ('v')
-        const riskStr = String(loc.nivelRisco || '').toLowerCase();
-        if (riskStr.includes('iminente') || riskStr.includes('muito alto') || riskStr === 'r4') {
+        const riskStr = String(loc.nivelRisco || loc.nivel_risco || loc.risk || loc.categoriaRisco || loc.categoria_risco || loc.details || '').toLowerCase();
+        if (riskStr.includes('iminente') || riskStr.includes('muito alto') || riskStr.includes('r4') || riskStr.includes('crítico') || riskStr.includes('critico')) {
             return '#dc2626'; // Vermelho
-        } else if (riskStr.includes('alto') || riskStr === 'r3') {
+        } else if (riskStr.includes('alto') || riskStr.includes('r3')) {
             return '#ea580c'; // Laranja
-        } else if (riskStr.includes('médio') || riskStr.includes('medio') || riskStr === 'r2') {
+        } else if (riskStr.includes('médio') || riskStr.includes('medio') || riskStr.includes('r2') || riskStr.includes('moderado')) {
             return '#f59e0b'; // Amarelo/Amber
-        } else if (riskStr.includes('baixo') || riskStr === 'r1') {
+        } else if (riskStr.includes('baixo') || riskStr.includes('r1')) {
             return '#10b981'; // Verde
         }
         return '#10b981'; // Fallback para baixo/outros

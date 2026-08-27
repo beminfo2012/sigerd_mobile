@@ -1690,9 +1690,8 @@ export const saveInterdicaoOffline = async (data) => {
 
 export const clearLocalData = async () => {
     const db = await initDB()
-    const stores = []
-    if (db.objectStoreNames.contains('vistorias')) stores.push('vistorias')
-    if (db.objectStoreNames.contains('interdicoes')) stores.push('interdicoes')
+    const targetStores = ['vistorias', 'interdicoes', 'remote_vistorias_cache', 'ocorrencias_operacionais', 'agenda_vistorias', 'desinterdicoes']
+    const stores = targetStores.filter(s => db.objectStoreNames.contains(s))
 
     if (stores.length > 0) {
         const tx = db.transaction(stores, 'readwrite')
