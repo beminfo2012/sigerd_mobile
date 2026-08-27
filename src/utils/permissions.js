@@ -16,9 +16,6 @@ export const isAdmin = async () => {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return false
 
-        // Special case: Explicitly allow the requested admin email
-        if (user.email === 'bruno_pagel@hotmail.com') return true
-
         const { data, error } = await supabase
             .from('profiles')
             .select('role')

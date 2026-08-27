@@ -641,7 +641,7 @@ const AppContent = ({
                     </main>
 
                     {/* Bottom Navigation - Hide on print, desktop, and TV mode */}
-                    {!isPrintPage && !isTvMode && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.role === 'Admin' || userProfile?.role === 'Redap_Geral' || ['bruno_pagel@hotmail.com', 'freitas.edificar@gmail.com'].includes(userProfile?.email)) && (
+                    {!isPrintPage && !isTvMode && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.role === 'Admin' || userProfile?.role === 'Redap_Geral') && (
                         <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
                     )}
                 </div>

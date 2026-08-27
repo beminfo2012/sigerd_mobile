@@ -45,7 +45,6 @@ export default function ShelterMenu() {
     const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'operacoes'
     const [consistency, setConsistency] = useState(null);
 
-    const ADMIN_EMAIL = 'bruno_pagel@hotmail.com';
     const AGENT_ROLES = [
         'agente de defesa civil',
         'técnico em edificações',
