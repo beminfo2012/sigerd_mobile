@@ -31,7 +31,7 @@ export default defineConfig({
         theme_color: '#2a5299',
         lang: 'pt-BR',
         scope: '/',
-        version: '1.01.18',
+        version: '2.29',
         icons: [
           {
             src: 'pwa-192x192.png',
