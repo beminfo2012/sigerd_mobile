@@ -6,8 +6,16 @@ import { supabase } from './supabase';
 
 // Simple SHA-256 string hash helper for browser/JS environment
 async function generateHash(text) {
+  if (typeof window === 'undefined' && typeof process !== 'undefined') {
+    try {
+      const cryptoModule = await import('crypto');
+      return cryptoModule.createHash('sha256').update(text).digest('hex');
+    } catch (e) {
+      // Fallback
+    }
+  }
   const msgUint8 = new TextEncoder().encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashBuffer = await (crypto.subtle || globalThis.crypto?.subtle).digest('SHA-256', msgUint8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
