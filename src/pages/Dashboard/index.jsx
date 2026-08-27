@@ -186,33 +186,61 @@ import { useNoprer } from '../Noprer/hooks/useNoprer'
 const processBreakdown = (records) => {
     const counts = {};
     records.forEach(v => {
-        const cat = v.categoria_risco || v.categoriaRisco || 'Outros';
-        counts[cat] = (counts[cat] || 0) + 1;
+        const cat = v.categoria_risco || v.categoriaRisco || v.tipo_ocorrencia || v.tipoOcorrencia || v.risco_grau || v.riscoGrau || v.risco_tipo || v.tipo_interdicao || v.medida_tipo || v.cobrade_subtipo || 'Outros';
+        const label = String(cat).trim() || 'Outros';
+        counts[label] = (counts[label] || 0) + 1;
     });
 
     const colorPalette = {
+        // Interdições Níveis / Grau de Risco
+        'Muito Alto': 'bg-red-600',
+        'MUITO ALTO': 'bg-red-600',
+        'Alto': 'bg-red-500',
+        'ALTO': 'bg-red-500',
+        'Médio': 'bg-amber-500',
+        'MÉDIO': 'bg-amber-500',
+        'Moderado': 'bg-amber-500',
+        'MODERADO': 'bg-amber-500',
+        'Baixo': 'bg-emerald-500',
+        'BAIXO': 'bg-emerald-500',
+        'Total': 'bg-red-600',
+        'Parcial': 'bg-orange-500',
+
+        // Ocorrências Tipologias
+        'Eventos Naturais / Climáticos': 'bg-sky-500',
+        'EVENTOS NATURAIS / CLIMÁTICOS': 'bg-sky-500',
+        'Climático / Meteorológico': 'bg-sky-500',
+        'Quedas e Desabamentos': 'bg-orange-500',
+        'QUEDAS E DESABAMENTOS': 'bg-orange-500',
+        'Desabamento': 'bg-orange-500',
+        'Reclamação de Rachadura/Trinca': 'bg-purple-500',
+        'RECLAMAÇÃO DE RACHADURA/TRINCA': 'bg-purple-500',
+        'Rachadura': 'bg-purple-500',
+        'Salvamentos': 'bg-emerald-500',
+        'SALVAMENTOS': 'bg-emerald-500',
+
+        // Vistorias & Riscos Tipologias
         'Geológico / Geotécnico': 'bg-orange-500',
         'Risco Geológico': 'bg-orange-500',
+        'Deslizamento': 'bg-orange-500',
         'Hidrológico': 'bg-blue-500',
         'Inundação': 'bg-blue-500',
-        'Alagamento': 'bg-blue-400',
+        'Alagamento': 'bg-sky-400',
         'Inundação/Alagamento': 'bg-blue-500',
         'Enxurrada': 'bg-blue-600',
-        'Estrutural': 'bg-slate-400',
-        'Estrutural/Predial': 'bg-slate-400',
+        'Estrutural': 'bg-purple-500',
+        'Estrutural/Predial': 'bg-purple-500',
         'Ambiental': 'bg-emerald-500',
         'Tecnológico': 'bg-amber-500',
-        'Climático / Meteorológico': 'bg-sky-500',
         'Infraestrutura Urbana': 'bg-indigo-500',
         'Sanitário': 'bg-rose-500',
-        'Deslizamento': 'bg-orange-500',
         'Vendaval': 'bg-sky-600',
         'Granizo': 'bg-indigo-400',
         'Incêndio': 'bg-red-500',
-        'Outros': 'bg-slate-400'
+        'Outros': 'bg-indigo-400'
     };
 
-    const defaultColors = ['bg-slate-300', 'bg-slate-400', 'bg-slate-500'];
+    const defaultColors = ['bg-blue-500', 'bg-orange-500', 'bg-purple-500', 'bg-emerald-500', 'bg-sky-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500'];
     const total = records.length;
 
     const breakdownItems = Object.keys(counts).map((label, idx) => ({
@@ -222,7 +250,6 @@ const processBreakdown = (records) => {
         color: colorPalette[label] || defaultColors[idx % defaultColors.length]
     })).sort((a, b) => b.count - a.count);
 
-    // If sliced, the sum won't match. We'll handle slicing in the UI.
     return breakdownItems;
 };
 

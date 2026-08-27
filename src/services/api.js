@@ -133,7 +133,7 @@ const processListToMapData = (list) => {
 const processBreakdown = (list) => {
     const counts = {};
     list.forEach(v => {
-        const cat = v.categoria_risco || v.categoriaRisco || v.tipo_ocorrencia || v.tipoOcorrencia || v.risco_grau || v.riscoGrau || v.risk || 'Outros';
+        const cat = v.categoria_risco || v.categoriaRisco || v.tipo_ocorrencia || v.tipoOcorrencia || v.risco_grau || v.riscoGrau || v.risco_tipo || v.tipo_interdicao || v.medida_tipo || v.risk || 'Outros';
         const label = String(cat).trim() || 'Outros';
         counts[label] = (counts[label] || 0) + 1;
     });
