@@ -6,18 +6,20 @@ import { supabase } from './supabase';
 
 // Simple SHA-256 string hash helper for browser/JS environment
 async function generateHash(text) {
-  if (typeof window === 'undefined' && typeof process !== 'undefined') {
-    try {
-      const cryptoModule = await import('crypto');
-      return cryptoModule.createHash('sha256').update(text).digest('hex');
-    } catch (e) {
-      // Fallback
-    }
-  }
   const msgUint8 = new TextEncoder().encode(text);
-  const hashBuffer = await (crypto.subtle || globalThis.crypto?.subtle).digest('SHA-256', msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const cryptoObj = typeof globalThis !== 'undefined' && globalThis.crypto ? globalThis.crypto : (typeof window !== 'undefined' ? window.crypto : null);
+  if (cryptoObj && cryptoObj.subtle) {
+    const hashBuffer = await cryptoObj.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16);
 }
 
 // Unaccent helper
