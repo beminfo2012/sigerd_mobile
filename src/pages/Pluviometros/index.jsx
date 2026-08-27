@@ -2,9 +2,9 @@ import React, { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RefreshCw, Share2, CloudRain, Calendar, AlertTriangle, Waves, Activity, Plus, MapPin, X, Plus as ZoomIn, Minus as ZoomOut, Search, FileText } from 'lucide-react'
 import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, Tooltip, AreaChart, Area } from 'recharts'
-import html2canvas from 'html2canvas'
 import { saveManualReading, getManualReadings } from '../../services/db'
 import { STATION_METADATA } from '../../services/cemaden'
+import { sharePluviometricReport } from '../../utils/pluviometricShareUtils'
 import { MapContainer, TileLayer, useMap, useMapEvents, Marker, GeoJSON } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -681,36 +681,14 @@ const Pluviometros = ({ hideHeader = false }) => {
             {!loading && stations.length > 0 && (
                 <div className="fixed bottom-6 right-6 z-20">
                     <button
-                        onClick={async () => {
-                            if (!reportRef.current) return;
-                            try {
-                                const canvas = await html2canvas(reportRef.current, {
-                                    backgroundColor: '#0f172a',
-                                    scale: 2
-                                });
-                                canvas.toBlob(async (blob) => {
-                                    const file = new File([blob], "mapa_pluviometria_smj.jpg", { type: "image/jpeg" });
-                                    if (navigator.share) {
-                                        await navigator.share({
-                                            title: 'SIGERD - Mapa Pluviométrico',
-                                            text: `Mapa de Pluviometria - Santa Maria de Jetibá. Atualizado em ${new Date().toLocaleString()}`,
-                                            files: [file]
-                                        }).catch(() => {});
-                                    } else {
-                                        const link = document.createElement('a');
-                                        link.download = `mapa_pluviometria_smj_${Date.now()}.jpg`;
-                                        link.href = canvas.toDataURL('image/jpeg');
-                                        link.click();
-                                    }
-                                });
-                            } catch (e) {
-                                alert("Erro ao gerar imagem do mapa.");
-                            }
+                        onClick={() => {
+                            const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+                            sharePluviometricReport({ stations, userProfile, isSingle: false });
                         }}
                         className="bg-green-600 hover:bg-green-500 text-white px-5 py-3.5 rounded-full shadow-lg shadow-green-650/30 active:scale-95 transition-all flex items-center gap-2 font-bold"
                     >
                         <Share2 size={20} />
-                        <span>Compartilhar Mapa</span>
+                        <span>Compartilhar Boletim</span>
                     </button>
                 </div>
             )}
@@ -797,31 +775,9 @@ const Pluviometros = ({ hideHeader = false }) => {
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={async () => {
-                                        if (!modalReportRef.current) return;
-                                        try {
-                                            const canvas = await html2canvas(modalReportRef.current, {
-                                                backgroundColor: '#0f172a',
-                                                scale: 2
-                                            });
-                                            canvas.toBlob(async (blob) => {
-                                                const file = new File([blob], `analise_${analysisModalStation.id}.jpg`, { type: "image/jpeg" });
-                                                if (navigator.share) {
-                                                    await navigator.share({
-                                                        title: `SIGERD - Análise: ${analysisModalStation.name}`,
-                                                        text: `Gráficos e Histórico Pluviométrico. Atualizado em ${new Date().toLocaleString()}`,
-                                                        files: [file]
-                                                    }).catch(() => {});
-                                                } else {
-                                                    const link = document.createElement('a');
-                                                    link.download = `analise_${analysisModalStation.id}_${Date.now()}.jpg`;
-                                                    link.href = canvas.toDataURL('image/jpeg');
-                                                    link.click();
-                                                }
-                                            });
-                                        } catch (e) {
-                                            alert("Erro ao compartilhar análise.");
-                                        }
+                                    onClick={() => {
+                                        const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+                                        sharePluviometricReport({ station: analysisModalStation, userProfile, isSingle: true });
                                     }}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-xs font-bold transition-all border border-green-150 dark:border-green-800 hover:bg-green-100/50"
                                 >

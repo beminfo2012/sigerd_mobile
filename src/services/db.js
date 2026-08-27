@@ -1321,7 +1321,10 @@ export const pullAllData = async (force = false) => {
             const tableStartTime = Date.now();
 
             try {
-                let query = supabase.from(mod.table).select('*');
+                const selectFields = mod.table === 'vistorias'
+                    ? 'id, vistoria_id, created_at, bairro, comunidade, localidade, categoria_risco, categoriaRisco, risco_grau, riscoGrau, latitude, longitude, lat, lng, endereco, status, agente_responsavel, agenteResponsavel'
+                    : '*';
+                let query = supabase.from(mod.table).select(selectFields);
                 if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(mod.table)) {
                     const limitVal = mod.table === 'vistorias' ? 100 : 200;
                     query = query.order('created_at', { ascending: false }).limit(limitVal);
