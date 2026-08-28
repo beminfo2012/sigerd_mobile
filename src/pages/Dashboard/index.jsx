@@ -2709,20 +2709,18 @@ const WebViewDashboardView = ({
                     {/* Navigation Bar */}
                     <div className="bg-[#274f82] text-white grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 min-h-[38px] border-t border-white/10 mt-auto">
                         {[
-                            { label: 'OCORRÊNCIAS', icon: Flame, path: '/ocorrencias', active: location.pathname.startsWith('/ocorrencias') || location.pathname === '/' },
-                            { label: 'VISTORIAS', icon: ClipboardList, path: '/vistorias', active: location.pathname.startsWith('/vistorias') },
-                            { label: 'INTERDIÇÕES', icon: AlertTriangle, path: '/interdicao', active: location.pathname.startsWith('/interdicao') },
-                            { label: 'REDAP', icon: FileText, path: '/redap', active: location.pathname.startsWith('/redap') },
-                            { label: 'REL. SITUACIONAL', icon: BarChart3, action: () => setShowReportMenu(!showReportMenu), active: showReportMenu || location.pathname.startsWith('/relatorio') }
+                            { label: 'OCORRÊNCIAS', icon: Flame, path: '/ocorrencias' },
+                            { label: 'VISTORIAS', icon: ClipboardList, path: '/vistorias' },
+                            { label: 'INTERDIÇÕES', icon: AlertTriangle, path: '/interdicao' },
+                            { label: 'REDAP', icon: FileText, path: '/redap' },
+                            { label: 'REL. SITUACIONAL', icon: BarChart3, action: () => setShowReportMenu(!showReportMenu) }
                         ].map((item, idx) => {
                             const IconComp = item.icon;
                             return (
                                 <button
                                     key={idx}
                                     onClick={item.action || (() => navigate(item.path))}
-                                    className={`relative flex items-center justify-center gap-[6px] py-2 px-3 text-[10px] md:text-[11px] font-extrabold tracking-[0.35px] hover:bg-white/[0.08] transition-colors cursor-pointer border-r border-white/10 last:border-r-0 uppercase text-white/90 ${
-                                        item.active ? 'bg-white/[0.12] text-white' : ''
-                                    }`}
+                                    className="relative flex items-center justify-center gap-[6px] py-2 px-3 text-[10px] md:text-[11px] font-extrabold tracking-[0.35px] hover:bg-white/[0.10] transition-colors cursor-pointer border-r border-white/10 last:border-r-0 uppercase text-white/90"
                                 >
                                     {IconComp && <IconComp size={13} className="shrink-0 opacity-90" />}
                                     <span>{item.label}</span>
