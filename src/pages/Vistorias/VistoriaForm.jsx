@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer, BookOpen, QrCode } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer, BookOpen } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import NortisQuickSearch from '../../components/NortisQuickSearch'
 import NortisIAValidation from '../../components/NortisIAValidation'
@@ -25,10 +25,7 @@ import DespachoModal from '../../components/DespachoModal'
 import RiskAreaModal from '../../components/RiskAreaModal'
 import RichTextEditor from '../../components/Editor/RichTextEditor'
 import DocumentReferencesManager from '../../components/DocumentReferencesManager'
-import AberturaRegistro from '../../components/AberturaRegistro'
 import RedapLocationPickerModal from '../Redap/components/RedapLocationPickerModal'
-import MarcadorQRModal from '../../components/MarcadorQRModal'
-import { classificarAbertura } from '../../services/classificacaoPatologia'
 import bairrosDataRaw from '../../data/Bairros.json'
 import logradourosDataRaw from '../../data/nomesderuas.json'
 
@@ -363,7 +360,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         encaminhamentos: [],
 
         fotos: [],
-        aberturas: [],
         documentos: [],
         assinaturaAgente: null,
         apoioTecnico: {
@@ -404,7 +400,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [detectedRiskArea, setDetectedRiskArea] = useState(null)
     const [showRiskModal, setShowRiskModal] = useState(false)
     const [showNortisModal, setShowNortisModal] = useState(false)
-    const [showQrModal, setShowQrModal] = useState(false)
     const [sugestoesIA, setSugestoesIA] = useState(null);
     const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
     const [analyzingIA, setAnalyzingIA] = useState(false);
@@ -545,48 +540,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     typeof f === 'string'
                         ? { id: `legacy-${i}`, data: f, legenda: '' }
                         : { ...f, id: f.id || `photo-${i}`, legenda: f.legenda || '' }
-                ),
-                aberturas: Array.isArray(initialData.aberturas) ? initialData.aberturas : []
+                )
             })
-            
-            // [NEW] Fetch aberturas from Supabase if online to sync cache with DB
-            if (navigator.onLine && (initialData.supabase_id || initialData.id)) {
-                const uuidToFetch = initialData.supabase_id || initialData.id;
-                if (String(uuidToFetch).length > 20) {
-                    supabase.from('abertura_patologica')
-                        .select('id, codigo_ponto, localizacao_descricao, categoria, status, criado_por, data_abertura, abertura_registro_fotografico(id, foto_url, hash_sha256, data_hora, fonte_data_hora, latitude, longitude, largura_mm_medida, classificacao_patologia, fonte_classificacao, validado_por, validado_em)')
-                        .eq('vistoria_id', uuidToFetch)
-                        .then(({data, error}) => {
-                            if (data && data.length > 0) {
-                                const fetchedAberturas = data.map(ab => {
-                                    const regs = (ab.abertura_registro_fotografico || []).sort((a, b) => new Date(b.data_hora || 0) - new Date(a.data_hora || 0));
-                                    const reg = regs[0] || {};
-                                    return {
-                                        id: ab.id,
-                                        codigo_ponto: ab.codigo_ponto,
-                                        localizacao_descricao: ab.localizacao_descricao,
-                                        categoria: ab.categoria,
-                                        status: ab.status,
-                                        foto_url: reg.foto_url,
-                                        foto_anotada_url: reg.foto_url,
-                                        hash_sha256: reg.hash_sha256,
-                                        data_hora: reg.data_hora ? new Date(reg.data_hora).toISOString() : new Date().toISOString(),
-                                        fonte_data_hora: reg.fonte_data_hora,
-                                        latitude: reg.latitude,
-                                        longitude: reg.longitude,
-                                        largura_mm_medida: reg.largura_mm_medida,
-                                        classificacao_patologia: reg.classificacao_patologia,
-                                        fonte_classificacao: reg.fonte_classificacao,
-                                        validado_por: reg.validado_por,
-                                        validado_em: reg.validado_em ? new Date(reg.validado_em).toISOString() : null
-                                    };
-                                });
-                                setFormData(prev => ({...prev, aberturas: fetchedAberturas}));
-                            }
-                        })
-                        .catch(err => console.error("[VistoriaForm] Failed to fetch remote aberturas", err));
-                }
-            }
         } else {
             getNextId()
         }
@@ -1081,97 +1036,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             return;
         }
         window.open(`/vistorias/imprimir/${id}`, '_blank');
-    };
-
-    const handleAberturaPhotoSelect = async (files, source) => {
-        if (!files || files.length === 0) return;
-        const file = files[0];
-        
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-            try {
-                const meta = await extractMetadata(file);
-                
-                let finalCoords = meta.coords || null;
-                let rawTimestamp = meta.timestamp || new Date();
-                let finalTimestamp = rawTimestamp instanceof Date ? rawTimestamp : new Date(rawTimestamp);
-                if (isNaN(finalTimestamp.getTime())) finalTimestamp = new Date();
-                let fonteMetadados = meta.coords ? 'exif_original' : 'ausente';
-
-                if (source === 'camera' && !finalCoords) {
-                    finalCoords = { lat: formData.latitude, lng: formData.longitude };
-                    if (finalCoords.lat) fonteMetadados = 'gps_device';
-                }
-
-                const compressed = await compressImage(reader.result, {
-                    coordinates: finalCoords,
-                    timestamp: finalTimestamp,
-                    fonteMetadados
-                });
-
-                const num = (formData.aberturas?.length || 0) + 1;
-                const newAbertura = {
-                    id: crypto.randomUUID(),
-                    codigo_ponto: `AB-${String(num).padStart(3, '0')}`,
-                    localizacao_descricao: 'Ponto de Monitoramento (Fissurômetro) ' + num,
-                    foto_url: compressed,
-                    hash_sha256: 'calculado_em_background...',
-                    data_hora: finalTimestamp instanceof Date && !isNaN(finalTimestamp.getTime()) ? finalTimestamp.toISOString() : new Date().toISOString(),
-                    fonte_data_hora: fonteMetadados,
-                    latitude: finalCoords?.lat || null,
-                    longitude: finalCoords?.lng || null,
-                    largura_mm_medida: null,
-                    classificacao_patologia: null,
-                    fonte_classificacao: 'IBAPE-MG'
-                };
-                setFormData(prev => ({ ...prev, aberturas: [...(prev.aberturas || []), newAbertura] }));
-            } catch (error) {
-                console.error("Erro ao adicionar foto de abertura:", error);
-                toast.error('Erro', 'Falha ao processar foto do fissurômetro');
-            }
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const handleValidarAbertura = (id, largura, fotoAnotada = null, larguraAnterior = null) => {
-        if (!largura || isNaN(largura)) return;
-        const val = parseFloat(largura);
-        const antVal = (larguraAnterior && !isNaN(larguraAnterior)) ? parseFloat(larguraAnterior) : null;
-        setFormData(prev => ({
-            ...prev,
-            aberturas: prev.aberturas.map(ab => {
-                if (ab.id === id) {
-                    return {
-                        ...ab,
-                        largura_mm_medida: val,
-                        ...(antVal !== null && { largura_anterior_mm: antVal }),
-                        ...(fotoAnotada && { foto_anotada_url: fotoAnotada }),
-                        classificacao_patologia: classificarAbertura(val),
-                        validado_por_nome: userProfile?.name || 'Agente Defesa Civil',
-                        validado_em: new Date().toISOString()
-                    };
-                }
-                return ab;
-            })
-        }));
-        toast.success('Ação de Sucesso', 'Medição e monitoramento de evolução registrados');
-    };
-
-    const handleRemoveAbertura = async (id) => {
-        setFormData(prev => ({
-            ...prev,
-            aberturas: (prev.aberturas || []).filter(ab => ab.id !== id)
-        }));
-
-        const isGuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
-        if (isGuid(id) && navigator.onLine) {
-            try {
-                await supabase.from('abertura_patologica').delete().eq('id', id);
-            } catch (err) {
-                console.warn("[VistoriaForm] Erro ao deletar abertura remota:", err);
-            }
-        }
-        toast.success("Ponto Removido", "Evidência do fissurômetro excluída com sucesso.");
     };
 
     const handleSubmit = async (e) => {
@@ -2547,58 +2411,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                         )}
                     </Card>
 
-                    {/* SEÇÃO: Aberturas Monitoradas (Fissurômetro) - Exibido apenas para Risco Estrutural */}
-                    {formData.categoriaRisco === 'Estrutural' && (
-                        <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
-                            <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
-                                <h3 className="font-bold uppercase text-xs tracking-widest flex items-center gap-2">
-                                    Aberturas Monitoradas (Fissurômetro)
-                                </h3>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowQrModal(true)}
-                                        className="bg-white/15 hover:bg-white/25 text-white text-[10px] font-bold px-2.5 py-1 rounded flex items-center gap-1 transition-colors"
-                                        title="Imprimir / Baixar Cartão QR de Referência (30mm)"
-                                    >
-                                        <QrCode size={13} /> Cartão QR (30mm)
-                                    </button>
-                                    <span className="bg-white/10 text-white text-[10px] font-black px-3 py-1 rounded-sm">{formData.aberturas?.length || 0} PONTOS</span>
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-4">
-                                {formData.aberturas && formData.aberturas.length > 0 ? (
-                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                                        {formData.aberturas.map((abertura) => (
-                                            <AberturaRegistro 
-                                                key={abertura.id} 
-                                                registro={abertura} 
-                                                onValidar={handleValidarAbertura} 
-                                                onRemover={handleRemoveAbertura}
-                                            />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-sm text-slate-500 bg-slate-50 dark:bg-slate-900 p-8 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-2">
-                                        <div className="flex justify-center text-slate-300 dark:text-slate-600 mb-2">
-                                            <Crosshair size={32} />
-                                        </div>
-                                        <p>Nenhum ponto de abertura (fissura/trinca/rachadura) monitorado para esta vistoria.</p>
-                                    </div>
-                                )}
-                                <div className="w-full pt-4 mt-4 border-t border-dashed border-slate-200 dark:border-slate-700">
-                                    <label className="block text-xs uppercase font-bold text-slate-500 mb-3 text-center">Registrar Nova Evidência</label>
-                                    <FileInput 
-                                        onFileSelect={handleAberturaPhotoSelect} 
-                                        compact={true} 
-                                        label="Capturar Foto do Fissurômetro" 
-                                    />
-                                </div>
-                            </div>
-                        </Card>
-                    )}
-
                     {/* 7. SEÇÃO: Registro Fotográfico */}
                     <Card className="p-6 sm:p-8 space-y-6 dark:bg-slate-800 border-slate-100 dark:border-slate-700 overflow-hidden">
                         <div className="flex items-center justify-between bg-[#1e3a5f] text-white p-3 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
@@ -3156,8 +2968,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     />
                 </div>
             )}
-
-            <MarcadorQRModal isOpen={showQrModal} onClose={() => setShowQrModal(false)} />
         </div >
     )
 }

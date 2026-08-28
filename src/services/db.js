@@ -358,7 +358,6 @@ export const saveVistoriaOffline = async (data) => {
         ...data,
         vistoria_id: data.vistoriaId || data.vistoria_id,
         vistoriaId: data.vistoriaId || data.vistoria_id,
-        aberturas: Array.isArray(data.aberturas) ? data.aberturas : [],
         createdAt: data.createdAt || data.created_at || new Date().toISOString(),
         synced: false
     })
@@ -1140,111 +1139,7 @@ export const syncSingleItem = async (storeName, item, db) => {
                 record.vistoriaId = officialId;
                 record.vistoria_id = officialId;
                 
-                // [NEW] Sync Aberturas (Fissurômetro)
-                if (record.aberturas && record.aberturas.length > 0) {
-                    const vistoriaUuid = record.supabase_id || syncedItems?.[0]?.id;
-                    if (vistoriaUuid) {
-                        try {
-                            const { data: userSession } = await supabase.auth.getSession();
-                            const isGuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
-                            const defaultGuid = '00000000-0000-0000-0000-000000000000';
-                            
-                            const rawUserId = userSession?.session?.user?.id;
-                            const userId = isGuid(rawUserId) ? rawUserId : null;
-                            
-                            const rawTenant = record.tenant_id || userSession?.session?.user?.user_metadata?.tenant_id;
-                            const tenantId = isGuid(rawTenant) ? rawTenant : defaultGuid;
-                            const criadoPor = userId || (isGuid(vistoriaUuid) ? vistoriaUuid : defaultGuid);
-                            
-                            let aberturasModificadas = false;
-                            const currentAberturas = [...record.aberturas];
-                            
-                            for (let i = 0; i < currentAberturas.length; i++) {
-                                const ab = { ...currentAberturas[i] };
-                                const abId = isGuid(ab.id) ? ab.id : crypto.randomUUID();
-                                ab.id = abId;
-                                
-                                try {
-                                    // 1. Upsert na tabela abertura_patologica
-                                    const { data: aberturaData, error: aberturaError } = await supabase
-                                        .from('abertura_patologica')
-                                        .upsert([{
-                                            id: abId,
-                                            tenant_id: tenantId,
-                                            vistoria_id: vistoriaUuid,
-                                            codigo_ponto: ab.codigo_ponto || `AB-${String(i + 1).padStart(3, '0')}`,
-                                            localizacao_descricao: ab.localizacao_descricao || `Ponto de Monitoramento ${i + 1}`,
-                                            categoria: ab.categoria || 'Estrutural',
-                                            status: ab.status || 'ativa',
-                                            criado_por: criadoPor
-                                        }], { onConflict: 'id' })
-                                        .select();
-                                        
-                                    if (aberturaError) {
-                                        console.error('[Sync] Erro Abertura:', aberturaError);
-                                        continue;
-                                    }
 
-                                    // 2. Upload de foto original e foto anotada (se em base64)
-                                    let fotoUrl = ab.foto_url || '';
-                                    if (fotoUrl && fotoUrl.startsWith('data:image')) {
-                                        const uploadedUrl = await uploadSignature(fotoUrl, 'vistorias_fotos', `${officialId.replace('/', '_')}/aberturas/${abId}.jpg`);
-                                        if (uploadedUrl) {
-                                            fotoUrl = uploadedUrl;
-                                            ab.foto_url = fotoUrl;
-                                            aberturasModificadas = true;
-                                        }
-                                    }
-                                    
-                                    let fotoAnotadaUrl = ab.foto_anotada_url || '';
-                                    if (fotoAnotadaUrl && fotoAnotadaUrl.startsWith('data:image')) {
-                                        const uploadedAnotada = await uploadSignature(fotoAnotadaUrl, 'vistorias_fotos', `${officialId.replace('/', '_')}/aberturas/${abId}_anotada.jpg`);
-                                        if (uploadedAnotada) {
-                                            fotoAnotadaUrl = uploadedAnotada;
-                                            ab.foto_anotada_url = fotoAnotadaUrl;
-                                            aberturasModificadas = true;
-                                        }
-                                    }
-                                    
-                                    // 3. Upsert do registro fotográfico
-                                    const finalFotoUrl = fotoAnotadaUrl || fotoUrl || 'pendente';
-                                    const { error: regError } = await supabase
-                                        .from('abertura_registro_fotografico')
-                                        .upsert([{
-                                            tenant_id: tenantId,
-                                            abertura_id: abId,
-                                            foto_url: finalFotoUrl,
-                                            hash_sha256: ab.hash_sha256 || 'N/A',
-                                            data_hora: safeToIsoString(ab.data_hora),
-                                            fonte_data_hora: ab.fonte_data_hora || 'gps_dispositivo',
-                                            latitude: ab.latitude ? parseFloat(ab.latitude) : null,
-                                            longitude: ab.longitude ? parseFloat(ab.longitude) : null,
-                                            largura_mm_medida: ab.largura_mm_medida ? parseFloat(ab.largura_mm_medida) : null,
-                                            classificacao_patologia: ab.classificacao_patologia || null,
-                                            fonte_classificacao: ab.fonte_classificacao || 'IBAPE-MG',
-                                            validado_por: (ab.validado_por_nome && userId) ? userId : null,
-                                            validado_em: ab.validado_em ? safeToIsoString(ab.validado_em) : null,
-                                            observacoes: ab.largura_anterior_mm ? `Largura Anterior: ${ab.largura_anterior_mm} mm` : null
-                                        }]);
-
-                                    if (regError) {
-                                        console.error('[Sync] Erro Abertura Registro:', regError);
-                                    }
-                                        
-                                    currentAberturas[i] = ab;
-                                } catch (singleAbErr) {
-                                    console.error(`[Sync] Erro ao processar abertura #${i + 1}:`, singleAbErr);
-                                }
-                            }
-                            
-                            if (aberturasModificadas) {
-                                record.aberturas = currentAberturas;
-                            }
-                        } catch (abErr) {
-                            console.error('[Sync] Erro Crítico ao sincronizar aberturas:', abErr);
-                        }
-                    }
-                }
             } else if (storeName === 'interdicoes') {
                 const officialId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
                 record.interdicaoId = officialId;

@@ -163,47 +163,7 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                 return;
             }
             try {
-                const enrichWithAberturas = async (vistoriaObj) => {
-                    if (!vistoriaObj) return vistoriaObj;
-                    if (vistoriaObj.aberturas && Array.isArray(vistoriaObj.aberturas) && vistoriaObj.aberturas.length > 0) {
-                        return vistoriaObj;
-                    }
-                    const uuidToFetch = vistoriaObj.supabase_id || vistoriaObj.id;
-                    if (uuidToFetch && String(uuidToFetch).length > 20) {
-                        try {
-                            const { data: remoteAberturas } = await supabase
-                                .from('abertura_patologica')
-                                .select('id, codigo_ponto, localizacao_descricao, categoria, status, criado_por, data_abertura, abertura_registro_fotografico(id, foto_url, hash_sha256, data_hora, fonte_data_hora, latitude, longitude, largura_mm_medida, classificacao_patologia, fonte_classificacao, validado_por, validado_em)')
-                                .eq('vistoria_id', uuidToFetch);
-                            if (remoteAberturas && remoteAberturas.length > 0) {
-                                const fetchedAberturas = remoteAberturas.map(ab => {
-                                    const regs = (ab.abertura_registro_fotografico || []).sort((a, b) => new Date(b.data_hora || 0) - new Date(a.data_hora || 0));
-                                    const reg = regs[0] || {};
-                                    return {
-                                        id: ab.id,
-                                        codigo_ponto: ab.codigo_ponto,
-                                        localizacao_descricao: ab.localizacao_descricao,
-                                        categoria: ab.categoria,
-                                        status: ab.status,
-                                        foto_url: reg.foto_url,
-                                        foto_anotada_url: reg.foto_url,
-                                        hash_sha256: reg.hash_sha256,
-                                        data_hora: reg.data_hora ? new Date(reg.data_hora).toLocaleString('pt-BR') : '',
-                                        latitude: reg.latitude,
-                                        longitude: reg.longitude,
-                                        largura_mm_medida: reg.largura_mm_medida,
-                                        classificacao_patologia: reg.classificacao_patologia,
-                                        fonte_classificacao: reg.fonte_classificacao
-                                    };
-                                });
-                                return { ...vistoriaObj, aberturas: fetchedAberturas };
-                            }
-                        } catch (e) {
-                            console.warn('[VistoriaPrint] Erro ao buscar aberturas remotas:', e);
-                        }
-                    }
-                    return vistoriaObj;
-                };
+
 
                 // 1. Try to fetch from Local DB first (support offline usage)
                 const decodedId = decodeURIComponent(id);
@@ -211,7 +171,6 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                 let localMatch = localVistorias.find(v => v.id === decodedId || v.vistoria_id === decodedId || v.id === id || v.vistoria_id === id);
 
                 if (localMatch) {
-                    localMatch = await enrichWithAberturas(localMatch);
                     setData(localMatch);
                     const docId = (localMatch.vistoriaId || localMatch.vistoria_id || id).replace('/', '-');
                     const docTitle = `Vistoria - ${docId} - ${localMatch.solicitante || 'Sem Nome'}`;
@@ -228,10 +187,9 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                     .single();
 
                 if (reportData) {
-                    const enrichedReport = await enrichWithAberturas(reportData);
-                    setData(enrichedReport);
-                    const docId = (enrichedReport.vistoriaId || enrichedReport.vistoria_id || id).replace('/', '-');
-                    const docTitle = `Vistoria - ${docId} - ${enrichedReport.solicitante || 'Sem Nome'}`;
+                    setData(reportData);
+                    const docId = (reportData.vistoriaId || reportData.vistoria_id || id).replace('/', '-');
+                    const docTitle = `Vistoria - ${docId} - ${reportData.solicitante || 'Sem Nome'}`;
                     document.title = docTitle;
                 } else {
                     console.warn("Vistoria not found:", error);
@@ -346,15 +304,6 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
         }
         return Array.isArray(r) ? r : [];
     })();
-    // Aberturas Monitoradas (Fissurômetro)
-    const aberturas = (() => {
-        let ab = data.aberturas || [];
-        if (typeof ab === 'string') {
-            try { ab = JSON.parse(ab); } catch (e) { ab = []; }
-        }
-        return Array.isArray(ab) ? ab : [];
-    })();
-    const hasAberturas = aberturas.length > 0;
     const hasRefs = referenciasNormativas.length > 0;
 
     // Dynamic section numbers
@@ -365,7 +314,6 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
 
     let secNum = 4;
     const numChecklist = hasChecklist ? secNum++ : null;
-    const numAberturas = hasAberturas ? secNum++ : null;
     const numMedidas = secNum++;
     const numEncaj = hasEncaminhamentos ? secNum++ : null;
     const numObs = hasObs ? secNum++ : null;
@@ -898,69 +846,7 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                             </section>
                         )}
 
-                        {/* Monitoramento de Aberturas (Fissurômetro) */}
-                        {hasAberturas && (
-                            <section className="mb-6 avoid-break">
-                                <div className="section-header">
-                                    <span className="section-header-title">{numAberturas}. Monitoramento de Aberturas (Fissurômetro)</span>
-                                    <div className="section-header-line"></div>
-                                </div>
-                                <table className="report-table">
-                                    <thead>
-                                        <tr>
-                                            <th style={{ width: '15%', backgroundColor: '#0B1F3A', color: 'white' }}>Código</th>
-                                            <th style={{ width: '35%', backgroundColor: '#0B1F3A', color: 'white' }}>Localização / Descrição</th>
-                                            <th style={{ width: '20%', backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center' }}>Largura Medida</th>
-                                            <th style={{ width: '15%', backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center' }}>Classificação</th>
-                                            <th style={{ width: '15%', backgroundColor: '#0B1F3A', color: 'white', textAlign: 'center' }}>Data/Hora</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {aberturas.map((ab, idx) => (
-                                            <tr key={ab.id || idx}>
-                                                <td style={{ fontWeight: '800', color: '#1e3a8a' }}>{ab.codigo_ponto || `AB-${String(idx + 1).padStart(3, '0')}`}</td>
-                                                <td style={{ fontWeight: '600', color: '#334155' }}>{ab.localizacao_descricao || 'Ponto de Monitoramento Estrutural'}</td>
-                                                <td style={{ textAlign: 'center', fontWeight: '800', color: '#2563eb' }}>
-                                                    {ab.largura_mm_medida ? `${parseFloat(ab.largura_mm_medida).toFixed(2)} mm` : 'Não medida'}
-                                                </td>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    <span className="badge-status badge-risk-medio" style={{ display: 'inline-block', fontSize: '9px', fontWeight: '900', padding: '3px 6px', borderRadius: '3px' }}>
-                                                        {(ab.classificacao_patologia || 'Pendente').toUpperCase()}
-                                                    </span>
-                                                </td>
-                                                <td style={{ textAlign: 'center', fontSize: '9px' }}>{ab.data_hora || '---'}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                
-                                <div className="grid grid-cols-2 gap-4 mt-3">
-                                    {aberturas.map((ab, idx) => {
-                                        const imgUrl = ab.foto_anotada_url || ab.foto_url;
-                                        if (!imgUrl) return null;
-                                        return (
-                                            <div key={`img-${ab.id || idx}`} className="border border-slate-200 rounded-lg p-2 bg-slate-50 flex flex-col justify-between avoid-break">
-                                                <div className="bg-slate-900 rounded border border-slate-700 overflow-hidden flex items-center justify-center min-h-[160px] max-h-[200px]">
-                                                    <img
-                                                        src={imgUrl}
-                                                        alt={`Ponto ${ab.codigo_ponto}`}
-                                                        className="max-w-full max-h-full object-contain"
-                                                    />
-                                                </div>
-                                                <div className="mt-2 text-[10px]">
-                                                    <span className="font-extrabold text-blue-800 block mb-0.5 uppercase">
-                                                        [ PONTO {ab.codigo_ponto || `AB-${String(idx + 1).padStart(3, '0')}`} ] — {ab.classificacao_patologia || 'Registro de Fissura'}
-                                                    </span>
-                                                    <p className="text-slate-600 font-semibold leading-tight">
-                                                        {ab.localizacao_descricao} | Medida: {ab.largura_mm_medida ? `${parseFloat(ab.largura_mm_medida).toFixed(2)} mm` : '---'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </section>
-                        )}
+
 
                         {/* 5. Medidas Adotadas no Atendimento */}
                         <section className="mb-6 avoid-break">

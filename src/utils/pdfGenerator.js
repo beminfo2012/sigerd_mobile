@@ -86,13 +86,6 @@ const normalizeData = (data, type) => {
                     try { av = JSON.parse(av); } catch (e) { av = null; }
                 }
                 return av;
-            })(),
-            aberturas: (() => {
-                let ab = data.aberturas || [];
-                if (typeof ab === 'string') {
-                    try { ab = JSON.parse(ab); } catch (e) { ab = []; }
-                }
-                return Array.isArray(ab) ? ab : [];
             })()
         };
     } else if (type === 'desinterdicao') {
@@ -499,54 +492,8 @@ export const generatePDF = async (rawData, type, options = { autoOpen: true }) =
                 `;
                 };
 
-                const renderAberturasBlock = () => {
-                    if (!data.aberturas || data.aberturas.length === 0) return '';
-                    return `
-                        ${sectionTitle(`${secNum++}. Monitoramento de Aberturas (Fissurômetro)`)}
-                        <div style="background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 25px; page-break-inside: avoid;">
-                            <div style="font-size: 10px; color: #1e3a8a; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">
-                                REGISTRO DE PONTOS MONITORADOS (FISSURAS / TRINCAS ESTRUTURAIS — ${data.aberturas.length} PONTO${data.aberturas.length > 1 ? 'S' : ''})
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 15px;">
-                                ${data.aberturas.map((ab, idx) => {
-                                    const fotoSrc = ab.foto_anotada_url || ab.foto_url || ab.foto || '';
-                                    const med = ab.largura_mm_medida ? `${parseFloat(ab.largura_mm_medida).toFixed(2)} mm` : 'Não medida';
-                                    const antMed = ab.largura_anterior_mm ? `${parseFloat(ab.largura_anterior_mm).toFixed(2)} mm` : null;
-                                    const classif = ab.classificacao_patologia || 'Pendente';
-                                    return `
-                                        <div style="background: white; border-radius: 8px; border: 1px solid #cbd5e1; padding: 12px; display: flex; gap: 15px; align-items: start; page-break-inside: avoid;">
-                                            ${fotoSrc ? `
-                                                <div style="width: 130px; height: 100px; flex-shrink: 0; background: #0f172a; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                                                    <img src="${fotoSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
-                                                </div>
-                                            ` : ''}
-                                            <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
-                                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">
-                                                    <span style="font-size: 11px; font-weight: 900; color: #1e3a8a;">PONTO ${ab.codigo_ponto || `AB-${String(idx + 1).padStart(3, '0')}`}</span>
-                                                    <span style="font-size: 10px; font-weight: 800; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px;">${classif.toUpperCase()}</span>
-                                                </div>
-                                                <div style="font-size: 11px; font-weight: 700; color: #334155;">${ab.localizacao_descricao || 'Ponto de Monitoramento Estrutural'}</div>
-                                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; font-size: 10px; color: #475569;">
-                                                    <div><strong>Largura Medida:</strong> <span style="color: #2563eb; font-weight: 800;">${med}</span></div>
-                                                    ${antMed ? `<div><strong>Leitura Anterior:</strong> ${antMed}</div>` : ''}
-                                                    <div><strong>Data/Hora:</strong> ${ab.data_hora || '---'}</div>
-                                                    <div><strong>Classificação:</strong> ${ab.fonte_classificacao || 'IBAPE-MG'}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    `;
-                };
-
                 if (structuralKeys.length > 0 || standardKeys.length > 0) {
                     htmlBlocks += renderChecklistBlock('Checklist Técnico de Vistoria');
-                }
-                
-                if (data.aberturas && data.aberturas.length > 0) {
-                    htmlBlocks += renderAberturasBlock();
                 }
 
                 htmlBlocks += renderRecomendacoesBlock();
