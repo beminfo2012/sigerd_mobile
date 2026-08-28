@@ -177,7 +177,7 @@ export const api = {
             // 1. Fetch data from Supabase in parallel with extended limits
             const [remoteVistorias, remoteOcorrencias, remoteInterdicoes, remoteDesinterdicoes, localVistorias, localOcorrencias, localInterdicoes, inmetResp] = await Promise.all([
                 navigator.onLine ? supabase.from('vistorias')
-                    .select('id, vistoria_id, created_at, bairro, comunidade, localidade, categoria_risco, categoriaRisco, risco_grau, riscoGrau, latitude, longitude, lat, lng, endereco, status')
+                    .select('id, vistoria_id, created_at, bairro, localidade, categoria_risco, categoriaRisco, risco_grau, riscoGrau, latitude, longitude, lat, lng, endereco, status')
                     .order('created_at', { ascending: false })
                     .limit(250) : Promise.resolve({ data: [] }),
                 navigator.onLine ? supabase.from('ocorrencias_operacionais')
