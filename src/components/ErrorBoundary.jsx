@@ -39,6 +39,15 @@ export class ErrorBoundary extends Component {
           <p style={styles.code}>
             Código do erro: <strong>{this.state.errorId}</strong>
           </p>
+          {this.state.error && (
+            <div style={styles.debugBox}>
+              <p style={styles.debugTitle}>Detalhes do Erro (Dev/Debug):</p>
+              <p style={styles.debugMsg}>{this.state.error.toString()}</p>
+              {this.state.error.stack && (
+                <pre style={styles.debugStack}>{this.state.error.stack}</pre>
+              )}
+            </div>
+          )}
           <p style={styles.hint}>
             Se o problema persistir, informe esse código ao suporte técnico.
           </p>
@@ -117,7 +126,21 @@ const styles = {
     fontSize: '0.95rem',
     fontWeight: '600',
     cursor: 'pointer'
-  }
+  },
+  debugBox: {
+    margin: '1rem 0',
+    padding: '1rem',
+    background: '#f1f5f9',
+    border: '1px solid #cbd5e1',
+    borderRadius: '8px',
+    textAlign: 'left',
+    maxWidth: '800px',
+    width: '100%',
+    overflowX: 'auto'
+  },
+  debugTitle: { fontWeight: 'bold', color: '#b91c1c', marginBottom: '0.5rem', fontSize: '0.9rem' },
+  debugMsg: { color: '#0f172a', fontWeight: '600', fontSize: '0.85rem', marginBottom: '0.5rem' },
+  debugStack: { color: '#334155', fontSize: '0.75rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }
 };
 
 export default ErrorBoundary;

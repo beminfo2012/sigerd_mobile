@@ -1138,8 +1138,10 @@ export const syncSingleItem = async (storeName, item, db) => {
                 const officialId = syncedItems?.[0]?.vistoria_id || payload.vistoria_id;
                 record.vistoriaId = officialId;
                 record.vistoria_id = officialId;
-                
-
+                if (payload.checklist_respostas) {
+                    record.checklist_respostas = payload.checklist_respostas;
+                    record.checklistRespostas = payload.checklist_respostas;
+                }
             } else if (storeName === 'interdicoes') {
                 const officialId = syncedItems?.[0]?.interdicao_id || payload.interdicao_id;
                 record.interdicaoId = officialId;
@@ -1320,10 +1322,13 @@ export const pullAllData = async (force = false) => {
                         }
 
                         const toStore = {
+                            ...localMatch,
                             ...rest,
                             id: localMatch ? localMatch.id : undefined,
                             supabase_id: supabaseId,
-                            synced: true
+                            synced: true,
+                            checklistRespostas: item.checklist_respostas || localMatch?.checklistRespostas || {},
+                            checklist_respostas: item.checklist_respostas || localMatch?.checklist_respostas || {}
                         };
 
                         // Restore pseudo shelter_id from observations for humanitarian hubs

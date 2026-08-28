@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer, BookOpen } from 'lucide-react'
+import { ClipboardList, AlertTriangle, Timer, Calendar, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, MapPin, Crosshair, Save, Share, Trash2, Camera, ClipboardCheck, Users, Edit2, CheckCircle2, CheckCircle, Circle, Sparkles, ArrowLeft, Siren, X, FileText, RefreshCw, Download, Maximize2, Zap, Search, Printer, BookOpen } from 'lucide-react'
 import { CHECKLIST_DATA } from '../../data/checklists'
 import NortisQuickSearch from '../../components/NortisQuickSearch'
 import NortisIAValidation from '../../components/NortisIAValidation'
@@ -403,6 +403,44 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [sugestoesIA, setSugestoesIA] = useState(null);
     const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
     const [analyzingIA, setAnalyzingIA] = useState(false);
+    const [showScrollControls, setShowScrollControls] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 200) {
+                setShowScrollControls(true);
+            } else {
+                setShowScrollControls(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        const mainEl = document.querySelector('.main-content');
+        if (mainEl) {
+            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+        document.body.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const scrollToBottom = () => {
+        const mainEl = document.querySelector('.main-content');
+        if (mainEl) {
+            mainEl.scrollTo({ top: mainEl.scrollHeight, behavior: 'smooth' });
+        }
+        const height = Math.max(
+            document.body.scrollHeight,
+            document.documentElement.scrollHeight
+        );
+        window.scrollTo({ top: height, behavior: 'smooth' });
+        document.documentElement.scrollTo({ top: height, behavior: 'smooth' });
+        document.body.scrollTo({ top: height, behavior: 'smooth' });
+    };
 
     // Carregar histórico de despachos vinculados
     const loadDespachos = async () => {
@@ -2637,26 +2675,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 </form>
             </div>
 
-            {/* Admin Feature: Gerar Despacho - Only for Coordinators */}
-            {
-                ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'admin'].includes(userProfile?.role) && (
-                    <div className="fixed bottom-24 right-4 z-40">
-                        <button
-                            onClick={() => {
-                                setSelectedDespachoForEdit(null);
-                                setShowDespachoModal(true);
-                            }}
-                            className="bg-slate-800 text-white p-4 rounded-full shadow-xl shadow-slate-900/30 flex items-center justify-center animate-in zoom-in spin-in-12 duration-500 hover:scale-110 transition-transform"
-                            title="Gerar Despacho Administrativo"
-                        >
-                            <FileText size={24} />
-                        </button>
-                        <span className="absolute right-16 top-2 text-xs font-bold bg-white px-2 py-1 rounded-md shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                            Novo Despacho
-                        </span>
-                    </div>
-                )
-            }
+
 
             <DespachoModal
                 isOpen={showDespachoModal}
@@ -2968,6 +2987,27 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                     />
                 </div>
             )}
+            {/* Floating Navigation Controls (Scroll to Top / Bottom) */}
+            <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2.5 animate-in fade-in zoom-in-95 duration-300">
+                <button
+                    type="button"
+                    onClick={scrollToTop}
+                    className="p-3 bg-[#1e3a5f] hover:bg-[#2a5299] text-white rounded-2xl shadow-2xl border border-white/20 backdrop-blur-md transition-all active:scale-95 group focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    title="Rolar de vez para o topo"
+                    aria-label="Ir para o topo"
+                >
+                    <ChevronUp size={22} className="group-hover:-translate-y-0.5 transition-transform duration-200" />
+                </button>
+                <button
+                    type="button"
+                    onClick={scrollToBottom}
+                    className="p-3 bg-[#1e3a5f] hover:bg-[#2a5299] text-white rounded-2xl shadow-2xl border border-white/20 backdrop-blur-md transition-all active:scale-95 group focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    title="Rolar de vez para o final"
+                    aria-label="Ir para o final"
+                >
+                    <ChevronDown size={22} className="group-hover:translate-y-0.5 transition-transform duration-200" />
+                </button>
+            </div>
         </div >
     )
 }

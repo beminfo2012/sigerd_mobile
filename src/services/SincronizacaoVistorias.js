@@ -185,7 +185,6 @@ export async function sincronizarVistoriasPendentes(vistoriasLoteOffline) {
             delete cleanPayload.areaAfetada;
             delete cleanPayload.gruposVulneraveis;
             delete cleanPayload.medidasTomadas;
-            delete cleanPayload.checklistRespostas;
             delete cleanPayload.assinaturaAgente;
             delete cleanPayload.apoioTecnico;
             delete cleanPayload.createdAt;
