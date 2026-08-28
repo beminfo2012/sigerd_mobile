@@ -21,14 +21,48 @@ const formatDocNumber = (rawId, customNum, dateStr) => {
     return String(num || `001/${year}`).replace(/^#/, '');
 };
 
+// Memory deduplication helper: strict 1-to-1 mapping by group_key
+const deduplicateState = (items = []) => {
+    if (!Array.isArray(items)) return [];
+    const map = new Map();
+    for (const item of items) {
+        if (!item) continue;
+        const key = item.group_key || item.id;
+        if (map.has(key)) {
+            const existing = map.get(key);
+            const read = existing.read || item.read;
+            const read_at = existing.read_at || item.read_at;
+            const isItemUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id);
+            if (isItemUuid) {
+                map.set(key, { ...item, read, read_at });
+            } else {
+                map.set(key, { ...existing, read, read_at });
+            }
+        } else {
+            map.set(key, item);
+        }
+    }
+    return Array.from(map.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+};
+
 export const NotificationProvider = ({ children }) => {
-    const [notifications, setNotifications] = useState([]);
+    const [notificationsState, setNotificationsState] = useState([]);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [connected, setConnected] = useState(false);
     const [lastSyncAt, setLastSyncAt] = useState(null);
     const [soundEnabled, setSoundEnabled] = useState(() => notificationSoundService.isSoundEnabled());
     const [pluviometroStates, setPluviometroStates] = useState({});
+
+    // Custom setter enforcing strict deduplication at all times
+    const setNotifications = useCallback((val) => {
+        setNotificationsState(prev => {
+            const nextList = typeof val === 'function' ? val(prev) : val;
+            return deduplicateState(nextList);
+        });
+    }, []);
+
+    const notifications = notificationsState;
 
     // Current logged-in user profile details
     const userProfile = useMemo(() => {
@@ -182,9 +216,9 @@ export const NotificationProvider = ({ children }) => {
             }
 
             if (allSystemNotifs.length > 0) {
-                // 1. Save all to local IndexedDB
+                // Save all to local IndexedDB (deduplicating by group_key)
                 await notificationRepository.saveAll(allSystemNotifs);
-                // 2. Batch push to Supabase in ONE lightweight query (instead of hundreds of requests)
+                // Batch push to Supabase in ONE lightweight query
                 if (navigator.onLine) {
                     await notificationService.pushRemoteNotificationsBatch(allSystemNotifs);
                 }
@@ -210,6 +244,9 @@ export const NotificationProvider = ({ children }) => {
                 }
             }
 
+            // Purge duplicate records sharing the same group_key in IndexedDB
+            await notificationRepository.purgeDuplicates();
+
             // Sync real system records into notifications once
             await syncRealSystemNotifications();
 
@@ -225,6 +262,9 @@ export const NotificationProvider = ({ children }) => {
                 }
             }
 
+            // Purge any remaining duplicates after remote save
+            await notificationRepository.purgeDuplicates();
+
             const items = await notificationRepository.getAll();
             setNotifications(items || []);
         } catch (error) {
@@ -233,7 +273,7 @@ export const NotificationProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [syncRealSystemNotifications, currentUserId, currentUserRole]);
+    }, [syncRealSystemNotifications, currentUserId, currentUserRole, setNotifications]);
 
     // Toggle Sound
     const toggleSound = useCallback(() => {
@@ -266,7 +306,7 @@ export const NotificationProvider = ({ children }) => {
         }
 
         return item;
-    }, [notifications]);
+    }, [notifications, setNotifications]);
 
     // Mark single notification as read
     const markAsRead = useCallback(async (id) => {
@@ -274,7 +314,7 @@ export const NotificationProvider = ({ children }) => {
         const groupKey = notifObj ? notifObj.group_key : null;
         const readAt = new Date().toISOString();
 
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true, read_at: readAt } : n));
+        setNotifications(prev => prev.map(n => (n.id === id || (groupKey && n.group_key === groupKey)) ? { ...n, read: true, read_at: readAt } : n));
         await notificationRepository.markAsRead(id, readAt);
 
         if (navigator.onLine) {
@@ -286,7 +326,7 @@ export const NotificationProvider = ({ children }) => {
         } else {
             await notificationRepository.queuePendingOp({ operation: 'MARK_AS_READ', notification_id: id, group_key: groupKey, user_id: currentUserId });
         }
-    }, [notifications, currentUserId]);
+    }, [notifications, currentUserId, setNotifications]);
 
     // Mark all notifications as read
     const markAllAsRead = useCallback(async () => {
@@ -305,9 +345,9 @@ export const NotificationProvider = ({ children }) => {
         } else {
             await notificationRepository.queuePendingOp({ operation: 'MARK_ALL_AS_READ', notifications: unreadItems, user_id: currentUserId });
         }
-    }, [notifications, currentUserId]);
+    }, [notifications, currentUserId, setNotifications]);
 
-    // Lightweight background sync (only pending ops and recent remote items)
+    // Lightweight background sync
     const sync = useCallback(async () => {
         if (!navigator.onLine || syncing) return;
         setSyncing(true);
@@ -320,6 +360,7 @@ export const NotificationProvider = ({ children }) => {
             });
             if (remoteNotifs && Array.isArray(remoteNotifs)) {
                 await notificationRepository.saveAll(remoteNotifs);
+                await notificationRepository.purgeDuplicates();
             }
             const allLocal = await notificationRepository.getAll();
             setNotifications(allLocal || []);
@@ -329,7 +370,7 @@ export const NotificationProvider = ({ children }) => {
         } finally {
             setSyncing(false);
         }
-    }, [syncing, currentUserId, currentUserRole]);
+    }, [syncing, currentUserId, currentUserRole, setNotifications]);
 
     // Handle WebSocket / Poller remote callbacks
     const handleIncomingRemoteNotifications = useCallback(async (incoming) => {
