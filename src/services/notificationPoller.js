@@ -1,10 +1,10 @@
 import { notificationService } from './notificationService';
 
 /**
- * NotificationPoller - 30s REST Polling fallback mechanism
+ * NotificationPoller - 60s REST Polling fallback mechanism (Low DB Load)
  */
 export class NotificationPoller {
-    constructor(onNewNotifications, intervalMs = 30000) {
+    constructor(onNewNotifications, intervalMs = 60000) {
         this.onNewNotifications = onNewNotifications;
         this.intervalMs = intervalMs;
         this.timer = null;
@@ -29,7 +29,7 @@ export class NotificationPoller {
     async poll() {
         if (!navigator.onLine || notificationService.remoteDisabled) return;
         try {
-            const data = await notificationService.fetchRemoteNotifications({ limit: 30 });
+            const data = await notificationService.fetchRemoteNotifications({ limit: 15 });
             if (data && Array.isArray(data) && this.onNewNotifications) {
                 this.onNewNotifications(data);
             }

@@ -2,188 +2,163 @@ import { supabase } from './supabase';
 import { notificationRepository } from './notificationRepository';
 
 /**
- * Central Notification Service for SIGERD Mobile
+ * NotificationService - Remote Sync & Server API Operations with Supabase
+ * Optimized with batching & single-query upserts to prevent database connection exhaustion.
  */
 class NotificationService {
     constructor() {
-        this.permission = 'default';
         this.remoteDisabled = false;
-        if (typeof window !== 'undefined' && 'Notification' in window) {
-            this.permission = Notification.permission;
-        }
     }
 
     /**
-     * Standard creation interface for any SIGERD module
+     * Factory: Create standardized notification object
      */
-    create({
-        type = 'system',
-        title,
-        message,
-        urgency = 'medium',
-        reference_id = null,
-        reference_type = null,
-        link = '/',
-        icon = 'bell',
-        group_key = null,
-        target_role = null,
-        user_id = null,
-        metadata = {}
-    }) {
-        const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `notif_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        const gKey = group_key || `${type}-${reference_id || id}`;
-
+    create(data = {}) {
+        const id = data.id || `notif_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
         return {
             id,
-            type,
-            title,
-            message,
-            created_at: new Date().toISOString(),
-            read: false,
-            read_at: null,
-            urgency,
-            reference_id,
-            reference_type,
-            link,
-            icon,
-            expires_at: null,
-            group_key: gKey,
-            target_role,
-            user_id,
-            metadata,
-            created_by: 'system'
+            type: data.type || 'system',
+            title: data.title || 'Notificação',
+            message: data.message || '',
+            created_at: data.created_at || new Date().toISOString(),
+            read: data.read || false,
+            read_at: data.read_at || null,
+            urgency: data.urgency || 'medium',
+            reference_id: data.reference_id ? String(data.reference_id) : null,
+            reference_type: data.reference_type || null,
+            link: data.link || '/',
+            icon: data.icon || 'bell',
+            expires_at: data.expires_at || null,
+            group_key: data.group_key || `gk_${id}`,
+            target_role: data.target_role || null,
+            user_id: data.user_id ? String(data.user_id) : null,
+            metadata: data.metadata || {},
+            created_by: data.created_by || 'system'
         };
     }
 
     /**
-     * Request browser push notification permissions
-     */
-    async requestPermission() {
-        if (typeof window === 'undefined' || !('Notification' in window)) {
-            return 'unsupported';
-        }
-        if (Notification.permission === 'granted') {
-            this.permission = 'granted';
-            return 'granted';
-        }
-        try {
-            const permission = await Notification.requestPermission();
-            this.permission = permission;
-            return permission;
-        } catch (error) {
-            console.error('Error requesting notification permission:', error);
-            return 'error';
-        }
-    }
-
-    /**
-     * Trigger browser system notification
-     */
-    showSystemNotification(title, body, icon = '/pwa-192x192.png') {
-        if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
-            return;
-        }
-        try {
-            const options = {
-                body,
-                icon,
-                badge: '/pwa-192x192.png',
-                vibrate: [200, 100, 200]
-            };
-            const n = new Notification(title, options);
-            n.onclick = () => {
-                window.focus();
-                n.close();
-            };
-        } catch (error) {
-            console.error('Error showing system notification:', error);
-        }
-    }
-
-    /**
-     * Upsert a notification to remote Supabase database table
+     * Push a single notification to Supabase
      */
     async pushRemoteNotification(notification) {
-        if (!navigator.onLine) return null;
-        try {
-            if (supabase && supabase.from) {
-                const payload = {
-                    type: notification.type || 'system',
-                    title: notification.title,
-                    message: notification.message,
-                    created_at: notification.created_at || new Date().toISOString(),
-                    read: notification.read || false,
-                    read_at: notification.read_at || null,
-                    urgency: notification.urgency || 'medium',
-                    reference_id: notification.reference_id ? String(notification.reference_id) : null,
-                    reference_type: notification.reference_type || null,
-                    link: notification.link || '/',
-                    icon: notification.icon || 'bell',
-                    expires_at: notification.expires_at || null,
-                    group_key: notification.group_key || null,
-                    target_role: notification.target_role || null,
-                    user_id: notification.user_id ? String(notification.user_id) : null,
-                    metadata: notification.metadata || {},
-                    created_by: notification.created_by || 'system'
-                };
-
-                const { data, error } = await supabase
-                    .from('notifications')
-                    .upsert(payload, { onConflict: 'group_key' })
-                    .select();
-
-                if (error) {
-                    console.warn('[Supabase Notification Push Warning]:', error.message || error);
-                    if (error.code === '42P01' || error.status === 404) {
-                        this.remoteDisabled = true;
-                    }
-                    return null;
-                }
-
-                if (data && data.length > 0) {
-                    this.remoteDisabled = false;
-                    return data[0];
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to push remote notification to Supabase:', error);
-        }
-        return null;
+        if (!navigator.onLine || this.remoteDisabled) return null;
+        return this.pushRemoteNotificationsBatch([notification]);
     }
 
     /**
-     * Helper to resolve real Supabase UUID for a notification (by UUID or group_key)
+     * Bulk Push multiple notifications to Supabase in lightweight batches of 50
+     * Reduces 300+ separate HTTP requests to a single or few bulk SQL queries.
+     */
+    async pushRemoteNotificationsBatch(items = []) {
+        if (!navigator.onLine || this.remoteDisabled || !Array.isArray(items) || items.length === 0) return null;
+
+        const chunkSize = 50;
+        for (let i = 0; i < items.length; i += chunkSize) {
+            const chunk = items.slice(i, i + chunkSize);
+            const payload = chunk.map(item => ({
+                type: item.type || 'system',
+                title: item.title,
+                message: item.message,
+                created_at: item.created_at || new Date().toISOString(),
+                read: item.read || false,
+                read_at: item.read_at || null,
+                urgency: item.urgency || 'medium',
+                reference_id: item.reference_id ? String(item.reference_id) : null,
+                reference_type: item.reference_type || null,
+                link: item.link || '/',
+                icon: item.icon || 'bell',
+                expires_at: item.expires_at || null,
+                group_key: item.group_key || null,
+                target_role: item.target_role || null,
+                user_id: item.user_id ? String(item.user_id) : null,
+                metadata: item.metadata || {},
+                created_by: item.created_by || 'system'
+            }));
+
+            try {
+                if (supabase && supabase.from) {
+                    const { error } = await supabase
+                        .from('notifications')
+                        .upsert(payload, { onConflict: 'group_key', ignoreDuplicates: true });
+
+                    if (error) {
+                        console.warn('[Supabase Notification Batch Push Warning]:', error.message || error);
+                        if (error.code === '42P01' || error.status === 404) {
+                            this.remoteDisabled = true;
+                            break;
+                        }
+                    } else {
+                        this.remoteDisabled = false;
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to push batch remote notifications to Supabase:', error);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Bulk resolve Supabase UUIDs in a SINGLE query (.in('group_key', keys))
+     */
+    async resolveNotificationUuidsBatch(items = []) {
+        if (!supabase || !supabase.from || items.length === 0) return new Map();
+        
+        const uuidMap = new Map();
+        const groupKeysToFetch = [];
+
+        items.forEach(item => {
+            const id = typeof item === 'string' ? item : item.id;
+            const groupKey = typeof item === 'object' ? item.group_key : null;
+            const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+            if (isValidUuid) {
+                uuidMap.set(id, id);
+                if (groupKey) uuidMap.set(groupKey, id);
+            } else if (groupKey) {
+                groupKeysToFetch.push(groupKey);
+            }
+        });
+
+        if (groupKeysToFetch.length > 0) {
+            try {
+                const { data } = await supabase
+                    .from('notifications')
+                    .select('id, group_key')
+                    .in('group_key', groupKeysToFetch);
+                if (data && Array.isArray(data)) {
+                    data.forEach(row => {
+                        if (row.id && row.group_key) {
+                            uuidMap.set(row.group_key, row.id);
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('Batch resolve UUIDs error:', err);
+            }
+        }
+        return uuidMap;
+    }
+
+    /**
+     * Helper to resolve real Supabase UUID for a notification
      */
     async resolveNotificationUuid(id, groupKey = null) {
         const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
         if (isValidUuid) return id;
 
-        if (supabase && supabase.from && groupKey) {
-            try {
-                const { data } = await supabase
-                    .from('notifications')
-                    .select('id')
-                    .eq('group_key', groupKey)
-                    .maybeSingle();
-                if (data && data.id) {
-                    return data.id;
-                }
-            } catch {
-                // fall through
-            }
-        }
-        return null;
+        const map = await this.resolveNotificationUuidsBatch([{ id, group_key: groupKey }]);
+        return map.get(groupKey) || map.get(id) || null;
     }
 
     /**
-     * API Fetch notifications from backend with per-user read tracking & role filtering
+     * Fetch recent notifications from backend with per-user read tracking (Limit: 15-20)
      */
     async fetchRemoteNotifications(params = {}) {
-        if (!navigator.onLine) {
+        if (!navigator.onLine || this.remoteDisabled) {
             return null;
         }
 
-        const { userId, userRole, limit = 50 } = params;
+        const { userId, userRole, limit = 20 } = params;
 
         try {
             if (supabase && supabase.from) {
@@ -193,7 +168,6 @@ class NotificationService {
                     .order('created_at', { ascending: false })
                     .limit(limit);
 
-                // Apply role/user filtering if provided
                 if (userId || userRole) {
                     const filters = ['user_id.is.null', 'target_role.is.null'];
                     if (userId) filters.push(`user_id.eq.${userId}`);
@@ -214,24 +188,24 @@ class NotificationService {
                 if (rawNotifs && Array.isArray(rawNotifs)) {
                     this.remoteDisabled = false;
 
-                    // Fetch user's individual read tracking records if userId exists
                     let userReadMap = new Map();
-                    if (userId) {
+                    if (userId && rawNotifs.length > 0) {
                         try {
+                            const notifIds = rawNotifs.map(n => n.id);
                             const { data: userReads } = await supabase
                                 .from('user_notifications')
                                 .select('notification_id, read, read_at')
-                                .eq('user_id', String(userId));
+                                .eq('user_id', String(userId))
+                                .in('notification_id', notifIds);
 
                             if (userReads && Array.isArray(userReads)) {
                                 userReads.forEach(r => userReadMap.set(r.notification_id, r));
                             }
                         } catch {
-                            // ignore user_notifications lookup error if table missing
+                            // silent ignore
                         }
                     }
 
-                    // Merge per-user read state with notifications
                     return rawNotifs.map(item => {
                         const userReadRecord = userReadMap.get(item.id);
                         if (userReadRecord) {
@@ -253,27 +227,22 @@ class NotificationService {
     }
 
     /**
-     * Mark notification read via API (per-user tracking in user_notifications table)
+     * Mark single notification read via API
      */
     async markRemoteAsRead(id, userId = null, groupKey = null) {
-        if (!navigator.onLine) return;
+        if (!navigator.onLine || this.remoteDisabled) return;
         try {
             const readAt = new Date().toISOString();
             if (supabase && supabase.from) {
                 const targetUuid = await this.resolveNotificationUuid(id, groupKey);
 
                 if (userId && targetUuid) {
-                    // Upsert per-user read state into user_notifications
-                    const { error: userNotifErr } = await supabase.from('user_notifications').upsert({
+                    await supabase.from('user_notifications').upsert({
                         notification_id: targetUuid,
                         user_id: String(userId),
                         read: true,
                         read_at: readAt
                     }, { onConflict: 'notification_id, user_id' });
-
-                    if (userNotifErr) {
-                        console.warn('[user_notifications Upsert Warning]:', userNotifErr.message || userNotifErr);
-                    }
                 }
 
                 if (targetUuid) {
@@ -286,18 +255,21 @@ class NotificationService {
     }
 
     /**
-     * Mark all notifications read via API (per-user tracking in user_notifications table)
+     * Mark all notifications read via API in ONE bulk query
      */
     async markAllRemoteAsRead(notificationsList = [], userId = null) {
-        if (!navigator.onLine) return;
+        if (!navigator.onLine || this.remoteDisabled || !Array.isArray(notificationsList) || notificationsList.length === 0) return;
         try {
             const readAt = new Date().toISOString();
-            if (supabase && supabase.from && Array.isArray(notificationsList) && notificationsList.length > 0) {
+            if (supabase && supabase.from) {
+                const uuidMap = await this.resolveNotificationUuidsBatch(notificationsList);
                 const upsertData = [];
+
                 for (const item of notificationsList) {
                     const notifId = typeof item === 'string' ? item : item.id;
                     const groupKey = typeof item === 'object' ? item.group_key : null;
-                    const targetUuid = await this.resolveNotificationUuid(notifId, groupKey);
+                    const targetUuid = uuidMap.get(groupKey) || uuidMap.get(notifId);
+
                     if (targetUuid && userId) {
                         upsertData.push({
                             notification_id: targetUuid,
@@ -309,13 +281,9 @@ class NotificationService {
                 }
 
                 if (upsertData.length > 0) {
-                    const { error: batchErr } = await supabase
+                    await supabase
                         .from('user_notifications')
                         .upsert(upsertData, { onConflict: 'notification_id, user_id' });
-                    
-                    if (batchErr) {
-                        console.warn('[user_notifications Batch Read Warning]:', batchErr.message || batchErr);
-                    }
                 }
             }
         } catch (error) {
@@ -327,7 +295,7 @@ class NotificationService {
      * Sync pending offline ops to backend
      */
     async syncPendingOps(userId = null) {
-        if (!navigator.onLine) return;
+        if (!navigator.onLine || this.remoteDisabled) return;
         const pendingOps = await notificationRepository.getPendingOps();
         for (const op of pendingOps) {
             try {
@@ -339,6 +307,19 @@ class NotificationService {
                 await notificationRepository.removePendingOp(op.id);
             } catch (err) {
                 console.error(`Failed to sync pending notification op ${op.id}:`, err);
+            }
+        }
+    }
+
+    /**
+     * Browser native desktop notification helper
+     */
+    showSystemNotification(title, body) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+                new Notification(title, { body, icon: '/pwa-192x192.png' });
+            } catch (e) {
+                // ignore
             }
         }
     }

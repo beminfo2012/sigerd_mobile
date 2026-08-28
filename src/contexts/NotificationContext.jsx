@@ -48,10 +48,11 @@ export const NotificationProvider = ({ children }) => {
         return notifications.filter(n => !n.read).length;
     }, [notifications]);
 
-    // Scan real system records (Interdições, Vistorias, Ocorrências) with formatted document numbers (001/2026)
+    // Scan real system records ONCE and push in ONE single batch query to Supabase
     const syncRealSystemNotifications = useCallback(async () => {
         try {
             const db = await initDB();
+            const allSystemNotifs = [];
             
             // 1. Check real Interdições in system
             if (db.objectStoreNames.contains('interdicoes')) {
@@ -70,7 +71,7 @@ export const NotificationProvider = ({ children }) => {
                         const title = `🚧 Interdição nº ${docNum}`;
                         const message = `Endereço: ${locationStr} • Motivo: ${reasonStr}`;
                         
-                        const notifObj = {
+                        allSystemNotifs.push({
                             id: notifId,
                             type: 'interdicao',
                             title,
@@ -89,10 +90,7 @@ export const NotificationProvider = ({ children }) => {
                             user_id: null,
                             metadata: {},
                             created_by: 'system'
-                        };
-
-                        await notificationRepository.save(notifObj);
-                        await notificationService.pushRemoteNotification(notifObj);
+                        });
                     }
                 }
             }
@@ -118,7 +116,7 @@ export const NotificationProvider = ({ children }) => {
                             const title = `🏠 Vistoria nº ${docNum}`;
                             const message = `Local: ${locationStr}${applicantStr} • Risco: ${riskStr}`;
 
-                            const notifObj = {
+                            allSystemNotifs.push({
                                 id: notifId,
                                 type: 'vistoria',
                                 title,
@@ -137,10 +135,7 @@ export const NotificationProvider = ({ children }) => {
                                 user_id: null,
                                 metadata: {},
                                 created_by: 'system'
-                            };
-
-                            await notificationRepository.save(notifObj);
-                            await notificationService.pushRemoteNotification(notifObj);
+                            });
                         }
                     }
                 }
@@ -162,7 +157,7 @@ export const NotificationProvider = ({ children }) => {
                         const message = `Tipo: ${typeStr} • Local: ${locationStr}`;
 
                         const targetId = item.supabase_id || item.id;
-                        const notifObj = {
+                        allSystemNotifs.push({
                             id: notifId,
                             type: 'ocorrencia',
                             title,
@@ -181,11 +176,17 @@ export const NotificationProvider = ({ children }) => {
                             user_id: null,
                             metadata: {},
                             created_by: 'system'
-                        };
-
-                        await notificationRepository.save(notifObj);
-                        await notificationService.pushRemoteNotification(notifObj);
+                        });
                     }
+                }
+            }
+
+            if (allSystemNotifs.length > 0) {
+                // 1. Save all to local IndexedDB
+                await notificationRepository.saveAll(allSystemNotifs);
+                // 2. Batch push to Supabase in ONE lightweight query (instead of hundreds of requests)
+                if (navigator.onLine) {
+                    await notificationService.pushRemoteNotificationsBatch(allSystemNotifs);
                 }
             }
         } catch (error) {
@@ -209,14 +210,15 @@ export const NotificationProvider = ({ children }) => {
                 }
             }
 
-            // Sync real system records into notifications
+            // Sync real system records into notifications once
             await syncRealSystemNotifications();
 
-            // Fetch remote user-targeted notifications from Supabase
+            // Fetch remote user-targeted notifications from Supabase (Limit: 20)
             if (navigator.onLine) {
                 const remoteNotifs = await notificationService.fetchRemoteNotifications({
                     userId: currentUserId,
-                    userRole: currentUserRole
+                    userRole: currentUserRole,
+                    limit: 20
                 });
                 if (remoteNotifs && Array.isArray(remoteNotifs)) {
                     await notificationRepository.saveAll(remoteNotifs);
@@ -240,28 +242,24 @@ export const NotificationProvider = ({ children }) => {
         notificationSoundService.setSoundEnabled(nextState);
     }, [soundEnabled]);
 
-    // Add & deduplicate notification (Local IndexedDB + Supabase remote database)
+    // Add & deduplicate notification
     const addNotification = useCallback(async (newNotifData) => {
         const item = notificationService.create(newNotifData);
 
-        // Deduplication check by group_key
         const existsInState = notifications.some(n => n.group_key === item.group_key);
         const existsInDb = await notificationRepository.existsByGroupKey(item.group_key);
 
         if (existsInState || existsInDb) {
-            return null; // Duplicate prevented
+            return null;
         }
 
-        // 1. Save to local IndexedDB
         await notificationRepository.save(item);
         setNotifications(prev => [item, ...prev]);
 
-        // 2. Push to Supabase remote database table
         if (navigator.onLine) {
             await notificationService.pushRemoteNotification(item);
         }
 
-        // Sound alert for critical
         if (item.urgency === 'critical') {
             notificationSoundService.playCriticalSound();
             notificationService.showSystemNotification(item.title, item.message);
@@ -270,19 +268,15 @@ export const NotificationProvider = ({ children }) => {
         return item;
     }, [notifications]);
 
-    // Mark single notification as read (Optimistic & Per-User in Supabase user_notifications)
+    // Mark single notification as read
     const markAsRead = useCallback(async (id) => {
         const notifObj = notifications.find(n => n.id === id);
         const groupKey = notifObj ? notifObj.group_key : null;
         const readAt = new Date().toISOString();
 
-        // 1. Optimistic local state update
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true, read_at: readAt } : n));
-
-        // 2. Local IndexedDB update
         await notificationRepository.markAsRead(id, readAt);
 
-        // 3. Server sync to Supabase user_notifications / offline queue
         if (navigator.onLine) {
             try {
                 await notificationService.markRemoteAsRead(id, currentUserId, groupKey);
@@ -294,18 +288,14 @@ export const NotificationProvider = ({ children }) => {
         }
     }, [notifications, currentUserId]);
 
-    // Mark all notifications as read (Optimistic & Per-User in Supabase user_notifications)
+    // Mark all notifications as read
     const markAllAsRead = useCallback(async () => {
         const readAt = new Date().toISOString();
         const unreadItems = notifications.filter(n => !n.read);
 
-        // 1. Optimistic update
         setNotifications(prev => prev.map(n => ({ ...n, read: true, read_at: readAt })));
-
-        // 2. IndexedDB update
         await notificationRepository.markAllAsRead(readAt);
 
-        // 3. Server sync to Supabase user_notifications / offline queue
         if (navigator.onLine) {
             try {
                 await notificationService.markAllRemoteAsRead(unreadItems, currentUserId);
@@ -317,16 +307,16 @@ export const NotificationProvider = ({ children }) => {
         }
     }, [notifications, currentUserId]);
 
-    // Synchronize pending ops & remote updates
+    // Lightweight background sync (only pending ops and recent remote items)
     const sync = useCallback(async () => {
         if (!navigator.onLine || syncing) return;
         setSyncing(true);
         try {
             await notificationService.syncPendingOps(currentUserId);
-            await syncRealSystemNotifications();
             const remoteNotifs = await notificationService.fetchRemoteNotifications({
                 userId: currentUserId,
-                userRole: currentUserRole
+                userRole: currentUserRole,
+                limit: 15
             });
             if (remoteNotifs && Array.isArray(remoteNotifs)) {
                 await notificationRepository.saveAll(remoteNotifs);
@@ -339,7 +329,7 @@ export const NotificationProvider = ({ children }) => {
         } finally {
             setSyncing(false);
         }
-    }, [syncing, syncRealSystemNotifications, currentUserId, currentUserRole]);
+    }, [syncing, currentUserId, currentUserRole]);
 
     // Handle WebSocket / Poller remote callbacks
     const handleIncomingRemoteNotifications = useCallback(async (incoming) => {
@@ -428,7 +418,7 @@ export const NotificationProvider = ({ children }) => {
         );
         ws.connect();
 
-        const poller = new NotificationPoller(handleIncomingRemoteNotifications, 30000);
+        const poller = new NotificationPoller(handleIncomingRemoteNotifications, 60000);
         poller.start();
 
         const handleOnline = () => sync();
