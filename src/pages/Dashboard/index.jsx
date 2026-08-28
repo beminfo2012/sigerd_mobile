@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { UserContext } from '../../App'
 import { api } from '../../services/api'
 import {
@@ -2419,29 +2419,26 @@ const AlertasCemadenCard = ({ navigate }) => {
     return (
         <div
             onClick={() => navigate('/alertas-cemaden')}
-            className={`p-4 rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-md h-full min-h-[140px] text-white ${
+            className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${
                 isAlerting
                     ? 'bg-gradient-to-br from-[#cf4436] to-[#9c2620]'
-                    : 'bg-gradient-to-br from-[#254776] to-[#15294d]'
+                    : 'bg-gradient-to-br from-[#24466f] to-[#19375d]'
             }`}
         >
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider opacity-90">
-                    <ShieldAlert size={16} className="text-white shrink-0" />
+            <div className="flex flex-col gap-2 relative z-10">
+                <div className="flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider opacity-95">
+                    <ShieldAlert size={15} className="text-white shrink-0" />
                     <span className="uppercase">ALERTAS CEMADEN</span>
                 </div>
                 {count === null ? (
-                    <span className="text-3xl font-extrabold leading-none animate-pulse opacity-40">—</span>
+                    <span className="text-[30px] font-extrabold leading-none animate-pulse opacity-40">—</span>
                 ) : (
-                    <span className="text-3xl font-extrabold leading-none">{count}</span>
+                    <span className="text-[30px] font-extrabold leading-none tracking-tight">{count}</span>
                 )}
-                <p className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">
-                    {count === null ? 'Carregando...' : count === 0 ? 'SEM ALERTAS VIGENTES' : `NÍVEL: ${style.label}`}
+                <p className="text-[10px] font-bold opacity-90 tracking-wide uppercase">
+                    {count === null ? 'CARREGANDO...' : count === 0 ? 'SEM ALERTAS VIGENTES' : `NÍVEL: ${style.label}`}
                 </p>
             </div>
-            {count > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/40 opacity-80" />
-            )}
         </div>
     );
 };
@@ -2505,32 +2502,38 @@ const WebViewDashboardView = ({
         />
     }
 
+    const location = useLocation();
+
     return (
         <div className="bg-[#f0f2f5] dark:bg-slate-950 min-h-screen font-sans flex flex-col md:-mb-8">
             <div className="max-w-[1700px] mx-auto w-full p-6 space-y-6 flex-1">
 
                 {/* --- 🏁 1. HEADER & TOP CARDS CONTAINER --- */}
-                <div className="bg-white dark:bg-slate-900 rounded-[18px] shadow-lg shadow-orange-500/10 border-2 border-[#e79a52] overflow-hidden flex flex-col">
+                <div className="bg-white dark:bg-slate-900 rounded-[20px] shadow-[0_10px_35px_rgba(25,48,76,0.08),0_2px_8px_rgba(25,48,76,0.05)] border-0 overflow-hidden flex flex-col">
                     {/* Inner Padded Section */}
-                    <div className="p-6 flex flex-col gap-5">
+                    <div className="p-6 md:p-[28px_26px_22px] flex flex-col gap-5">
                         {/* Header: Title */}
-                        <div className="flex justify-between items-center px-1">
-                            <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
-                                Monitoramento em Tempo Real
-                            </h2>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => window.open('/?tvMode=true', '_blank', 'toolbar=no,scrollbars=yes,resizable=yes,top=50,left=50,width=1280,height=800')}
-                                    className="flex items-center gap-2 px-4 py-2 bg-[#2a4f8c] hover:bg-[#15294d] text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest shadow-sm"
-                                >
-                                    <MonitorPlay size={16} /> Modo TV
-                                </button>
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-1">
+                            <div className="flex flex-col gap-1">
+                                <h1 className="text-2xl md:text-[25px] font-extrabold text-[#17283d] dark:text-white leading-tight tracking-tight">
+                                    Monitoramento em Tempo Real
+                                </h1>
+                                <div className="flex items-center gap-2 text-[11px] font-bold text-[#7a8898] dark:text-slate-400 tracking-wider">
+                                    <span className="w-2 h-2 rounded-full bg-[#e5a23a] shadow-[0_0_0_4px_rgba(229,162,58,0.12)] animate-[pulse_1.8s_infinite] shrink-0" />
+                                    <span>Sistema operacional &nbsp;•&nbsp; Atualizado agora</span>
+                                </div>
                             </div>
+                            <button
+                                onClick={() => window.open('/?tvMode=true', '_blank', 'toolbar=no,scrollbars=yes,resizable=yes,top=50,left=50,width=1280,height=800')}
+                                className="flex items-center gap-2 px-3.5 py-2.5 bg-[#31598d] hover:bg-[#294e80] text-white rounded-[7px] transition-all font-extrabold text-[11px] uppercase tracking-[0.35px] shadow-[0_4px_10px_rgba(49,89,141,0.18)] shrink-0 self-start cursor-pointer active:scale-95"
+                            >
+                                <MonitorPlay size={15} /> MODO TV
+                            </button>
                         </div>
 
                         {/* CONTINGENCY BANNER (WEB) */}
                         {activeContingencyPlan && (
-                            <div className="animate-in slide-in-from-top-4 duration-500 px-1">
+                            <div className="animate-in slide-in-from-top-4 duration-500">
                                 <div
                                     className={`overflow-hidden rounded-[26px] border shadow-2xl flex items-center cursor-pointer hover:scale-[1.01] transition-all group ${activeContingencyPlan.nivel === 'Calamidade' ? 'bg-red-600 border-red-500 shadow-red-900/10' :
                                         activeContingencyPlan.nivel === 'Emergência' ? 'bg-orange-600 border-orange-500' : 'bg-amber-500 border-amber-400 shadow-orange-500/10'
@@ -2560,26 +2563,25 @@ const WebViewDashboardView = ({
                         )}
 
                         {/* Top 5 Cards Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-[14px]">
                             {/* Card 1: Risk Level */}
-                            <div className={`p-4 rounded-[14px] flex flex-col justify-between relative overflow-hidden group transition-all shadow-md h-full min-h-[140px] text-white ${
+                            <div className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${
                                 statusInfo.loading || statusInfo.label === 'CONSULTANDO...'
-                                    ? 'bg-gradient-to-br from-[#64748b] to-[#334155]'
+                                    ? 'bg-gradient-to-br from-[#5a6b7f] to-[#3e5065]'
                                     : statusInfo.label === 'NORMAL'
                                         ? 'bg-gradient-to-br from-[#22b57e] to-[#0e9668]'
                                         : 'bg-gradient-to-br from-[#cf4436] to-[#9c2620]'
                             }`}>
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider opacity-90">
-                                        <Shield size={16} className="text-white shrink-0" />
+                                <div className="flex flex-col gap-2 relative z-10">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider opacity-95">
+                                        <Shield size={15} className="shrink-0" />
                                         <span className="uppercase">STATUS</span>
-                                        <span className="w-1.5 h-1.5 rounded-full bg-white opacity-80 animate-pulse ml-0.5" />
                                     </div>
-                                    <span className="text-3xl font-extrabold leading-none uppercase tracking-tight">{statusInfo.label}</span>
-                                    <div className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">CONDIÇÃO GERAL</div>
+                                    <span className="text-[29px] font-extrabold leading-none tracking-tight uppercase">{statusInfo.label}</span>
+                                    <div className="text-[10px] font-bold opacity-90 tracking-wide uppercase">CONDIÇÃO GERAL</div>
                                 </div>
-                                <div className="h-1.5 rounded-full bg-white/30 overflow-hidden mt-auto">
-                                    <div className="h-full rounded-full bg-white transition-all duration-500" style={{ width: '100%' }} />
+                                <div className="h-[6px] rounded-full bg-white/20 overflow-hidden mt-4 relative z-10">
+                                    <div className="h-full rounded-full bg-white/95 transition-all duration-500" style={{ width: '100%' }} />
                                 </div>
                             </div>
 
@@ -2591,31 +2593,28 @@ const WebViewDashboardView = ({
                                 const hasPerigo = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('perigo') && !(a.severidade || a.aviso_severidade || '').toLowerCase().includes('grande'));
                                 const hasPerigoPotencial = inmetAlerts.some(a => (a.severidade || a.aviso_severidade || '').toLowerCase().includes('potencial'));
                                 const inmetIconStyle = hasGrandePerigo
-                                    ? { bg: 'bg-red-500/10', text: 'text-red-600', bar: 'bg-red-500', label: 'Grande Perigo' }
+                                    ? { label: 'Grande Perigo' }
                                     : hasPerigo
-                                        ? { bg: 'bg-orange-500/10', text: 'text-orange-600', bar: 'bg-orange-500', label: 'Perigo' }
+                                        ? { label: 'Perigo' }
                                         : hasPerigoPotencial
-                                            ? { bg: 'bg-amber-400/10', text: 'text-amber-600', bar: 'bg-amber-400', label: 'Perigo Potencial' }
-                                            : { bg: 'bg-slate-100', text: 'text-slate-400', bar: null, label: 'SEM AVISOS VIGENTES' };
+                                            ? { label: 'Perigo Potencial' }
+                                            : { label: 'SEM AVISOS VIGENTES' };
                                 return (
-                                    <div onClick={() => navigate('/alerts')} className={`p-4 rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-md h-full min-h-[140px] text-white ${
+                                    <div onClick={() => navigate('/alerts')} className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${
                                         totalCount === 0
-                                            ? 'bg-gradient-to-br from-[#3a66ac] to-[#2a4f8c]'
+                                            ? 'bg-gradient-to-br from-[#376bb0] to-[#2f5d9b]'
                                             : 'bg-gradient-to-br from-[#e79a52] to-[#c9762f]'
                                     }`}>
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider opacity-90">
-                                                <Zap size={16} className="text-white shrink-0" />
+                                        <div className="flex flex-col gap-2 relative z-10">
+                                            <div className="flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider opacity-95">
+                                                <Zap size={15} className="shrink-0" />
                                                 <span className="uppercase">AVISOS INMET</span>
                                             </div>
-                                            <span className="text-3xl font-extrabold leading-none">{totalCount}</span>
-                                            <p className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">
+                                            <span className="text-[30px] font-extrabold leading-none tracking-tight">{totalCount}</span>
+                                            <p className="text-[10px] font-bold opacity-90 tracking-wide uppercase">
                                                 {totalCount === 0 ? 'SEM AVISOS VIGENTES' : inmetIconStyle.label}
                                             </p>
                                         </div>
-                                        {totalCount > 0 && (
-                                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/40 opacity-80" />
-                                        )}
                                     </div>
                                 );
                             })()}
@@ -2624,69 +2623,82 @@ const WebViewDashboardView = ({
                             <AlertasCemadenCard navigate={navigate} />
 
                             {/* Card 4: Vistorias */}
-                            <div onClick={() => navigate('/vistorias')} className="p-4 rounded-[14px] bg-gradient-to-br from-[#254776] to-[#15294d] text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-md h-full min-h-[140px]">
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider opacity-90">
-                                        <ClipboardList size={16} className="text-white shrink-0" />
+                            <div onClick={() => navigate('/vistorias')} className="p-[17px_17px_15px] rounded-[14px] bg-gradient-to-br from-[#274b75] to-[#193b62] text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none">
+                                <div className="flex flex-col gap-2 relative z-10">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider opacity-95">
+                                        <ClipboardList size={15} className="shrink-0" />
                                         <span className="uppercase">VISTORIAS</span>
                                     </div>
-                                    <span className="text-3xl font-extrabold leading-none">{data.stats.totalVistorias}</span>
-                                    <p className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">TOTAL REGISTRADO</p>
+                                    <span className="text-[30px] font-extrabold leading-none tracking-tight">{data.stats.totalVistorias}</span>
+                                    <p className="text-[10px] font-bold opacity-90 tracking-wide uppercase">TOTAL REGISTRADO</p>
                                 </div>
                             </div>
 
                             {/* Card 5: Pluviometria */}
-                            <div onClick={() => navigate('/pluviometros')} className="p-4 rounded-[14px] bg-gradient-to-br from-[#7d6dcf] to-[#54459c] text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-md h-full min-h-[140px]">
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider opacity-90">
-                                        <Droplets size={16} className="text-white shrink-0" />
+                            <div onClick={() => navigate('/pluviometros')} className="p-[17px_17px_15px] rounded-[14px] bg-gradient-to-br from-[#735fc0] to-[#5945a5] text-white flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none">
+                                <div className="flex flex-col gap-2 relative z-10">
+                                    <div className="flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider opacity-95">
+                                        <Droplets size={15} className="shrink-0" />
                                         <span className="uppercase">PLUVIOMETRIA</span>
                                     </div>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-extrabold leading-none">
+                                        <span className="text-[30px] font-extrabold leading-none tracking-tight">
                                             {rainfall?.length ? (rainfall.reduce((a, b) => a + (b.rainRaw || 0), 0) / rainfall.length).toFixed(1) : '0.0'}
                                         </span>
-                                        <span className="text-xs font-bold uppercase opacity-85">mm</span>
+                                        <span className="text-[14px] font-extrabold uppercase opacity-90">MM</span>
                                     </div>
-                                    <p className="text-[11px] font-semibold opacity-85 tracking-wide uppercase">MÉDIA 24H</p>
+                                    <p className="text-[10px] font-bold opacity-90 tracking-wide uppercase">MÉDIA 24H</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Clima Horizontal - Abaixo dos Minicards */}
                         {weather?.current && (
-                            <div onClick={() => setShowForecast(true)} className="flex w-full flex-col md:flex-row items-center justify-between py-3 px-6 rounded-[14px] bg-[#f8fafc] dark:bg-slate-800/40 border border-[#eef1f5] dark:border-slate-700/60 shadow-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all group overflow-hidden">
-                                <div className="flex items-center gap-4 relative z-10 w-full md:w-auto mb-3 md:mb-0">
-                                    <div className="text-3xl drop-shadow-sm text-blue-500 group-hover:scale-110 transition-transform">{getWeatherIcon(weather.current.code)}</div>
+                            <div
+                                onClick={() => setShowForecast(true)}
+                                className="min-h-[64px] flex flex-col md:flex-row items-center justify-between py-3 px-5 md:px-[20px] rounded-[13px] bg-[#fafbfd] dark:bg-slate-800/40 border border-[#edf0f4] dark:border-slate-700/60 shadow-none cursor-pointer hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-all group overflow-hidden gap-4"
+                            >
+                                <div className="flex items-center gap-[15px] w-full md:w-auto">
+                                    <div className="text-[28px] leading-none text-blue-500 group-hover:scale-110 transition-transform">
+                                        {getWeatherIcon(weather.current.code)}
+                                    </div>
                                     <div>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-xl font-extrabold text-slate-800 dark:text-slate-100 leading-none tracking-tight">{Math.round(weather.current.temp || 0)}°C</span>
+                                        <div className="text-[21px] font-extrabold text-[#26384c] dark:text-slate-100 leading-none">
+                                            {Math.round(weather.current.temp || 0)}°C
                                         </div>
-                                        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">PREVISÃO • SANTA MARIA DE JETIBÁ</div>
+                                        <div className="text-[9px] font-extrabold text-[#9aa6b4] uppercase tracking-[0.45px] mt-[4px]">
+                                            PREVISÃO • SANTA MARIA DE JETIBÁ
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-6 relative z-10 w-full md:w-auto">
-                                    <div className="flex items-center gap-1.5">
-                                        <CloudRain size={16} className="text-blue-500" />
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 leading-none uppercase">{weather.daily?.[0]?.rainProb || 0}%</span>
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Chuva</span>
+                                <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-[26px]">
+                                    <div className="flex items-center gap-2 pl-0 md:pl-[25px] border-l-0 md:border-l border-[#e2e7ed] dark:border-slate-700">
+                                        <CloudRain size={16} className="text-blue-500 shrink-0" />
+                                        <div>
+                                            <div className="text-[12px] font-extrabold text-[#35485c] dark:text-slate-200 leading-none">
+                                                {weather.daily?.[0]?.rainProb || 0}%
+                                            </div>
+                                            <div className="text-[9px] font-extrabold text-[#9aa6b4] uppercase tracking-wider mt-[3px]">Chuva</div>
                                         </div>
                                     </div>
-                                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Timer size={16} className="text-blue-400" />
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 leading-none uppercase">{weather.current.humidity || 0}%</span>
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Umidade</span>
+
+                                    <div className="flex items-center gap-2 pl-[25px] border-l border-[#e2e7ed] dark:border-slate-700">
+                                        <Timer size={16} className="text-blue-400 shrink-0" />
+                                        <div>
+                                            <div className="text-[12px] font-extrabold text-[#35485c] dark:text-slate-200 leading-none">
+                                                {weather.current.humidity || 0}%
+                                            </div>
+                                            <div className="text-[9px] font-extrabold text-[#9aa6b4] uppercase tracking-wider mt-[3px]">Umidade</div>
                                         </div>
                                     </div>
-                                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Activity size={16} className="text-slate-400" />
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 leading-none uppercase">{Math.round(weather.current.wind || 6)} km/h</span>
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Vento</span>
+
+                                    <div className="flex items-center gap-2 pl-[25px] border-l border-[#e2e7ed] dark:border-slate-700">
+                                        <Wind size={16} className="text-slate-400 shrink-0" />
+                                        <div>
+                                            <div className="text-[12px] font-extrabold text-[#35485c] dark:text-slate-200 leading-none">
+                                                {Math.round(weather.current.wind || 6)} KM/H
+                                            </div>
+                                            <div className="text-[9px] font-extrabold text-[#9aa6b4] uppercase tracking-wider mt-[3px]">Vento</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2694,23 +2706,29 @@ const WebViewDashboardView = ({
                         )}
                     </div>
 
-                    {/* Blue Horizontal Nav Bar - Positioned at absolute bottom of container */}
-                    <div className="bg-[#254776] text-white flex w-full divide-x divide-white/10 border-t border-white/10 mt-auto">
+                    {/* Navigation Bar */}
+                    <div className="bg-[#274f82] text-white grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 min-h-[38px] border-t border-white/10 mt-auto">
                         {[
-                            { label: 'OCORRÊNCIAS', path: '/ocorrencias' },
-                            { label: 'VISTORIAS', path: '/vistorias' },
-                            { label: 'INTERDIÇÕES', path: '/interdicao' },
-                            { label: 'REDAP', path: '/redap' },
-                            { label: 'REL. SITUACIONAL', action: () => setShowReportMenu(!showReportMenu) }
-                        ].map((item, idx) => (
-                            <button
-                                key={idx}
-                                onClick={item.action || (() => navigate(item.path))}
-                                className="flex-1 py-2 px-2 text-center text-[10px] md:text-[11px] font-extrabold tracking-wider hover:bg-white/10 transition-colors cursor-pointer flex items-center justify-center whitespace-nowrap"
-                            >
-                                {item.label}
-                            </button>
-                        ))}
+                            { label: 'OCORRÊNCIAS', icon: Flame, path: '/ocorrencias', active: location.pathname.startsWith('/ocorrencias') || location.pathname === '/' },
+                            { label: 'VISTORIAS', icon: ClipboardList, path: '/vistorias', active: location.pathname.startsWith('/vistorias') },
+                            { label: 'INTERDIÇÕES', icon: AlertTriangle, path: '/interdicao', active: location.pathname.startsWith('/interdicao') },
+                            { label: 'REDAP', icon: FileText, path: '/redap', active: location.pathname.startsWith('/redap') },
+                            { label: 'REL. SITUACIONAL', icon: BarChart3, action: () => setShowReportMenu(!showReportMenu), active: showReportMenu || location.pathname.startsWith('/relatorio') }
+                        ].map((item, idx) => {
+                            const IconComp = item.icon;
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={item.action || (() => navigate(item.path))}
+                                    className={`relative flex items-center justify-center gap-[6px] py-2 px-3 text-[10px] md:text-[11px] font-extrabold tracking-[0.35px] hover:bg-white/[0.08] transition-colors cursor-pointer border-r border-white/10 last:border-r-0 uppercase text-white/90 ${
+                                        item.active ? 'bg-white/[0.12] text-white' : ''
+                                    }`}
+                                >
+                                    {IconComp && <IconComp size={13} className="shrink-0 opacity-90" />}
+                                    <span>{item.label}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 

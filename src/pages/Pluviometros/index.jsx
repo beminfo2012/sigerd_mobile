@@ -204,6 +204,7 @@ const Pluviometros = ({ hideHeader = false }) => {
     const [mapStyle, setMapStyle] = useState('google');
     const [mouseCoords, setMouseCoords] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showControlsPopover, setShowControlsPopover] = useState(false);
     
     // Table Filters
     const [cityFilter, setCityFilter] = useState('santa ma');
@@ -467,101 +468,145 @@ const Pluviometros = ({ hideHeader = false }) => {
     };
 
     return (
-        <div className={hideHeader ? "" : "bg-slate-50 dark:bg-slate-950 min-h-screen pb-12 transition-colors duration-200"}>
-            {/* Standard Header */}
+        <div className={hideHeader ? "w-full h-full flex flex-col relative overflow-hidden" : "bg-slate-50 dark:bg-slate-950 h-full w-full flex flex-col overflow-hidden transition-colors duration-200"}>
+            {/* Standard Header (Compact 48-56px height) */}
             {!hideHeader && (
-                <div className="bg-white dark:bg-slate-900 px-6 py-4 shadow-sm sticky top-0 z-[10] border-b border-slate-100 dark:border-slate-800 flex justify-between items-center transition-colors duration-200">
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
-                            <ArrowLeft size={24} />
+                <div className="bg-white dark:bg-slate-900 px-3 sm:px-6 py-2 shadow-sm sticky top-0 z-[20] border-b border-slate-100 dark:border-slate-800 flex justify-between items-center transition-colors duration-200 shrink-0 min-h-[52px]">
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={() => navigate(-1)} className="p-1.5 -ml-1 text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
+                            <ArrowLeft size={20} />
                         </button>
-                        <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Pluviômetros</h1>
+                        <h1 className="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Pluviômetros</h1>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <button 
                             onClick={() => setAnalysisModalStation(stations[0] || selectedStation)} 
-                            className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 hover:bg-blue-100/70 dark:bg-blue-900/20 text-[#2a5299] dark:text-blue-400 rounded-xl text-xs font-bold transition-all border border-blue-100 dark:border-blue-800 hover:scale-[1.02]"
+                            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-blue-50 hover:bg-blue-100/70 dark:bg-blue-900/20 text-[#2a5299] dark:text-blue-400 rounded-xl text-xs font-bold transition-all border border-blue-100 dark:border-blue-800 hover:scale-[1.02] shrink-0"
                         >
-                            <FileText size={16} /> Tabela & Gráficos
+                            <FileText size={15} /> <span className="hidden md:inline">Tabela & Gráficos</span>
                         </button>
-                        <button onClick={() => setManualModalOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-[#2a5299] dark:text-blue-400 rounded-xl text-xs font-bold transition-all border border-blue-100 dark:border-blue-800 hover:bg-blue-100/50">
-                            <Plus size={16} /> Entrada Manual
+                        <button onClick={() => setManualModalOpen(true)} className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-[#2a5299] dark:text-blue-400 rounded-xl text-xs font-bold transition-all border border-blue-100 dark:border-blue-800 hover:bg-blue-100/50 shrink-0">
+                            <Plus size={15} /> <span className="hidden md:inline">Entrada Manual</span>
                         </button>
-                        <button onClick={fetchData} className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-500 rounded-xl hover:bg-slate-100 transition-all active:scale-95 border border-slate-200/50 dark:border-slate-700">
-                            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                        <button onClick={fetchData} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 border border-slate-200 dark:border-slate-700 shrink-0 ml-1" title="Atualizar dados">
+                            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Main Layout Container */}
-            <div ref={reportRef} className="max-w-[1500px] mx-auto p-4 sm:p-6 space-y-6">
+            {/* Main Layout Container - Full Bleed Map Area */}
+            <div ref={reportRef} className="flex-1 w-full relative overflow-hidden bg-slate-100 dark:bg-slate-900">
                 {hideHeader && (
-                    <div className="flex justify-between items-center mb-2">
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setAnalysisModalStation(stations[0] || selectedStation)}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100 dark:border-blue-800 hover:bg-blue-100/40"
-                            >
-                                <FileText size={14} /> Tabela & Gráficos
-                            </button>
-                            <button
-                                onClick={() => setManualModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100 dark:border-blue-800 hover:bg-blue-100/40"
-                            >
-                                <Plus size={14} /> Entrada Manual
-                            </button>
-                            <button
-                                onClick={fetchData}
-                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl transition-all active:scale-95 border border-slate-200 dark:border-slate-700"
-                            >
-                                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                            </button>
-                        </div>
+                    <div className="absolute top-3 right-3 z-[10] flex gap-2">
+                        <button
+                            onClick={() => setAnalysisModalStation(stations[0] || selectedStation)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-[#2a5299] dark:text-blue-400 rounded-xl text-xs font-bold shadow-md border border-slate-200/80 dark:border-slate-800 hover:bg-white"
+                        >
+                            <FileText size={15} /> <span className="hidden sm:inline">Tabela & Gráficos</span>
+                        </button>
+                        <button
+                            onClick={() => setManualModalOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-[#2a5299] dark:text-blue-400 rounded-xl text-xs font-bold shadow-md border border-slate-200/80 dark:border-slate-800 hover:bg-white"
+                        >
+                            <Plus size={15} /> <span className="hidden sm:inline">Entrada Manual</span>
+                        </button>
+                        <button
+                            onClick={fetchData}
+                            className="p-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-600 dark:text-slate-300 rounded-xl shadow-md border border-slate-200/80 dark:border-slate-800 hover:bg-white"
+                            title="Atualizar"
+                        >
+                            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+                        </button>
                     </div>
                 )}
 
-                {/* 🌧️ CEMADEN-Style Map Control Bar */}
-                <div className="bg-[#0ea5e9] p-3 text-white flex flex-col md:flex-row justify-between items-center rounded-t-[20px] shadow-md gap-3">
-                    <form onSubmit={handleSearch} className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-xl border border-white/25 w-full md:w-auto">
-                        <Search size={16} className="text-white/85 shrink-0" />
-                        <input
-                            type="text"
-                            placeholder="cidade, uf"
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="bg-transparent text-white text-xs font-semibold placeholder-white/60 outline-none border-none w-full md:w-56"
-                        />
-                        <button type="submit" className="bg-white text-[#0ea5e9] px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider hover:bg-slate-100 transition-all shrink-0">
-                            Buscar
-                        </button>
-                    </form>
-                    
-                    <div className="flex items-center gap-2 shrink-0">
+                {/* 🌊 Mini-painel Flutuante de Controles (Bacias / Provedor) - Top Left Overlay */}
+                <div className="absolute top-3 left-3 z-[10]">
+                    {/* Desktop / Tablet View */}
+                    <div className="hidden sm:flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-1.5 rounded-2xl shadow-lg border border-slate-200/80 dark:border-slate-800">
                         <button
                             onClick={() => setShowBacias(!showBacias)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm ${showBacias ? 'bg-white text-[#0ea5e9]' : 'bg-white/20 text-white hover:bg-white/30 border border-white/25'}`}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                                showBacias 
+                                    ? 'bg-[#0ea5e9] text-white shadow-sm' 
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                            }`}
                             title="Alternar Bacias Hidrográficas"
                         >
-                            <Waves size={14} /> Bacias
+                            <Waves size={15} /> Bacias
                         </button>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-white/80 ml-2 hidden sm:inline">Provedor:</span>
-                        <select
-                            value={mapStyle}
-                            onChange={e => setMapStyle(e.target.value)}
-                            className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs px-2.5 py-1.5 rounded-xl border-none font-bold focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer shadow-sm"
+                        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
+                        <div className="flex items-center gap-1.5 px-1">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Provedor:</span>
+                            <select
+                                value={mapStyle}
+                                onChange={e => setMapStyle(e.target.value)}
+                                className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs px-2 py-1 rounded-lg border-none font-bold focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
+                            >
+                                <option value="google">Google Maps</option>
+                                <option value="google_sat">Google Satélite</option>
+                                <option value="osm">OpenStreetMap</option>
+                                <option value="satellite">Satélite (Esri)</option>
+                                <option value="carto">CartoDB Light</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Mobile View - Popover Toggle Button */}
+                    <div className="sm:hidden relative">
+                        <button
+                            onClick={() => setShowControlsPopover(!showControlsPopover)}
+                            className="w-10 h-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-2xl flex items-center justify-center shadow-lg border border-slate-200/80 dark:border-slate-800 active:scale-95 transition-all"
+                            title="Camadas e Filtros"
                         >
-                            <option value="google">Google Maps</option>
-                            <option value="google_sat">Google Satélite</option>
-                            <option value="osm">OpenStreetMap</option>
-                            <option value="satellite">Satélite (Esri)</option>
-                            <option value="carto">CartoDB Light</option>
-                        </select>
+                            <Waves size={18} className={showBacias ? "text-sky-500" : ""} />
+                        </button>
+
+                        {/* Mobile Popover */}
+                        {showControlsPopover && (
+                            <div className="absolute top-12 left-0 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800 p-3 space-y-3 z-[20] animate-in fade-in zoom-in-95">
+                                <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                                    <span className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider">Camadas & Provedor</span>
+                                    <button onClick={() => setShowControlsPopover(false)} className="p-1 text-slate-400 hover:text-slate-600 rounded-full">
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={() => setShowBacias(!showBacias)}
+                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                                        showBacias 
+                                            ? 'bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800' 
+                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2"><Waves size={16} /> Bacias Hidrográficas</span>
+                                    <span className="text-[10px] font-black uppercase">{showBacias ? 'Ativo' : 'Off'}</span>
+                                </button>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 block">Provedor do Mapa</label>
+                                    <select
+                                        value={mapStyle}
+                                        onChange={e => {
+                                            setMapStyle(e.target.value);
+                                            setShowControlsPopover(false);
+                                        }}
+                                        className="w-full bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold focus:outline-none"
+                                    >
+                                        <option value="google">Google Maps</option>
+                                        <option value="google_sat">Google Satélite</option>
+                                        <option value="osm">OpenStreetMap</option>
+                                        <option value="satellite">Satélite (Esri)</option>
+                                        <option value="carto">CartoDB Light</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Interactive Leaflet Map */}
-                <div className="h-[500px] md:h-[70vh] min-h-[500px] max-h-[850px] w-full rounded-b-[20px] overflow-hidden relative border-x border-b border-slate-200 dark:border-slate-800 shadow-lg z-[0] bg-slate-100 dark:bg-slate-900">
+                {/* Interactive Leaflet Map Container (100% full-bleed) */}
+                <div className="w-full h-full relative z-[0]">
                     {loading ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm z-[10]">
                             <div className="flex flex-col items-center gap-3">
@@ -575,7 +620,7 @@ const Pluviometros = ({ hideHeader = false }) => {
                             zoom={11}
                             maxZoom={22}
                             zoomControl={false}
-                            style={{ height: '100%', width: '100%', borderRadius: 'inherit' }}
+                            style={{ height: '100%', width: '100%' }}
                         >
                             <MapInstanceCapture setMap={setMapInstance} />
                             <CoordsListener setCoords={setMouseCoords} />
@@ -627,17 +672,25 @@ const Pluviometros = ({ hideHeader = false }) => {
                         </MapContainer>
                     )}
 
-                    {/* Floating Info Box (Bottom-Left) */}
+                    {/* Floating Info Box (Bottom-Left Overlay) */}
                     {selectedStation && (
-                        <div className="absolute bottom-4 left-4 z-[1000] w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-3 duration-250">
-                            <div className="bg-[#0ea5e9] text-white px-4 py-2.5 flex justify-between items-center font-black text-[10px] uppercase tracking-widest shrink-0">
+                        <div className="absolute bottom-4 left-4 z-[10] w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-3 duration-250">
+                            <div className="bg-[#0ea5e9] text-white px-4 py-2 flex justify-between items-center font-black text-[10px] uppercase tracking-widest shrink-0">
                                 <span>Informações do Pluviômetro</span>
                                 <button onClick={() => setSelectedStation(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
                                     <X size={14} />
                                 </button>
                             </div>
-                            <div className="p-4 space-y-1.5 text-xs text-slate-700 dark:text-slate-300 font-bold tracking-tight">
-                                <div className="text-slate-800 dark:text-slate-100 font-extrabold text-[13px] border-b border-slate-100 dark:border-slate-800 pb-1">{selectedStation.name}</div>
+                            <div className="p-3.5 space-y-1 text-xs text-slate-700 dark:text-slate-300 font-bold tracking-tight">
+                                <div className="text-slate-800 dark:text-slate-100 font-extrabold text-[13px] border-b border-slate-100 dark:border-slate-800 pb-1 flex justify-between items-center">
+                                    <span>{selectedStation.name}</span>
+                                    <button
+                                        onClick={() => setAnalysisModalStation(selectedStation)}
+                                        className="text-[10px] text-sky-600 dark:text-sky-400 font-black uppercase hover:underline"
+                                    >
+                                        Detalhar
+                                    </button>
+                                </div>
                                 <div>Estação: <span className="font-semibold text-slate-500 dark:text-slate-400">{selectedStation.id}</span></div>
                                 <div>Fonte: <span className="font-semibold text-slate-500 dark:text-slate-400">{selectedStation.isManual ? 'Manual / Defesa Civil' : 'CEMADEN'}</span></div>
                                 <div>Município: <span className="font-semibold text-slate-500 dark:text-slate-400">SANTA MARIA DE JETIBÁ-ES</span></div>
@@ -646,52 +699,53 @@ const Pluviometros = ({ hideHeader = false }) => {
                         </div>
                     )}
 
-                    {/* Custom Zoom Buttons (Bottom-Center) */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] flex gap-2">
+                    {/* Custom Zoom Controls Overlay (Bottom-Center) */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[10] flex gap-2">
                         <button
                             onClick={() => mapInstance?.zoomIn()}
-                            className="w-9 h-9 bg-cyan-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-cyan-600 active:scale-90 transition-all border border-cyan-400/20"
+                            className="w-9 h-9 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-50 active:scale-90 transition-all border border-slate-200/80 dark:border-slate-800"
                             title="Aumentar Zoom"
                         >
                             <ZoomIn size={18} />
                         </button>
                         <button
                             onClick={() => mapInstance?.zoomOut()}
-                            className="w-9 h-9 bg-cyan-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-cyan-600 active:scale-90 transition-all border border-cyan-400/20"
+                            className="w-9 h-9 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-50 active:scale-90 transition-all border border-slate-200/80 dark:border-slate-800"
                             title="Diminuir Zoom"
                         >
                             <ZoomOut size={18} />
                         </button>
                         <button
                             onClick={() => mapInstance?.setView([-20.0246, -40.7464], 11)}
-                            className="w-9 h-9 bg-cyan-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-cyan-600 active:scale-90 transition-all border border-cyan-400/20"
+                            className="w-9 h-9 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-50 active:scale-90 transition-all border border-slate-200/80 dark:border-slate-800"
                             title="Restaurar Visão"
                         >
-                            <RefreshCw size={16} />
+                            <RefreshCw size={15} />
                         </button>
                     </div>
 
-                    {/* Coordinates Label (Bottom-Right) */}
-                    <div className="absolute bottom-2 right-2 bg-black/65 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] text-white/90 font-mono z-[1000] pointer-events-none tracking-wider border border-white/10">
+                    {/* Coordinates Label Overlay (Bottom-Right, positioned left of Share button) */}
+                    <div className="absolute bottom-3 right-48 sm:right-64 bg-black/65 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] text-white/90 font-mono z-[10] pointer-events-none tracking-wider border border-white/10 hidden sm:block">
                         {mouseCoords ? `${mouseCoords.lng.toFixed(5)}, ${mouseCoords.lat.toFixed(5)}` : '-40.74640, -20.02460'}
                     </div>
                 </div>
 
-            {/* Fab Button for Share */}
-            {!loading && stations.length > 0 && (
-                <div className="fixed bottom-6 right-6 z-20">
-                    <button
-                        onClick={() => {
-                            const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-                            sharePluviometricReport({ stations, userProfile, isSingle: false });
-                        }}
-                        className="bg-green-600 hover:bg-green-500 text-white px-5 py-3.5 rounded-full shadow-lg shadow-green-650/30 active:scale-95 transition-all flex items-center gap-2 font-bold"
-                    >
-                        <Share2 size={20} />
-                        <span>Compartilhar Boletim</span>
-                    </button>
-                </div>
-            )}
+                {/* Floating Action Button for WhatsApp Boletim Share (Bottom-Right) */}
+                {!loading && stations.length > 0 && (
+                    <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-[15]">
+                        <button
+                            onClick={() => {
+                                const userProfile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+                                sharePluviometricReport({ stations, userProfile, isSingle: false });
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 sm:px-5 py-2.5 sm:py-3.5 rounded-full shadow-2xl shadow-emerald-950/40 active:scale-95 transition-all flex items-center gap-2 font-bold text-xs sm:text-sm border border-emerald-400/30"
+                        >
+                            <Share2 size={18} />
+                            <span>Compartilhar Boletim</span>
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {/* Manual Entry Modal */}
             {manualModalOpen && (
@@ -1074,8 +1128,7 @@ const Pluviometros = ({ hideHeader = false }) => {
                 </div>
             )}
         </div>
-    </div>
-);
+    );
 };
 
 export default Pluviometros;
