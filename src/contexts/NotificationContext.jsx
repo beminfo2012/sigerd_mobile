@@ -82,7 +82,7 @@ export const NotificationProvider = ({ children }) => {
         return notifications.filter(n => !n.read).length;
     }, [notifications]);
 
-    // Scan real system records ONCE and push in ONE single batch query to Supabase
+    // Scan real system records ONCE and push ONLY UNEXISTING items to Supabase
     const syncRealSystemNotifications = useCallback(async () => {
         try {
             const db = await initDB();
@@ -218,7 +218,7 @@ export const NotificationProvider = ({ children }) => {
             if (allSystemNotifs.length > 0) {
                 // Save all to local IndexedDB (deduplicating by group_key)
                 await notificationRepository.saveAll(allSystemNotifs);
-                // Batch push to Supabase in ONE lightweight query
+                // Batch push to Supabase ONLY unsynced items
                 if (navigator.onLine) {
                     await notificationService.pushRemoteNotificationsBatch(allSystemNotifs);
                 }
@@ -228,7 +228,7 @@ export const NotificationProvider = ({ children }) => {
         }
     }, []);
 
-    // Load initial notifications from IndexedDB & Supabase
+    // Load master notifications from Supabase (Single Source of Truth across all devices)
     const loadLocalNotifications = useCallback(async () => {
         setLoading(true);
         try {
@@ -244,25 +244,22 @@ export const NotificationProvider = ({ children }) => {
                 }
             }
 
-            // Purge duplicate records sharing the same group_key in IndexedDB
-            await notificationRepository.purgeDuplicates();
-
             // Sync real system records into notifications once
             await syncRealSystemNotifications();
 
-            // Fetch remote user-targeted notifications from Supabase (Limit: 20)
+            // Fetch master remote notifications from Supabase for this user (Limit: 200)
             if (navigator.onLine) {
                 const remoteNotifs = await notificationService.fetchRemoteNotifications({
                     userId: currentUserId,
                     userRole: currentUserRole,
-                    limit: 20
+                    limit: 200
                 });
                 if (remoteNotifs && Array.isArray(remoteNotifs)) {
                     await notificationRepository.saveAll(remoteNotifs);
                 }
             }
 
-            // Purge any remaining duplicates after remote save
+            // Purge duplicate records in IndexedDB
             await notificationRepository.purgeDuplicates();
 
             const items = await notificationRepository.getAll();
@@ -308,7 +305,7 @@ export const NotificationProvider = ({ children }) => {
         return item;
     }, [notifications, setNotifications]);
 
-    // Mark single notification as read
+    // Mark single notification as read across devices
     const markAsRead = useCallback(async (id) => {
         const notifObj = notifications.find(n => n.id === id);
         const groupKey = notifObj ? notifObj.group_key : null;
@@ -328,7 +325,7 @@ export const NotificationProvider = ({ children }) => {
         }
     }, [notifications, currentUserId, setNotifications]);
 
-    // Mark all notifications as read
+    // Mark all notifications as read across devices
     const markAllAsRead = useCallback(async () => {
         const readAt = new Date().toISOString();
         const unreadItems = notifications.filter(n => !n.read);
@@ -347,7 +344,7 @@ export const NotificationProvider = ({ children }) => {
         }
     }, [notifications, currentUserId, setNotifications]);
 
-    // Lightweight background sync
+    // Lightweight background sync for inter-device consistency
     const sync = useCallback(async () => {
         if (!navigator.onLine || syncing) return;
         setSyncing(true);
@@ -356,7 +353,7 @@ export const NotificationProvider = ({ children }) => {
             const remoteNotifs = await notificationService.fetchRemoteNotifications({
                 userId: currentUserId,
                 userRole: currentUserRole,
-                limit: 15
+                limit: 200
             });
             if (remoteNotifs && Array.isArray(remoteNotifs)) {
                 await notificationRepository.saveAll(remoteNotifs);

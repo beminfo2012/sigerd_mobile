@@ -2,8 +2,8 @@ import { supabase } from './supabase';
 import { notificationRepository } from './notificationRepository';
 
 /**
- * NotificationService - Remote Sync & Server API Operations with Supabase
- * Optimized with batching & single-query upserts to prevent database connection exhaustion.
+ * NotificationService - Single Source of Truth & Remote Sync with Supabase
+ * Enforces exact multi-device and multi-user consistency across all computers.
  */
 class NotificationService {
     constructor() {
@@ -38,6 +38,33 @@ class NotificationService {
     }
 
     /**
+     * Filter group_keys that ALREADY exist in Supabase to prevent duplicate inserts
+     */
+    async filterUnsyncedGroupKeys(groupKeys = []) {
+        if (!supabase || !supabase.from || !navigator.onLine || this.remoteDisabled || groupKeys.length === 0) {
+            return new Set();
+        }
+        try {
+            const { data, error } = await supabase
+                .from('notifications')
+                .select('group_key')
+                .in('group_key', groupKeys);
+
+            if (error) {
+                console.warn('[filterUnsyncedGroupKeys Warning]:', error.message || error);
+                return new Set();
+            }
+
+            if (data && Array.isArray(data)) {
+                return new Set(data.map(d => d.group_key));
+            }
+        } catch (err) {
+            console.warn('Error checking existing group_keys in Supabase:', err);
+        }
+        return new Set();
+    }
+
+    /**
      * Push a single notification to Supabase
      */
     async pushRemoteNotification(notification) {
@@ -47,14 +74,22 @@ class NotificationService {
 
     /**
      * Bulk Push multiple notifications to Supabase in lightweight batches of 50
-     * Reduces 300+ separate HTTP requests to a single or few bulk SQL queries.
+     * Only inserts notifications whose group_key does not already exist in Supabase.
      */
     async pushRemoteNotificationsBatch(items = []) {
         if (!navigator.onLine || this.remoteDisabled || !Array.isArray(items) || items.length === 0) return null;
 
+        // Extract all group keys to check existence on server
+        const allKeys = items.map(i => i.group_key).filter(Boolean);
+        const existingKeysOnServer = await this.filterUnsyncedGroupKeys(allKeys);
+
+        // Filter items that are NOT YET in Supabase
+        const unsyncedItems = items.filter(i => !existingKeysOnServer.has(i.group_key));
+        if (unsyncedItems.length === 0) return true;
+
         const chunkSize = 50;
-        for (let i = 0; i < items.length; i += chunkSize) {
-            const chunk = items.slice(i, i + chunkSize);
+        for (let i = 0; i < unsyncedItems.length; i += chunkSize) {
+            const chunk = unsyncedItems.slice(i, i + chunkSize);
             const payload = chunk.map(item => ({
                 type: item.type || 'system',
                 title: item.title,
@@ -151,14 +186,14 @@ class NotificationService {
     }
 
     /**
-     * Fetch recent notifications from backend with per-user read tracking (Limit: 15-20)
+     * Fetch master notifications from backend with per-user read tracking (Single Source of Truth)
      */
     async fetchRemoteNotifications(params = {}) {
         if (!navigator.onLine || this.remoteDisabled) {
             return null;
         }
 
-        const { userId, userRole, limit = 20 } = params;
+        const { userId, userRole, limit = 200 } = params;
 
         try {
             if (supabase && supabase.from) {
@@ -227,7 +262,7 @@ class NotificationService {
     }
 
     /**
-     * Mark single notification read via API
+     * Mark single notification read via API (per-user tracking in user_notifications table)
      */
     async markRemoteAsRead(id, userId = null, groupKey = null) {
         if (!navigator.onLine || this.remoteDisabled) return;
