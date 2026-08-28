@@ -166,9 +166,14 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
 
 
                 // 1. Try to fetch from Local DB first (support offline usage)
-                const decodedId = decodeURIComponent(id);
+                const decodedId = String(decodeURIComponent(id)).trim();
                 const localVistorias = await getAllVistoriasLocal().catch(() => []);
-                let localMatch = localVistorias.find(v => v.id === decodedId || v.vistoria_id === decodedId || v.id === id || v.vistoria_id === id);
+                let localMatch = localVistorias.find(v => 
+                    String(v.id) === decodedId || 
+                    String(v.vistoria_id) === decodedId || 
+                    String(v.supabase_id) === decodedId ||
+                    String(v.vistoriaId) === decodedId
+                );
 
                 if (localMatch) {
                     setData(localMatch);
@@ -180,11 +185,19 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                 }
 
                 // 2. Fetch from Supabase if not local
-                const { data: reportData, error } = await supabase
-                    .from('vistorias')
-                    .select('*')
-                    .or(`id.eq.${decodedId},vistoria_id.eq.${decodedId}`)
-                    .single();
+                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
+                const isNumeric = /^\d+$/.test(decodedId);
+
+                let query = supabase.from('vistorias').select('*');
+                if (isUuid) {
+                    query = query.eq('id', decodedId);
+                } else if (isNumeric) {
+                    query = query.or(`id.eq.${decodedId},vistoria_id.eq.${decodedId}`);
+                } else {
+                    query = query.or(`vistoria_id.eq.${decodedId},id.eq.${decodedId}`);
+                }
+
+                const { data: reportData, error } = await query.maybeSingle();
 
                 if (reportData) {
                     setData(reportData);

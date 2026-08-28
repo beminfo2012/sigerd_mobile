@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 34
+const DB_VERSION = 35
 
 export const safeToIsoString = (dateVal) => {
     if (!dateVal) return new Date().toISOString();
@@ -41,6 +41,19 @@ export const initDB = async () => {
                     }
                 }
             };
+
+            // Notifications Store
+            if (!db.objectStoreNames.contains('notifications')) {
+                const store = db.createObjectStore('notifications', { keyPath: 'id' });
+                store.createIndex('group_key', 'group_key', { unique: false });
+                store.createIndex('read', 'read', { unique: false });
+                store.createIndex('urgency', 'urgency', { unique: false });
+                store.createIndex('created_at', 'created_at', { unique: false });
+            }
+
+            if (!db.objectStoreNames.contains('pending_notification_ops')) {
+                db.createObjectStore('pending_notification_ops', { keyPath: 'id', autoIncrement: true });
+            }
 
             // Core Stores
             if (!db.objectStoreNames.contains('vistorias')) {
@@ -1239,7 +1252,7 @@ export const pullAllData = async (force = false) => {
                 }
 
                 if (error) {
-                    console.error(`[Pull] Error fetching ${mod.table}:`, error);
+                    console.warn(`[Pull] Table ${mod.table} not available or fetch skipped:`, error.message || error);
                     continue;
                 }
 

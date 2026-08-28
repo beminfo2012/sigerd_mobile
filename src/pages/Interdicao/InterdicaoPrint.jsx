@@ -69,9 +69,15 @@ const InterdicaoPrint = () => {
         const fetchData = async () => {
             if (!id) return;
             try {
+                const decodedId = String(decodeURIComponent(id)).trim();
                 // 1. Try to fetch from Local DB first
                 const localInterdicoes = await getAllInterdicoesLocal().catch(() => []);
-                const localMatch = localInterdicoes.find(v => v.id === id || v.interdicaoId === id || v.interdicao_id === id);
+                const localMatch = localInterdicoes.find(v => 
+                    String(v.id) === decodedId || 
+                    String(v.interdicaoId) === decodedId || 
+                    String(v.interdicao_id) === decodedId ||
+                    String(v.supabase_id) === decodedId
+                );
 
                 if (localMatch) {
                     setData(localMatch);
@@ -83,11 +89,19 @@ const InterdicaoPrint = () => {
                 }
 
                 // 2. Fetch from Supabase
-                const { data: reportData, error } = await supabase
-                    .from('interdicoes')
-                    .select('*')
-                    .or(`id.eq.${id},interdicao_id.eq.${id}`)
-                    .single();
+                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedId);
+                const isNumeric = /^\d+$/.test(decodedId);
+
+                let query = supabase.from('interdicoes').select('*');
+                if (isUuid) {
+                    query = query.eq('id', decodedId);
+                } else if (isNumeric) {
+                    query = query.or(`id.eq.${decodedId},interdicao_id.eq.${decodedId}`);
+                } else {
+                    query = query.or(`interdicao_id.eq.${decodedId},id.eq.${decodedId}`);
+                }
+
+                const { data: reportData, error } = await query.maybeSingle();
 
                 if (reportData) {
                     setData(reportData);

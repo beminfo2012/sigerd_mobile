@@ -1,7 +1,8 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { ChevronRight, Search, Bell, Settings, HelpCircle, User } from 'lucide-react';
+import { ChevronRight, Search, Settings, HelpCircle, User } from 'lucide-react';
 import GlobalSearchBar from './GlobalSearchBar';
+import NotificationBell from './notifications/NotificationBell';
 
 const DesktopHeader = ({ userProfile }) => {
     const location = useLocation();
@@ -34,8 +35,10 @@ const DesktopHeader = ({ userProfile }) => {
             {/* Barra de Pesquisa Global Centralizada (~36% da largura) */}
             <GlobalSearchBar />
 
-            <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+                <NotificationBell />
+
+                <div className="flex items-center gap-3 border-l border-white/20 pl-4">
                     <div className="text-right">
                         <p className="text-xs font-black text-white leading-none uppercase tracking-tight">{userProfile?.full_name || 'Operador'}</p>
                     </div>

@@ -20,6 +20,7 @@ import MobileHeader from './components/MobileHeader'
 import MobileNavigation from './components/MobileNavigation'
 import { ativarSincronizacaoOfflineAutomatica } from './services/SincronizacaoVistorias'
 import { OperacaoProvider } from './contexts/OperacaoContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 
 
 // Lazy loaded components
@@ -272,7 +273,17 @@ const AppContent = ({
                                         <Interdicao />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/interdicoes" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <Interdicao />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/interdicao/imprimir/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
+                                        <InterdicaoPrint />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/interdicoes/imprimir/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={AGENT_ROLES}>
                                         <InterdicaoPrint />
                                     </ProtectedRoute>
@@ -839,23 +850,25 @@ function App() {
     return (
         <ErrorBoundary>
             <UserContext.Provider value={userProfile}>
-                <Router>
-                    <AppContent
-                        isAuthenticated={isAuthenticated}
-                        userProfile={userProfile}
-                        setUserProfile={setUserProfile}
-                        activeTab={activeTab}
-                        setActiveTab={setActiveTab}
-                        handleLogout={handleLogout}
-                        handleLogin={handleLogin}
-                        AGENT_ROLES={AGENT_ROLES}
-                        HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
-                        HUMANITARIAN_FULL_ROLES={HUMANITARIAN_FULL_ROLES}
-                        REDAP_ROLES={REDAP_ROLES}
-                        isDarkMode={isDarkMode}
-                        setIsDarkMode={setIsDarkMode}
-                    />
-                </Router>
+                <NotificationProvider>
+                    <Router>
+                        <AppContent
+                            isAuthenticated={isAuthenticated}
+                            userProfile={userProfile}
+                            setUserProfile={setUserProfile}
+                            activeTab={activeTab}
+                            setActiveTab={setActiveTab}
+                            handleLogout={handleLogout}
+                            handleLogin={handleLogin}
+                            AGENT_ROLES={AGENT_ROLES}
+                            HUMANITARIAN_ROLES={HUMANITARIAN_ROLES}
+                            HUMANITARIAN_FULL_ROLES={HUMANITARIAN_FULL_ROLES}
+                            REDAP_ROLES={REDAP_ROLES}
+                            isDarkMode={isDarkMode}
+                            setIsDarkMode={setIsDarkMode}
+                        />
+                    </Router>
+                </NotificationProvider>
                 <ToastContainer />
             </UserContext.Provider>
         </ErrorBoundary>

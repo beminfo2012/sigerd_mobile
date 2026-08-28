@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
+import NotificationBell from './notifications/NotificationBell';
 
 export default function MobileHeader({ userProfile }) {
     const avatarLetter = userProfile?.full_name?.charAt(0)?.toUpperCase() || 'U';
@@ -16,6 +16,7 @@ export default function MobileHeader({ userProfile }) {
             </div>
             
             <div className="flex items-center gap-[14px]">
+                <NotificationBell />
 
                 <Link to="/menu" className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-white font-bold text-[15px] font-sans shadow-[0_3px_8px_rgba(0,0,0,0.3),inset_0_0_0_1.5px_rgba(255,255,255,0.15)] bg-gradient-to-br from-[#3f5fc4] to-[#25397c]">
                     {avatarLetter}
