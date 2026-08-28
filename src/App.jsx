@@ -741,7 +741,7 @@ function App() {
             } catch (e) { /* ignore */ }
 
             setIsLoading(false) // Release UI immediately
-            notificationService.requestPermission();
+            notificationService.requestPermission?.();
 
             // Background refresh happens via SyncBackground component
             refreshProfileFromServer();

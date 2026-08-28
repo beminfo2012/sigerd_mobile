@@ -312,6 +312,19 @@ class NotificationService {
     }
 
     /**
+     * Request browser notification permission
+     */
+    async requestPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            try {
+                await Notification.requestPermission();
+            } catch (e) {
+                // ignore
+            }
+        }
+    }
+
+    /**
      * Browser native desktop notification helper
      */
     showSystemNotification(title, body) {
