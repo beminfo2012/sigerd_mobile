@@ -415,10 +415,10 @@ async function performOnlineTableSearch(query, type, limit) {
 
     // 4. NOPRER
     if (type === 'all' || type === 'noprer') {
-        const filterStr = buildOrFilter(['numero_noprer', 'numero', 'descricao', 'solicitante', 'responsavel']);
+        const filterStr = buildOrFilter(['numero', 'descricao', 'solicitante', 'responsavel']);
         queries.push(
             supabase.from('noprer')
-                .select('id, numero_noprer, numero, descricao, solicitante, responsavel, status, created_at')
+                .select('id, numero, descricao, solicitante, responsavel, status, created_at')
                 .or(filterStr)
                 .limit(limit)
                 .then(({ data, error }) => {

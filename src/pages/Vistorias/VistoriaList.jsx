@@ -49,7 +49,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
         setLoading(true)
         try {
             // Fetch NOPRERs to link them
-            const { data: noprersData } = await supabase.from('noprer').select('id, origem_id, numero_noprer')
+            const { data: noprersData } = await supabase.from('noprer').select('id, vistoria_id, numero')
             if (noprersData) setNoprers(noprersData)
 
             // 1. Fetch from Supabase (Optimized Select)
@@ -486,7 +486,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                             {/* NOPRER Button */}
                                             {(vistoria.nivelRisco === 'Médio' || vistoria.nivelRisco === 'Alto' || vistoria.nivelRisco === 'Muito Alto' || vistoria.nivelRisco === 'Iminente') && (
                                                 (() => {
-                                                    const linkedNoprer = noprers.find(n => String(n.origem_id) === String(vistoria.vistoria_id) || String(n.origem_id) === String(vistoria.id));
+                                                    const linkedNoprer = noprers.find(n => String(n.vistoria_id) === String(vistoria.vistoria_id) || String(n.vistoria_id) === String(vistoria.id));
                                                     if (linkedNoprer) {
                                                         return (
                                                             <button
@@ -495,7 +495,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                                                 title="Ver NOPRER Gerada"
                                                             >
                                                                 <ShieldAlert size={12} />
-                                                                {linkedNoprer.numero_noprer}
+                                                                {linkedNoprer.numero}
                                                             </button>
                                                         );
                                                     } else {
@@ -639,7 +639,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
 
                             {/* NOPRER Option */}
                             {(mobileMenuVistoria.nivelRisco === 'Médio' || mobileMenuVistoria.nivelRisco === 'Alto' || mobileMenuVistoria.nivelRisco === 'Muito Alto' || mobileMenuVistoria.nivelRisco === 'Iminente') && (() => {
-                                const linkedNoprer = noprers.find(n => String(n.origem_id) === String(mobileMenuVistoria.vistoria_id) || String(n.origem_id) === String(mobileMenuVistoria.id));
+                                const linkedNoprer = noprers.find(n => String(n.vistoria_id) === String(mobileMenuVistoria.vistoria_id) || String(n.vistoria_id) === String(mobileMenuVistoria.id));
                                 if (linkedNoprer) {
                                     return (
                                         <button
@@ -652,7 +652,7 @@ const VistoriaList = ({ onNew, onEdit }) => {
                                             <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center shrink-0">
                                                 <ShieldAlert size={18} />
                                             </div>
-                                            <span>Ver NOPRER ({linkedNoprer.numero_noprer})</span>
+                                            <span>Ver NOPRER ({linkedNoprer.numero})</span>
                                         </button>
                                     );
                                 } else {
