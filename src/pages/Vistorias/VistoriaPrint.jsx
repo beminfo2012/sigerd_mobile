@@ -710,6 +710,18 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                                                 {(data.situacaoObservada || 'Estabilizado').toUpperCase()}
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <th colSpan="3" style={{ backgroundColor: '#f1f5f9', color: '#475569', fontSize: '10px' }}>Subtipos de Risco Identificados</th>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="3" style={{ padding: '8px', fontSize: '11px' }}>
+                                            {(() => {
+                                                const subtipos = Array.isArray(data.subtiposRisco) ? data.subtiposRisco : 
+                                                                (Array.isArray(data.subtipos_risco) ? data.subtipos_risco : []);
+                                                return subtipos.length > 0 ? subtipos.join(', ') : 'Nenhum subtipo registrado';
+                                            })()}
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </section>
