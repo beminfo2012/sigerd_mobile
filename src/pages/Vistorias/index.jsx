@@ -24,15 +24,34 @@ const EditVistoriaLoader = () => {
                 
                 let fullData = await getVistoriaFull(targetId);
 
-                // Só pesquisa no Supabase se for um UUID (string com '-')
-                if (!fullData && typeof targetId === 'string' && targetId.includes('-')) {
-                    const { data, error } = await supabase
-                        .from('vistorias')
-                        .select('*')
-                        .eq('id', targetId)
-                        .single();
+                // Força atualização a partir do Supabase se estiver online e for um UUID válido,
+                // para evitar travamento em cache antigo de edições feitas por outras máquinas.
+                if (navigator.onLine && typeof targetId === 'string' && targetId.includes('-')) {
+                    // Só sobrescrevemos o cache se NÃO houver edições locais pendentes (synced === false ou 0)
+                    if (!fullData || fullData.synced === true || fullData.synced === 1) {
+                        const { data, error } = await supabase
+                            .from('vistorias')
+                            .select('*')
+                            .eq('id', targetId)
+                            .single();
 
-                    if (data) fullData = data;
+                        if (data) {
+                            fullData = data;
+                            // Atualiza silenciosamente o IndexedDB local com o dado mais recente da nuvem
+                            try {
+                                const { initDB } = await import('../../services/db');
+                                const database = await initDB();
+                                // Mescla os IDs e chaves camelCase antigas para manter consistência
+                                await database.put('vistorias', {
+                                    ...data,
+                                    vistoriaId: data.vistoria_id,
+                                    synced: true
+                                });
+                            } catch (e) {
+                                console.warn("Aviso: Falha ao atualizar cache local da vistoria", e);
+                            }
+                        }
+                    }
                 }
 
                 if (!fullData) {
