@@ -334,6 +334,8 @@ export default function ShelterMenu() {
     ];
 
 
+    const ADMIN_EMAIL = 'freitas.edificar@gmail.com';
+
     const filteredItems = menuItems.filter(item =>
         userEmail === ADMIN_EMAIL || item.allowedRoles.includes(userRole)
     );
