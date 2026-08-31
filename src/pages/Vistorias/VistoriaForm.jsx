@@ -1068,12 +1068,24 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     };
 
     const handleGeneratePDF = async () => {
-        const id = formData.id || formData.vistoria_id || formData.vistoriaId;
-        if (!id) {
-            toast.warning('Ação Necessária', 'Por favor, salve a vistoria primeiro para gerar o PDF neste modelo.');
-            return;
+        // Auto-salva antes de imprimir para garantir que o PDF tenha os dados mais recentes
+        setSaving(true);
+        try {
+            await saveVistoriaOffline(formData);
+            
+            const id = formData.id || formData.vistoria_id || formData.vistoriaId;
+            if (!id) {
+                toast.warning('Ação Necessária', 'Por favor, salve a vistoria primeiro para gerar o PDF neste modelo.');
+                setSaving(false);
+                return;
+            }
+            window.open(`/vistorias/imprimir/${id}`, '_blank');
+        } catch (error) {
+            console.error("Erro ao salvar antes de imprimir:", error);
+            toast.error("Erro", "Falha ao preparar os dados para impressão.");
+        } finally {
+            setSaving(false);
         }
-        window.open(`/vistorias/imprimir/${id}`, '_blank');
     };
 
     const handleSubmit = async (e) => {
