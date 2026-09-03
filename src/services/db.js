@@ -1634,7 +1634,52 @@ export const resetDatabase = async () => {
 }
 
 // GeoRescue Logic
+let cachedInstallationsList = null
+
+export const clearInstallationsCache = () => {
+    cachedInstallationsList = null
+}
+
+export const getCachedInstallations = async () => {
+    if (cachedInstallationsList && cachedInstallationsList.length > 0) {
+        return cachedInstallationsList
+    }
+    const db = await initDB()
+    const all = await db.getAll('installations')
+    cachedInstallationsList = all
+        .map(item => {
+            const lat = parseFloat(item.lat || item.LATITUDE || item.Latitude || item.pee_lat || item.client_lat)
+            const lng = parseFloat(item.lng || item.LONGITUDE || item.Longitude || item.pee_lng || item.client_lng)
+            return {
+                ...item,
+                lat,
+                lng,
+                bairro: item.bairro || item.NOME_BAIRRO || '',
+                status: item.status || item['Status da UC'] || ''
+            }
+        })
+        .filter(item => !isNaN(item.lat) && !isNaN(item.lng) && item.lat !== 0 && item.lng !== 0)
+    return cachedInstallationsList
+}
+
+export const getInstallationsInBounds = async (bounds, limit = 1500) => {
+    if (!bounds) return []
+    const list = await getCachedInstallations()
+    const { south, north, west, east } = bounds
+
+    const results = []
+    for (let i = 0; i < list.length; i++) {
+        const item = list[i]
+        if (item.lat >= south && item.lat <= north && item.lng >= west && item.lng <= east) {
+            results.push(item)
+            if (results.length >= limit) break
+        }
+    }
+    return results
+}
+
 export const importInstallations = async (data, onProgress) => {
+    clearInstallationsCache()
     const db = await initDB()
 
     // 1. Clear existing store first (single transaction)
@@ -1679,6 +1724,8 @@ export const importInstallations = async (data, onProgress) => {
                 uc_core: ucCore,
                 name: item.name || item.NOME || item.NOME_BAIRRO || '',
                 address: item.address || item.LOGRADOURO || item.NOME_LOGRADOURO || '',
+                bairro: item.bairro || item.NOME_BAIRRO || '',
+                status: item.status || item["Status da UC"] || '',
                 // Fix: Flexible Latitude/Longitude keys
                 lat: parseFloat(item.LATITUDE || item.Latitude || item.lat || item.pee_lat || item.client_lat || 0),
                 lng: parseFloat(item.LONGITUDE || item.Longitude || item.lng || item.pee_lng || item.client_lng || 0)
@@ -1692,6 +1739,7 @@ export const importInstallations = async (data, onProgress) => {
         // Small yield to UI
         await new Promise(r => setTimeout(r, 10))
     }
+    clearInstallationsCache()
 }
 
 export const searchInstallations = async (query) => {
