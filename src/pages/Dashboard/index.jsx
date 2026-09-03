@@ -90,8 +90,8 @@ const createClusterIcon = (cluster) => {
 
     childMarkers.forEach(marker => {
         let color = marker.options.markerColor
-                 || marker.options.icon?.options?.markerColor
-                 || (marker.options.loc ? getMarkerColor(marker.options.loc) : null);
+            || marker.options.icon?.options?.markerColor
+            || (marker.options.loc ? getMarkerColor(marker.options.loc) : null);
 
         if (!color && marker.options.icon?.options?.html) {
             const html = String(marker.options.icon.options.html);
@@ -324,6 +324,8 @@ const processLocations = (records, forcedType = null) => {
                 medida_tipo: v.medida_tipo || v.medidaTipo,
                 coordenadas: v.coordenadas,
                 interdicao_id: v.interdicao_id || v.interdicaoId,
+                vistoria_id: v.vistoria_id || v.vistoriaId,
+                ocorrencia_id: v.ocorrencia_id || v.ocorrencia_id_format,
                 // Ocorrencia specific
                 solicitante: v.solicitante,
                 natureza: v.natureza,
@@ -468,7 +470,7 @@ const TvModeDashboardView = ({
     const [customLayers, setCustomLayers] = useState([]);
 
     useEffect(() => {
-        getShelters().then(s => setSheltersData(s || [])).catch(() => {});
+        getShelters().then(s => setSheltersData(s || [])).catch(() => { });
     }, []);
 
     const countOcorrencias = data.ocorrencias?.locations?.length || 0;
@@ -534,7 +536,7 @@ const TvModeDashboardView = ({
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                         <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
                         <LimiteSMJLayer keyId="limite-smj-full" />
-                        
+
                         {/* Camada de Abrigos */}
                         {sheltersData?.map((s, idx) => {
                             const lat = parseFloat(s.latitude || s.lat || -20.025);
@@ -912,7 +914,7 @@ const TV_StrategicOverview = ({ data, statusInfo, isDark, rainfall, weather, she
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
                 <HeatmapLayer points={(data.ocorrencias?.locations || []).filter(l => l.lat && l.lng && !isNaN(Number(l.lat)))} show={true} options={{ radius: 40, blur: 25, opacity: 0.8 }} />
                 <LimiteSMJLayer keyId="limite-smj-strategic" />
-                
+
                 {/* Renderização da Camada de Abrigos (Ícone Rosa 🏠) */}
                 {sheltersData?.map((s, idx) => {
                     const lat = parseFloat(s.latitude || s.lat || -20.025);
@@ -1666,7 +1668,7 @@ const MapStyleControl = ({ mapStyle, setMapStyle, size = 18, isMobile = false })
             <button
                 onClick={() => setOpen(v => !v)}
                 title="Estilo do mapa"
-                className={isMobile 
+                className={isMobile
                     ? "w-10 h-10 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700 active:scale-90 transition-transform"
                     : "w-[34px] h-[34px] bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center rounded-[4px] shadow-sm border-2 border-[rgba(0,0,0,0.2)] dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
                 }
@@ -1675,7 +1677,7 @@ const MapStyleControl = ({ mapStyle, setMapStyle, size = 18, isMobile = false })
             </button>
 
             {open && (
-                <div 
+                <div
                     className="absolute left-[44px] top-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-2 min-w-[170px] flex flex-col gap-1 z-[99999]"
                 >
                     <div className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1 px-2.5 pt-1">
@@ -1688,11 +1690,10 @@ const MapStyleControl = ({ mapStyle, setMapStyle, size = 18, isMobile = false })
                                 setMapStyle(style.id);
                                 setOpen(false);
                             }}
-                            className={`flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-left text-[11px] font-bold transition-all ${
-                                mapStyle === style.id 
-                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                            className={`flex items-center gap-2.5 w-full px-2.5 py-1.5 rounded-lg text-left text-[11px] font-bold transition-all ${mapStyle === style.id
+                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                            }`}
+                                }`}
                         >
                             <span className="text-sm leading-none">{style.emoji}</span>
                             <span>{style.label}</span>
@@ -1702,6 +1703,28 @@ const MapStyleControl = ({ mapStyle, setMapStyle, size = 18, isMobile = false })
             )}
         </div>
     );
+};
+
+// --- HELPER: ABRIR RELATÓRIO EM NOVA ABA ---
+const openReportInNewTab = (loc, currentViewMode) => {
+    if (!loc) return;
+    const effectiveType = loc.type || (currentViewMode === 'vistorias' ? 'v' : currentViewMode === 'ocorrencias' ? 'o' : currentViewMode === 'interdicoes' ? 'i' : 'v');
+
+    const targetId = encodeURIComponent(loc.id || loc.vistoria_id || loc.ocorrencia_id || loc.interdicao_id || loc.formattedId || '');
+    if (!targetId) return;
+
+    let url = '';
+    if (effectiveType === 'o') {
+        url = `/ocorrencias/imprimir/${targetId}`;
+    } else if (effectiveType === 'i') {
+        url = `/interdicao/imprimir/${targetId}`;
+    } else {
+        url = `/vistorias/imprimir/${targetId}`;
+    }
+
+    if (url) {
+        window.open(url, '_blank');
+    }
 };
 
 // --- SUB-COMPONENT: MOBILE VIEW ---
@@ -2087,9 +2110,22 @@ const MobileDashboardView = ({
                                                     <div className="text-[11px] text-slate-700 mb-0.5">
                                                         <strong>Data:</strong> {new Date(loc.date).toLocaleDateString('pt-BR')}
                                                     </div>
-                                                    <div className="text-[11px] text-slate-700">
+                                                    <div className="text-[11px] text-slate-700 mb-2">
                                                         <strong>Risco:</strong> {loc.risk || 'N/A'}
                                                     </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openReportInNewTab(loc, viewMode);
+                                                        }}
+                                                        className="w-full py-1.5 px-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-sm hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                                                        title="Visualizar relatório em nova aba"
+                                                    >
+                                                        <FileText size={12} />
+                                                        <span>Visualizar Relatório</span>
+                                                        <ExternalLink size={11} className="opacity-80" />
+                                                    </button>
                                                 </div>
                                             </Popup>
                                         </Marker>
@@ -2126,7 +2162,7 @@ const PrazosAlertasCard = () => {
 
                 // Fetch Agendas
                 const agendas = await getAllAgendaLocal().catch(() => []);
-                
+
                 // Fetch NOPRERs via hook to get correctly calculated statuses
                 const noprers = await fetchNoprers().catch(() => []);
 
@@ -2153,7 +2189,7 @@ const PrazosAlertasCard = () => {
 
                         const diasRestantes = Math.floor((dLimite - today) / (1000 * 60 * 60 * 24));
 
-                        return { 
+                        return {
                             diasRestantes,
                             titulo: (item.categoria_risco && item.categoria_risco !== 'Outros' ? item.categoria_risco : (item.observacao_outro || 'Agenda Geral')),
                             local: item.solicitante || item.endereco || 'Sem local',
@@ -2210,22 +2246,22 @@ const PrazosAlertasCard = () => {
                     <Clock size={16} className="text-blue-500" />
                     Prazos e Alertas
                 </h3>
-                
+
                 {/* Filtros em forma de pílula */}
                 <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl shrink-0 w-full sm:w-auto">
-                    <button 
+                    <button
                         onClick={() => setFilterType('todos')}
                         className={`flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${filterType === 'todos' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Todos
                     </button>
-                    <button 
+                    <button
                         onClick={() => setFilterType('noprer')}
                         className={`flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${filterType === 'noprer' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         NOPRER
                     </button>
-                    <button 
+                    <button
                         onClick={() => setFilterType('agenda')}
                         className={`flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${filterType === 'agenda' ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
@@ -2248,12 +2284,11 @@ const PrazosAlertasCard = () => {
                                         {prazo.titulo} — {prazo.local}
                                     </span>
                                     <div className="mt-1.5 flex">
-                                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${
-                                            prazo.diasRestantes < 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800' :
-                                            prazo.diasRestantes <= 1 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800' :
-                                            prazo.diasRestantes <= 5 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800' :
-                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                                        }`}>
+                                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${prazo.diasRestantes < 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800' :
+                                                prazo.diasRestantes <= 1 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800' :
+                                                    prazo.diasRestantes <= 5 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800' :
+                                                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                            }`}>
                                             {getDiasText(prazo.diasRestantes)}
                                         </span>
                                     </div>
@@ -2419,11 +2454,10 @@ const AlertasCemadenCard = ({ navigate }) => {
     return (
         <div
             onClick={() => navigate('/alertas-cemaden')}
-            className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${
-                isAlerting
+            className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${isAlerting
                     ? 'bg-gradient-to-br from-[#cf4436] to-[#9c2620]'
                     : 'bg-gradient-to-br from-[#24466f] to-[#19375d]'
-            }`}
+                }`}
         >
             <div className="flex flex-col gap-2 relative z-10">
                 <div className="flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider opacity-95">
@@ -2565,13 +2599,12 @@ const WebViewDashboardView = ({
                         {/* Top 5 Cards Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-[14px]">
                             {/* Card 1: Risk Level */}
-                            <div className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${
-                                statusInfo.loading || statusInfo.label === 'CONSULTANDO...'
+                            <div className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${statusInfo.loading || statusInfo.label === 'CONSULTANDO...'
                                     ? 'bg-gradient-to-br from-[#5a6b7f] to-[#3e5065]'
                                     : statusInfo.label === 'NORMAL'
                                         ? 'bg-gradient-to-br from-[#22b57e] to-[#0e9668]'
                                         : 'bg-gradient-to-br from-[#cf4436] to-[#9c2620]'
-                            }`}>
+                                }`}>
                                 <div className="flex flex-col gap-2 relative z-10">
                                     <div className="flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider opacity-95">
                                         <Shield size={15} className="shrink-0" />
@@ -2600,11 +2633,10 @@ const WebViewDashboardView = ({
                                             ? { label: 'Perigo Potencial' }
                                             : { label: 'SEM AVISOS VIGENTES' };
                                 return (
-                                    <div onClick={() => navigate('/alerts')} className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${
-                                        totalCount === 0
+                                    <div onClick={() => navigate('/alerts')} className={`p-[17px_17px_15px] rounded-[14px] flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:shadow-xl transition-all shadow-[0_6px_15px_rgba(25,48,76,0.10)] h-full min-h-[140px] text-white after:content-[''] after:absolute after:-right-7 after:-bottom-10 after:w-[110px] after:h-[110px] after:rounded-full after:bg-white/[0.055] after:pointer-events-none ${totalCount === 0
                                             ? 'bg-gradient-to-br from-[#376bb0] to-[#2f5d9b]'
                                             : 'bg-gradient-to-br from-[#e79a52] to-[#c9762f]'
-                                    }`}>
+                                        }`}>
                                         <div className="flex flex-col gap-2 relative z-10">
                                             <div className="flex items-center gap-1.5 text-[11px] font-extrabold tracking-wider opacity-95">
                                                 <Zap size={15} className="shrink-0" />
@@ -2865,9 +2897,22 @@ const WebViewDashboardView = ({
                                                     <div className="text-[12px] text-slate-700 mb-1">
                                                         <strong>Data:</strong> {new Date(loc.date).toLocaleDateString('pt-BR')}
                                                     </div>
-                                                    <div className="text-[12px] text-slate-700">
+                                                    <div className="text-[12px] text-slate-700 mb-2.5">
                                                         <strong>Risco:</strong> {loc.risk || 'N/A'}
                                                     </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openReportInNewTab(loc, viewMode);
+                                                        }}
+                                                        className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-sm hover:shadow transition-all active:scale-[0.98] cursor-pointer"
+                                                        title="Visualizar relatório em nova aba"
+                                                    >
+                                                        <FileText size={12} />
+                                                        <span>Visualizar Relatório</span>
+                                                        <ExternalLink size={11} className="opacity-80" />
+                                                    </button>
                                                 </div>
                                             </Popup>
                                         </Marker>
@@ -2882,100 +2927,100 @@ const WebViewDashboardView = ({
                     <div className="lg:col-span-4 relative h-[600px] lg:h-auto">
                         <div className="lg:absolute lg:inset-0 bg-white dark:bg-slate-900 border border-slate-200 p-8 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col h-full">
                             <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : viewMode === 'ocorrencias' ? 'Ocorrências' : 'Interdições'}</h3>
-                            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                                <button
-                                    onClick={() => setChartMode('tipologia')}
-                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'tipologia' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    Tipologia
-                                </button>
-                                <button
-                                    onClick={() => setChartMode('localidade')}
-                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'localidade' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    Localidade
-                                </button>
+                                <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-[3px] border-l-4 border-blue-600 pl-4">{viewMode === 'vistorias' ? 'Vistorias' : viewMode === 'ocorrencias' ? 'Ocorrências' : 'Interdições'}</h3>
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                                    <button
+                                        onClick={() => setChartMode('tipologia')}
+                                        className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'tipologia' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Tipologia
+                                    </button>
+                                    <button
+                                        onClick={() => setChartMode('localidade')}
+                                        className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${chartMode === 'localidade' ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Localidade
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div className="space-y-6 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
-                            {(() => {
-                                const list = (chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || [];
-                                const top = list.slice(0, 10);
-                                const rest = list.slice(10);
-                                const restCount = rest.reduce((acc, c) => acc + c.count, 0);
-                                if (restCount > 0) {
-                                    top.push({ label: 'Outros', count: restCount, percentage: Math.round((restCount / (currentData?.stats?.total || 1)) * 100), color: 'bg-indigo-400' });
-                                }
-                                return top.map((item, idx) => (
-                                    <div key={idx} className="group cursor-default">
-                                        <div className="flex justify-between items-center mb-2 px-1">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors tracking-tight truncate max-w-[70%]">{item.label}</span>
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-sm font-black text-slate-800 dark:text-slate-100 tabular-nums">{item.count}</span>
-                                                <span className="text-[9px] font-bold text-slate-300">({item.percentage}%)</span>
-                                            </div>
-                                        </div>
-                                        <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-full h-2 overflow-hidden shadow-inner border border-slate-100 dark:border-slate-800">
-                                            <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-600'} shadow-[0_0_5px_rgba(0,0,0,0.05)]`} style={{ width: `${item.percentage}%` }} />
-                                        </div>
-                                    </div>
-                                ));
-                            })()}
-                            {((chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || []).length === 0 && (
-                                <div className="text-center py-10 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                                    Sem dados registrados
-                                </div>
-                            )}
-                        </div>
-
-
-                        {/* Pluviômetros (Relocado para o final da lista situacional) */}
-                        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
-                            {/* Índices Pluviométricos Row */}
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center px-1">
-                                    <h4 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[2px] flex items-center gap-2">
-                                        Estações Pluviométricas (24h)
-                                        {pluvioLoading && <RefreshCw size={12} className="animate-spin text-blue-500" />}
-                                    </h4>
-                                    <button onClick={() => navigate('/pluviometros')} className="text-[9px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 py-1 px-2.5 rounded-lg active:scale-95">Ver painel</button>
-                                </div>
-
-                                {pluvioLoading ? (
-                                    <div className="text-center py-6">
-                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Buscando Estações...</div>
-                                    </div>
-                                ) : rainfall?.length > 0 ? (
-                                    <div className="space-y-2.5 pr-2 custom-scrollbar max-h-[140px] overflow-y-auto">
-                                        {rainfall.slice(0, 5).map((station, idx) => (
-                                            <div key={idx} onClick={() => navigate('/pluviometros')} className="group flex items-center justify-between p-3 rounded-[16px] bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 hover:border-blue-200 dark:hover:border-blue-500/50 hover:bg-blue-50/30 hover:shadow-sm cursor-pointer transition-all">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-3 h-3 rounded-[4px] shadow-sm transform group-hover:rotate-45 transition-transform ${station.level === 'Extremo' ? 'bg-red-500 shadow-red-500/40' : station.level === 'Alerta' ? 'bg-orange-500 shadow-orange-500/40' : station.level === 'Atenção' ? 'bg-amber-400 shadow-amber-400/40' : 'bg-emerald-400 shadow-emerald-400/40'}`} />
-                                                    <div className="flex flex-col justify-center">
-                                                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-tight leading-tight line-clamp-1 max-w-[140px] truncate">{station.name}</span>
-                                                        <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{station.level}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900/80 px-3 py-1.5 rounded-[12px] border border-slate-100 dark:border-slate-800 group-hover:bg-white dark:group-hover:bg-slate-800 transition-colors">
-                                                    <Droplets size={12} className={station.level === 'Normal' ? 'text-blue-400' : station.level === 'Extremo' ? 'text-red-500' : 'text-slate-500'} />
-                                                    <div className="flex items-baseline gap-0.5">
-                                                        <span className="text-sm font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tighter">{(station.rainRaw || 0).toFixed(1)}</span>
-                                                        <span className="text-[9px] font-bold text-slate-500 leading-none">mm</span>
-                                                    </div>
+                            <div className="space-y-6 flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
+                                {(() => {
+                                    const list = (chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || [];
+                                    const top = list.slice(0, 10);
+                                    const rest = list.slice(10);
+                                    const restCount = rest.reduce((acc, c) => acc + c.count, 0);
+                                    if (restCount > 0) {
+                                        top.push({ label: 'Outros', count: restCount, percentage: Math.round((restCount / (currentData?.stats?.total || 1)) * 100), color: 'bg-indigo-400' });
+                                    }
+                                    return top.map((item, idx) => (
+                                        <div key={idx} className="group cursor-default">
+                                            <div className="flex justify-between items-center mb-2 px-1">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors tracking-tight truncate max-w-[70%]">{item.label}</span>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-sm font-black text-slate-800 dark:text-slate-100 tabular-nums">{item.count}</span>
+                                                    <span className="text-[9px] font-bold text-slate-300">({item.percentage}%)</span>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-center border border-slate-100 dark:border-slate-800">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nenhuma estação com chuva reportada</span>
+                                            <div className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-full h-2 overflow-hidden shadow-inner border border-slate-100 dark:border-slate-800">
+                                                <div className={`h-full rounded-full transition-all duration-1000 ${item.color || 'bg-blue-600'} shadow-[0_0_5px_rgba(0,0,0,0.05)]`} style={{ width: `${item.percentage}%` }} />
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                                {((chartMode === 'tipologia' ? currentData?.breakdown : currentData?.localidadeBreakdown) || []).length === 0 && (
+                                    <div className="text-center py-10 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                                        Sem dados registrados
                                     </div>
                                 )}
                             </div>
+
+
+                            {/* Pluviômetros (Relocado para o final da lista situacional) */}
+                            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                                {/* Índices Pluviométricos Row */}
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center px-1">
+                                        <h4 className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[2px] flex items-center gap-2">
+                                            Estações Pluviométricas (24h)
+                                            {pluvioLoading && <RefreshCw size={12} className="animate-spin text-blue-500" />}
+                                        </h4>
+                                        <button onClick={() => navigate('/pluviometros')} className="text-[9px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-600 transition-colors bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 py-1 px-2.5 rounded-lg active:scale-95">Ver painel</button>
+                                    </div>
+
+                                    {pluvioLoading ? (
+                                        <div className="text-center py-6">
+                                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Buscando Estações...</div>
+                                        </div>
+                                    ) : rainfall?.length > 0 ? (
+                                        <div className="space-y-2.5 pr-2 custom-scrollbar max-h-[140px] overflow-y-auto">
+                                            {rainfall.slice(0, 5).map((station, idx) => (
+                                                <div key={idx} onClick={() => navigate('/pluviometros')} className="group flex items-center justify-between p-3 rounded-[16px] bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 hover:border-blue-200 dark:hover:border-blue-500/50 hover:bg-blue-50/30 hover:shadow-sm cursor-pointer transition-all">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-3 h-3 rounded-[4px] shadow-sm transform group-hover:rotate-45 transition-transform ${station.level === 'Extremo' ? 'bg-red-500 shadow-red-500/40' : station.level === 'Alerta' ? 'bg-orange-500 shadow-orange-500/40' : station.level === 'Atenção' ? 'bg-amber-400 shadow-amber-400/40' : 'bg-emerald-400 shadow-emerald-400/40'}`} />
+                                                        <div className="flex flex-col justify-center">
+                                                            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-tight leading-tight line-clamp-1 max-w-[140px] truncate">{station.name}</span>
+                                                            <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">{station.level}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900/80 px-3 py-1.5 rounded-[12px] border border-slate-100 dark:border-slate-800 group-hover:bg-white dark:group-hover:bg-slate-800 transition-colors">
+                                                        <Droplets size={12} className={station.level === 'Normal' ? 'text-blue-400' : station.level === 'Extremo' ? 'text-red-500' : 'text-slate-500'} />
+                                                        <div className="flex items-baseline gap-0.5">
+                                                            <span className="text-sm font-black text-slate-800 dark:text-slate-100 leading-none tabular-nums tracking-tighter">{(station.rainRaw || 0).toFixed(1)}</span>
+                                                            <span className="text-[9px] font-bold text-slate-500 leading-none">mm</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-center border border-slate-100 dark:border-slate-800">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nenhuma estação com chuva reportada</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
                     </div>
                 </div>
 
@@ -3016,16 +3061,16 @@ const WebViewDashboardView = ({
 // --- MAP LEGEND ---
 const MapLegend = ({ viewMode, rainfall, tiposRiscoAtivos, isMobile = false }) => {
     const [isOpen, setIsOpen] = useState(false);
-    
+
     if (!isOpen) {
         return (
             <div className={`absolute z-[9999] ${isMobile ? 'bottom-2 right-2' : 'bottom-[76px] right-4 md:bottom-4 md:right-4'}`}>
-                <button 
+                <button
                     onClick={() => setIsOpen(true)}
                     className="w-10 h-10 flex items-center justify-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 text-blue-600 transition-all hover:scale-105"
                     title="Abrir Legenda"
                 >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h7" /></svg>
                 </button>
             </div>
         );
@@ -3036,7 +3081,7 @@ const MapLegend = ({ viewMode, rainfall, tiposRiscoAtivos, isMobile = false }) =
             <div className="flex justify-between items-center mb-1">
                 <div className="text-[8px] text-slate-400">LEGENDA DO MAPA</div>
                 <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                 </button>
             </div>
             {viewMode === 'ocorrencias' ? (
@@ -3088,7 +3133,7 @@ const CustomMapControls = ({ defaultCenter = [-20.0246, -40.7464], defaultZoom =
 
     const handleZoomIn = () => map.zoomIn();
     const handleZoomOut = () => map.zoomOut();
-    
+
     const handleHome = () => {
         map.setView(defaultCenter, defaultZoom);
     };
@@ -3111,17 +3156,17 @@ const CustomMapControls = ({ defaultCenter = [-20.0246, -40.7464], defaultZoom =
         <div className="absolute top-4 right-4 z-[9999] flex flex-col gap-2">
             <div className="flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <button onClick={handleZoomIn} className="w-8 h-8 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-700" title="Aumentar Zoom">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
                 </button>
                 <button onClick={handleZoomOut} className="w-8 h-8 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Diminuir Zoom">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14" /></svg>
                 </button>
             </div>
             <button onClick={handleHome} className="w-8 h-8 flex items-center justify-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-xl shadow-lg border border-slate-200 dark:border-slate-800" title="Enquadrar Estado">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
             </button>
             <button onClick={handleGPS} className="w-8 h-8 flex items-center justify-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors rounded-xl shadow-lg border border-slate-200 dark:border-slate-800" title="Minha Localização">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="3 11 22 2 13 21 11 13 3 11" /></svg>
             </button>
         </div>
     );

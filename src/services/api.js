@@ -71,7 +71,7 @@ const processListToMapData = (list) => {
     return (list || [])
         .map(v => {
             if (!v) return null;
-            
+
             const parseCoords = (input) => {
                 const s = String(input || '');
                 if (!s) return [null, null];
@@ -87,7 +87,7 @@ const processListToMapData = (list) => {
             };
 
             let lat = null, lng = null;
-            
+
             // Try explicit fields first
             if (v.latitude && v.longitude) {
                 lat = typeof v.latitude === 'string' ? parseFloat(v.latitude.replace(',', '.')) : parseFloat(v.latitude);
@@ -96,7 +96,7 @@ const processListToMapData = (list) => {
                 lat = typeof v.lat === 'string' ? parseFloat(v.lat.replace(',', '.')) : parseFloat(v.lat);
                 lng = typeof v.lng === 'string' ? parseFloat(v.lng.replace(',', '.')) : parseFloat(v.lng);
             }
-            
+
             // Fallback to coordinates string parsing if still null or invalid
             if ((!lat || !lng || isNaN(lat) || isNaN(lng)) && v.coordenadas) {
                 [lat, lng] = parseCoords(v.coordenadas);
@@ -126,7 +126,9 @@ const processListToMapData = (list) => {
                 risco_tipo: v.risco_tipo || v.riscoTipo,
                 medida_tipo: v.medida_tipo || v.medidaTipo,
                 coordenadas: v.coordenadas || `${lat},${lng}`,
-                interdicao_id: v.interdicao_id || v.interdicaoId
+                interdicao_id: v.interdicao_id || v.interdicaoId,
+                vistoria_id: v.vistoria_id || v.vistoriaId,
+                ocorrencia_id: v.ocorrencia_id || v.ocorrencia_id_format
             };
         })
         .filter(loc => loc !== null);
@@ -287,7 +289,7 @@ export const api = {
                         .gte('fim', nowIso)
                         .lte('inicio', nowIso)
                         .order('inicio', { ascending: false });
-                    
+
                     if (dbAlerts && dbAlerts.length > 0) {
                         inmetAlerts = dbAlerts.map(a => ({
                             id: a.id,
