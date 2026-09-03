@@ -136,6 +136,28 @@ const createInstallationClusterIcon = (cluster) => {
     });
 };
 
+// Santa Maria de Jetibá municipality bounds & center
+const SMJ_BOUNDS = [
+    [-20.2274, -41.0361], // Sudoeste
+    [-19.9460, -40.5953]  // Nordeste
+];
+const SMJ_CENTER = [-20.0246, -40.7464];
+
+// Component to fit municipality bounds on initial load
+const MapInitialBounds = () => {
+    const map = useMap();
+    const initialized = useRef(false);
+
+    useEffect(() => {
+        if (!initialized.current) {
+            map.fitBounds(SMJ_BOUNDS, { padding: [25, 25], maxZoom: 13 });
+            initialized.current = true;
+        }
+    }, [map]);
+
+    return null;
+};
+
 // Child component to update map view smoothly
 const MapUpdater = ({ center }) => {
     const map = useMap();
@@ -163,8 +185,8 @@ const MapViewportListener = ({ onViewportChange }) => {
 
 const GeoRescue = () => {
     const { toast } = useToast()
-    const [position, setPosition] = useState([-20.3155, -40.3128]) // Default ES coords
-    const [hasPosition, setHasPosition] = useState(false)
+    const [position, setPosition] = useState(SMJ_CENTER)
+    const [userLocation, setUserLocation] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchResults, setSearchResults] = useState([])
     const [importSuccess, setImportSuccess] = useState(null)
@@ -178,7 +200,7 @@ const GeoRescue = () => {
     const syncInProgress = useRef(false)
 
     // Dynamic Viewport & Clustering States
-    const [currentZoom, setCurrentZoom] = useState(14)
+    const [currentZoom, setCurrentZoom] = useState(12)
     const [visibleInstallations, setVisibleInstallations] = useState([])
     const [isLoadingPoints, setIsLoadingPoints] = useState(false)
     const [showPointsLayer, setShowPointsLayer] = useState(true)
@@ -190,12 +212,11 @@ const GeoRescue = () => {
     const [showRiskModal, setShowRiskModal] = useState(false)
 
     useEffect(() => {
-        // Attempt to get user location
+        // Attempt to get user location (for marker only, without shifting away from municipality)
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    setPosition([pos.coords.latitude, pos.coords.longitude])
-                    setHasPosition(true)
+                    setUserLocation([pos.coords.latitude, pos.coords.longitude])
                 },
                 (err) => {
                     console.log('Location access denied or error:', err)
@@ -747,13 +768,14 @@ const GeoRescue = () => {
 
             {/* Map Component - Locked to maxZoom 18 to avoid blank tiles */}
             <MapContainer
-                center={position}
-                zoom={14}
+                center={SMJ_CENTER}
+                zoom={12}
                 maxZoom={18}
                 zoomControl={false}
                 style={{ height: '100%', width: '100%' }}
                 className="z-0"
             >
+                <MapInitialBounds />
                 <LayersControl position="bottomright">
                     <BaseLayer checked name="Padrão">
                         <TileLayer
@@ -814,8 +836,8 @@ const GeoRescue = () => {
                 <MapViewportListener onViewportChange={handleViewportChange} />
 
                 {/* User Location Marker */}
-                {hasPosition && (
-                    <Marker position={position} icon={L.divIcon({
+                {userLocation && (
+                    <Marker position={userLocation} icon={L.divIcon({
                         className: 'user-location-marker',
                         html: '<div class="w-4 h-4 bg-blue-600 rounded-full border-4 border-white shadow-lg animate-pulse"></div>',
                         iconSize: [20, 20]
