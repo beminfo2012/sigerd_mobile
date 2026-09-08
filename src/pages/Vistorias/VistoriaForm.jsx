@@ -761,7 +761,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const hasOrganSelected = (organ) => {
         return (formData.encaminhamentos || []).some(item => {
             if (typeof item === 'string') {
-                return item === organ || item.startsWith(organ + ':');
+                const itemOrgan = item.includes(':') ? item.slice(0, item.indexOf(':')).trim() : item.trim();
+                return itemOrgan.toLowerCase() === organ.toLowerCase();
             }
             return false;
         });
@@ -772,7 +773,8 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
             ...prev,
             encaminhamentos: (prev.encaminhamentos || []).filter(item => {
                 if (typeof item === 'string') {
-                    return item !== organ && !item.startsWith(organ + ':');
+                    const itemOrgan = item.includes(':') ? item.slice(0, item.indexOf(':')).trim() : item.trim();
+                    return itemOrgan.toLowerCase() !== organ.toLowerCase();
                 }
                 return true;
             })
@@ -783,8 +785,11 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
         setFormData(prev => ({
             ...prev,
             encaminhamentos: (prev.encaminhamentos || []).map(item => {
-                if (typeof item === 'string' && (item === organ || item.startsWith(organ + ':'))) {
-                    return detail ? `${organ}: ${detail}` : organ;
+                if (typeof item === 'string') {
+                    const itemOrgan = item.includes(':') ? item.slice(0, item.indexOf(':')).trim() : item.trim();
+                    if (itemOrgan.toLowerCase() === organ.toLowerCase()) {
+                        return detail !== '' ? `${organ}: ${detail}` : organ;
+                    }
                 }
                 return item;
             })
@@ -2187,9 +2192,10 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                                 let organ = item;
                                                 let detail = '';
                                                 if (typeof item === 'string' && item.includes(':')) {
-                                                    const parts = item.split(':');
-                                                    organ = parts[0].trim();
-                                                    detail = parts.slice(1).join(':').trim();
+                                                    const colonIndex = item.indexOf(':');
+                                                    organ = item.slice(0, colonIndex).trim();
+                                                    const rawDetail = item.slice(colonIndex + 1);
+                                                    detail = rawDetail.startsWith(' ') ? rawDetail.slice(1) : rawDetail;
                                                 }
                                                 return (
                                                     <div key={organ} className="p-4 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
