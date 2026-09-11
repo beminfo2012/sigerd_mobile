@@ -2932,7 +2932,11 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                                 legenda: ''
                             };
                         } else {
-                            updatedFotos[editingPhotoIndex].data = newData;
+                            updatedFotos[editingPhotoIndex] = {
+                                ...updatedFotos[editingPhotoIndex],
+                                id: crypto.randomUUID(), // Novo ID para forçar nova URL no Supabase e burlar cache
+                                data: newData
+                            };
                         }
                         setFormData({ ...formData, fotos: updatedFotos });
                         setEditingPhotoIndex(null);
