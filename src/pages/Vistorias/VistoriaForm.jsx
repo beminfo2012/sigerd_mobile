@@ -403,20 +403,6 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
     const [sugestoesIA, setSugestoesIA] = useState(null);
     const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
     const [analyzingIA, setAnalyzingIA] = useState(false);
-    const [showScrollControls, setShowScrollControls] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            if (window.scrollY > 200) {
-                setShowScrollControls(true);
-            } else {
-                setShowScrollControls(false);
-            }
-        };
-
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     const scrollToTop = () => {
         const mainEl = document.querySelector('.main-content');
@@ -3010,7 +2996,7 @@ const VistoriaForm = ({ onBack, initialData = null }) => {
                 </div>
             )}
             {/* Floating Navigation Controls (Scroll to Top / Bottom) */}
-            <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2.5 animate-in fade-in zoom-in-95 duration-300">
+            <div className="floating-scroll-arrows fixed bottom-6 right-6 z-30 flex flex-col gap-2.5 animate-in fade-in zoom-in-95 duration-300 pointer-events-auto print:hidden">
                 <button
                     type="button"
                     onClick={scrollToTop}

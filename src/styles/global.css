@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -324,5 +324,14 @@
 }
 .print-container .leaflet-tile {
   filter: none !important;
-}
+}
+
+/* Ocultar botões flutuantes de scroll quando a câmera estiver ativa */
+body.camera-modal-open .floating-scroll-arrows {
+  display: none !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
 
