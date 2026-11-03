@@ -1231,10 +1231,12 @@ export const pullAllData = async (force = false) => {
             const tableStartTime = Date.now();
 
             try {
-                const selectFields = '*';
+                const selectFields = mod.table === 'ocorrencias_operacionais'
+                    ? 'id, ocorrencia_id, ocorrencia_id_format, created_at, updated_at, data_ocorrencia, horario_ocorrencia, solicitante, cpf, telefone, tem_solicitante_especifico, endereco, bairro, lat, lng, mortos, feridos, enfermos, desalojados, desabrigados, desaparecidos, outros_afetados, tem_danos_humanos, tipo_ocorrencia, nivel_gravidade, categoria_risco, nivel_risco, subtipos_risco, descricao_danos, observacoes, encaminhada, status, orgao_solicitado, orgao_atendeu, risco_pessoas_estruturas, horario_encaminhamento, numero_ocorrencia_externa, observacao_encaminhamento, historico_status, accuracy, gps_timestamp'
+                    : '*';
                 let query = supabase.from(mod.table).select(selectFields);
                 if (['vistorias', 'ocorrencias_operacionais', 'interdicoes', 'agenda_vistorias', 'redap_records', 'emergency_contracts', 'shelters', 'eventos_desastre', 'redap_secoes', 'redap_fluxo_aprovacao', 'redap_historico_acoes', 'redap_assinaturas'].includes(mod.table)) {
-                    const limitVal = mod.table === 'vistorias' ? 25 : 200;
+                    const limitVal = mod.table === 'vistorias' ? 25 : (mod.table === 'ocorrencias_operacionais' ? 60 : 200);
                     query = query.order('created_at', { ascending: false }).limit(limitVal);
                 }
 
@@ -1244,7 +1246,22 @@ export const pullAllData = async (force = false) => {
                     setTimeout(() => reject(new Error(`Timeout fetching ${mod.table}`)), 30000)
                 );
 
-                const { data, error, status } = await Promise.race([tablePromise, tableTimeout]);
+                let { data, error, status } = await Promise.race([tablePromise, tableTimeout]);
+
+                // Fallback para timeout de banco (statement timeout): tenta com limite reduzido para não travar o pull
+                if (error && (String(error.message || '').includes('timeout') || String(error.message || '').includes('canceling statement'))) {
+                    console.warn(`[Pull] Timeout em ${mod.table}, tentando fallback com limite reduzido...`);
+                    try {
+                        const fallbackRes = await supabase.from(mod.table).select(selectFields).limit(30);
+                        if (!fallbackRes.error && fallbackRes.data) {
+                            data = fallbackRes.data;
+                            error = null;
+                            status = 200;
+                        }
+                    } catch (fbErr) {
+                        console.warn(`[Pull] Fallback para ${mod.table} falhou:`, fbErr);
+                    }
+                }
 
                 if (status === 404) {
                     console.warn(`[Pull] Table ${mod.table} not found (404). Skipping.`);

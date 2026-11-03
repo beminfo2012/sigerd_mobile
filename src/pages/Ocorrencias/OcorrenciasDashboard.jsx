@@ -7,7 +7,7 @@ import {
     Eye, ShieldCheck, RefreshCw, Loader2, FileText, Calendar, Printer
 } from 'lucide-react';
 import { generateConsolidatedReport } from '../../utils/ocorrenciaConsolidadoGenerator';
-import { getOcorrenciasLocal, deleteOcorrenciaLocal, saveOcorrenciaLocal } from '../../services/ocorrenciasDb';
+import { getOcorrenciasLocal, deleteOcorrenciaLocal, saveOcorrenciaLocal, OCORRENCIAS_SELECT_FIELDS } from '../../services/ocorrenciasDb';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
 import { Button } from '../../components/ui/Button';
@@ -55,10 +55,22 @@ const OcorrenciasDashboard = () => {
                 try {
                     const { supabase } = await import('../../services/supabase');
                     
+                    // Helper seguro: PostgrestBuilder implementa PromiseLike (then), mas NÃO possui .catch()
+                    const safeFetch = async (queryPromise) => {
+                        try {
+                            const res = await queryPromise;
+                            return res;
+                        } catch (err) {
+                            console.warn('[OcorrenciasDashboard] Falha na consulta remota:', err);
+                            return { data: null, error: err };
+                        }
+                    };
+
                     // Busca paralela otimizada de NOPRERs e Ocorrências
+                    // Limitando ocorrências a 100 para evitar statement timeout no Postgres
                     const [noprerRes, remoteRes] = await Promise.all([
-                        supabase.from('noprer').select('*').catch(() => null),
-                        supabase.from('ocorrencias_operacionais').select('*').order('created_at', { ascending: false }).catch(() => null)
+                        safeFetch(supabase.from('noprer').select('*').limit(200)),
+                        safeFetch(supabase.from('ocorrencias_operacionais').select(OCORRENCIAS_SELECT_FIELDS).order('created_at', { ascending: false }).limit(150))
                     ]);
 
                     if (noprerRes?.data) {
@@ -70,9 +82,16 @@ const OcorrenciasDashboard = () => {
                         setNoprers(formattedNoprers);
                     }
 
-                    const remoteData = remoteRes?.data;
+                    // Fallback caso a query com order tenha sofrido statement timeout no Postgres
+                    let remoteData = remoteRes?.data;
+                    if (!remoteData && remoteRes?.error && (String(remoteRes.error.message || '').includes('timeout') || String(remoteRes.error.message || '').includes('canceling statement'))) {
+                        console.warn('[OcorrenciasDashboard] Timeout detectado no Postgres, tentando fallback sem ordenação...');
+                        const fallbackRes = await safeFetch(supabase.from('ocorrencias_operacionais').select(OCORRENCIAS_SELECT_FIELDS).limit(50));
+                        remoteData = fallbackRes?.data;
+                    }
+
                     if (remoteData && remoteData.length > 0) {
-                        const combined = [...localData];
+                        const combined = [...(localData || [])];
                         remoteData.forEach(d => {
                             d.synced = true;
                             combined.push(d);
@@ -80,8 +99,8 @@ const OcorrenciasDashboard = () => {
                         
                         const dedupMap = new Map();
                         combined.sort((a, b) => {
-                            const dateA = new Date(a.updated_at || a.created_at);
-                            const dateB = new Date(b.updated_at || b.created_at);
+                            const dateA = new Date(a.updated_at || a.created_at || 0);
+                            const dateB = new Date(b.updated_at || b.created_at || 0);
                             return dateA - dateB;
                         }).forEach(r => {
                             const key = r.ocorrencia_id || r.id;
@@ -92,7 +111,16 @@ const OcorrenciasDashboard = () => {
                             dedupMap.set(key, r);
                         });
                         
-                        setRecords(Array.from(dedupMap.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
+                        setRecords(Array.from(dedupMap.values()).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)));
+
+                        // Cacheia localmente para persistência no IndexedDB em modo offline
+                        try {
+                            for (const item of remoteData) {
+                                await saveOcorrenciaLocal(item, true);
+                            }
+                        } catch (cacheErr) {
+                            console.warn('[OcorrenciasDashboard] Cache local falhou silenciosamente:', cacheErr);
+                        }
                     }
                 } catch (e) {
                     console.warn('Revalidação em segundo plano falhou silenciosamente:', e);

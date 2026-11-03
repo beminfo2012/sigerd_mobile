@@ -183,9 +183,9 @@ export const api = {
                     .order('created_at', { ascending: false })
                     .limit(250) : Promise.resolve({ data: [] }),
                 navigator.onLine ? supabase.from('ocorrencias_operacionais')
-                    .select('*')
+                    .select('id, ocorrencia_id, ocorrencia_id_format, created_at, updated_at, data_ocorrencia, horario_ocorrencia, solicitante, cpf, telefone, tem_solicitante_especifico, endereco, bairro, lat, lng, mortos, feridos, enfermos, desalojados, desabrigados, desaparecidos, outros_afetados, tem_danos_humanos, tipo_ocorrencia, nivel_gravidade, categoria_risco, nivel_risco, subtipos_risco, descricao_danos, observacoes, encaminhada, status, orgao_solicitado, orgao_atendeu, risco_pessoas_estruturas, horario_encaminhamento, numero_ocorrencia_externa, observacao_encaminhamento, historico_status, accuracy, gps_timestamp')
                     .order('created_at', { ascending: false })
-                    .limit(1000) : Promise.resolve({ data: [] }),
+                    .limit(250) : Promise.resolve({ data: [] }),
                 navigator.onLine ? supabase.from('interdicoes')
                     .select('*')
                     .order('created_at', { ascending: false })
