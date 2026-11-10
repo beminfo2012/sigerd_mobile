@@ -374,14 +374,15 @@ const GeoRescue = () => {
             const count = await getInstallationsCount()
 
             // Migra v5 residual para v2 caso já esteja atualizado com a nova base
-            if (dbVersion === 'v5' || (count >= 28000 && (!dbVersion || dbVersion === 'v5' || dbVersion === 'v4'))) {
+            if (dbVersion === 'v5' && count >= 28000) {
                 dbVersion = 'v2'
                 localStorage.setItem('geo_db_version', 'v2')
             }
 
-            // Se for v2 e tiver dados, ou v1/v4 válido, mantém sem sobrescrever o upsert manual
-            const isValidVersion = (dbVersion === 'v2' && count >= 20000) || ((dbVersion === 'v1' || dbVersion === 'v4') && count >= 21000)
-            if (!isValidVersion) {
+            // A base oficial do sistema é V2 com 28.323 UCs. Qualquer dispositivo com versão anterior ou menor atualiza automaticamente
+            const isUpToDate = dbVersion === 'v2' && count >= 28000
+            if (!isUpToDate) {
+                console.log(`[GeoRescue] Base local desatualizada (${dbVersion || 'nenhuma'} com ${count} UCs). Atualizando automaticamente para V2 (28.323 UCs)...`)
                 await startImport()
             } else {
                 setTotalInstallations(count)

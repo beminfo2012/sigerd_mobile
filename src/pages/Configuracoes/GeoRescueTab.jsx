@@ -47,6 +47,8 @@ const GeoRescueTab = () => {
     const [showDiffSamples, setShowDiffSamples] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+    const [cloudProgress, setCloudProgress] = useState(0);
 
     useEffect(() => {
         loadLocalStats();
@@ -159,6 +161,30 @@ const GeoRescueTab = () => {
         }
     };
 
+    const handleSyncFromCloudV2 = async () => {
+        setIsSyncingCloud(true);
+        setCloudProgress(0);
+        try {
+            toast.info('Baixando da Nuvem', 'Obtendo a base oficial uc_db_v2.json (28.323 UCs)...');
+            const response = await fetch('/uc_db_v2.json?t=' + new Date().getTime());
+            if (!response.ok) throw new Error('Não foi possível carregar uc_db_v2.json do servidor.');
+
+            const data = await response.json();
+            await applyUpsertToIndexedDB(data, (current, total) => {
+                const pct = Math.round((current / total) * 100);
+                setCloudProgress(pct);
+            });
+
+            await loadLocalStats();
+            toast.success('Dispositivo Atualizado!', 'A base deste dispositivo foi atualizada para a V2 oficial (28.323 UCs)!');
+        } catch (err) {
+            console.error('Erro ao sincronizar da nuvem:', err);
+            toast.error('Erro ao baixar base oficial: ' + err.message);
+        } finally {
+            setIsSyncingCloud(false);
+        }
+    };
+
     const handleReset = () => {
         setSelectedFile(null);
         setParsedItems([]);
@@ -248,6 +274,42 @@ const GeoRescueTab = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Banner de Sincronização com a Base Oficial da Nuvem */}
+                {(!loadingLocal && (localCount < 28000 || dbVersion !== 'v2')) && (
+                    <div className="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/40 border border-indigo-200 dark:border-indigo-900/50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 bg-indigo-600 text-white rounded-xl shrink-0 mt-0.5">
+                                <RefreshCw size={16} className={isSyncingCloud ? 'animate-spin' : ''} />
+                            </div>
+                            <div>
+                                <h4 className="text-xs font-black text-indigo-950 dark:text-indigo-200 uppercase tracking-wide">
+                                    Base Oficial V2 Disponível no Servidor (28.323 UCs)
+                                </h4>
+                                <p className="text-[11px] text-indigo-700 dark:text-indigo-300 mt-0.5 leading-relaxed">
+                                    Este dispositivo possui {localCount.toLocaleString('pt-BR')} UCs ({dbVersion.toUpperCase()}). Sincronize agora diretamente com a base oficial consolidada na nuvem.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleSyncFromCloudV2}
+                            disabled={isSyncingCloud}
+                            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 transition-all shrink-0 active:scale-95"
+                        >
+                            {isSyncingCloud ? (
+                                <>
+                                    <Loader2 size={14} className="animate-spin" />
+                                    <span>Baixando ({cloudProgress}%)</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Download size={14} />
+                                    <span>Sincronizar V2 Oficial</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Área de Seleção / Dropzone do Arquivo */}
