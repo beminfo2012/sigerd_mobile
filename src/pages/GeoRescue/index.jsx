@@ -280,8 +280,13 @@ const GeoRescue = () => {
             setIsImporting(true)
             setImportProgress(0)
 
-            console.log('Importing updated UC data (v4)...')
-            const response = await fetch('/uc_db_v4.json?t=' + new Date().getTime())
+            console.log('Importing updated UC data (v2 / v1)...')
+            let response = await fetch('/uc_db_v2.json?t=' + new Date().getTime())
+            let loadedVersion = 'v2'
+            if (!response.ok) {
+                response = await fetch('/uc_db_v4.json?t=' + new Date().getTime())
+                loadedVersion = 'v1'
+            }
             if (!response.ok) throw new Error('Failed to fetch DB file')
 
             const ucData = await response.json()
@@ -294,10 +299,10 @@ const GeoRescue = () => {
             const updatedCount = await getInstallationsCount()
             setTotalInstallations(updatedCount)
 
-            localStorage.setItem('geo_db_version', 'v4')
+            localStorage.setItem('geo_db_version', loadedVersion)
             setImportSuccess({
                 title: 'Banco Atualizado!',
-                message: `${updatedCount} unidades consumidoras carregadas e prontas para uso offline.`
+                message: `${updatedCount} unidades consumidoras (${loadedVersion.toUpperCase()}) carregadas e prontas para uso offline.`
             })
 
             // Refresh current viewport if zoomed in
@@ -368,7 +373,9 @@ const GeoRescue = () => {
             const dbVersion = localStorage.getItem('geo_db_version')
             const count = await getInstallationsCount()
 
-            if (dbVersion !== 'v4' || count < 21000) {
+            // Se for v2 e tiver dados, ou v1/v4 válido, mantém sem sobrescrever o upsert manual
+            const isValidVersion = (dbVersion === 'v2' && count >= 20000) || ((dbVersion === 'v1' || dbVersion === 'v4') && count >= 21000)
+            if (!isValidVersion) {
                 await startImport()
             } else {
                 setTotalInstallations(count)

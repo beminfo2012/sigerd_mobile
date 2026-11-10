@@ -79,6 +79,7 @@ const ProfileManagement = lazy(() => import('./pages/ProfileManagement'))
 // Configurações do Sistema (Lazy)
 const ConfiguracoesPage = lazy(() => import('./pages/Configuracoes'))
 const MrcrPage = lazy(() => import('./pages/Mrcr'))
+const GeoRescueAdminPage = lazy(() => import('./pages/GeoRescue/GeoRescueAdminPage'))
 
 // Redap Module (Lazy)
 const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
@@ -331,6 +332,16 @@ const AppContent = ({
                                 <Route path="/configuracoes" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral']}>
                                         <ConfiguracoesPage />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/georescue/dados" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral']}>
+                                        <GeoRescueAdminPage />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/georescue/gestao-dados" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={['Admin', 'Administrador', 'administrador', 'admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'Redap_Geral']}>
+                                        <GeoRescueAdminPage />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/mrcr" element={

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield, HeartHandshake, ClipboardList, Flame, Calculator, Activity, Map, Book } from 'lucide-react'
+import { User, Settings, LogOut, Database, WifiOff, CheckCircle, RefreshCcw, X, Edit2, Save, Trash2, ShieldAlert, ArrowLeft, Users, Edit, Moon, Sun, BarChart3, Globe, History, Calendar, Shield, HeartHandshake, ClipboardList, Flame, Calculator, Activity, Map, Book, Zap } from 'lucide-react'
 import { syncPendingData, getPendingSyncCount, resetDatabase, clearLocalData, pullAllData } from '../../services/db'
 import { supabase } from '../../services/supabase'
 import SignaturePadComp from '../../components/SignaturePad'
@@ -574,6 +574,21 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                                     <div className="flex-1">
                                         <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">Gerenciar Orthofotos</span>
                                         <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-tight">Camadas GIS</span>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/georescue/dados')}
+                                className="w-full p-5 flex items-center justify-between hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="p-3 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 rounded-2xl mr-4">
+                                        <Zap size={22} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="block font-bold text-slate-800 dark:text-slate-100 text-sm">GeoRescue - Base de Dados</span>
+                                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest leading-tight">Atualização de UCs & Rede Elétrica</span>
                                     </div>
                                 </div>
                             </button>

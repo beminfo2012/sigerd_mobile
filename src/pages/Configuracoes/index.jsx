@@ -5,7 +5,6 @@ import { listOrthofotos, uploadOrthofoto, registerTilesLayer, updateOrthofoto, d
 import { toast } from '../../components/ToastNotification';
 import { compressImage } from '../../utils/imageOptimizer';
 import PizZip from 'pizzip';
-import MrcrTab from './MrcrTab';
 
 const DEFAULT_BOUNDS = [[-20.06, -40.80], [-19.98, -40.70]];
 
@@ -136,7 +135,6 @@ const ConfiguracoesPage = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
-    const [activeConfigTab, setActiveConfigTab] = useState('orthofotos');
     const [orthofotos, setOrthofotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -527,17 +525,19 @@ const ConfiguracoesPage = () => {
     return (
         <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
             {/* Header */}
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center gap-3 sticky top-0 z-20 shadow-sm shrink-0">
-                <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                    <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
-                </button>
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center">
-                        <Layers size={16} className="text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-base font-black text-slate-800 dark:text-slate-100 leading-tight">Gerenciar Orthofotos</h1>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Gestão de Camadas GIS</p>
+            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-16 flex items-center justify-between sticky top-0 z-20 shadow-sm shrink-0">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                        <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
+                            <Settings size={16} className="text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-base font-black text-slate-800 dark:text-slate-100 leading-tight">Configurações</h1>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Painel Administrativo & Gestão GIS</p>
+                        </div>
                     </div>
                 </div>
             </header>
