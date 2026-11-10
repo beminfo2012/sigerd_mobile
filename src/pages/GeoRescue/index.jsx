@@ -370,8 +370,14 @@ const GeoRescue = () => {
     // Check on startup
     useEffect(() => {
         const checkAndImport = async () => {
-            const dbVersion = localStorage.getItem('geo_db_version')
+            let dbVersion = localStorage.getItem('geo_db_version')
             const count = await getInstallationsCount()
+
+            // Migra v5 residual para v2 caso já esteja atualizado com a nova base
+            if (dbVersion === 'v5' || (count >= 28000 && (!dbVersion || dbVersion === 'v5' || dbVersion === 'v4'))) {
+                dbVersion = 'v2'
+                localStorage.setItem('geo_db_version', 'v2')
+            }
 
             // Se for v2 e tiver dados, ou v1/v4 válido, mantém sem sobrescrever o upsert manual
             const isValidVersion = (dbVersion === 'v2' && count >= 20000) || ((dbVersion === 'v1' || dbVersion === 'v4') && count >= 21000)

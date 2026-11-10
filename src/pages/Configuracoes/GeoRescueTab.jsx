@@ -57,7 +57,15 @@ const GeoRescueTab = () => {
         try {
             const count = await getInstallationsCount();
             setLocalCount(count);
-            setDbVersion(localStorage.getItem('geo_db_version') || 'v1');
+
+            // Migra v5 residual para v2 caso já esteja sincronizado com a base nova
+            let version = localStorage.getItem('geo_db_version');
+            if (version === 'v5' || (count >= 28000 && (!version || version === 'v5' || version === 'v4'))) {
+                version = 'v2';
+                localStorage.setItem('geo_db_version', 'v2');
+            }
+            setDbVersion(version || 'v2');
+
             const storedDate = localStorage.getItem('geo_db_last_update');
             setLastUpdate(storedDate ? new Date(storedDate).toLocaleString('pt-BR') : null);
         } catch (e) {
