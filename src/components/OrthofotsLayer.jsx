@@ -56,9 +56,10 @@ const OrthofotsLayer = () => {
                              key={orto.id}
                              url={urlToUse}
                              tms={isTms}
-                             opacity={orto.opacidade ?? 0.7}
+                             opacity={orto.opacidade ?? 0.75}
                              maxZoom={22}
-                             maxNativeZoom={22}
+                             maxNativeZoom={20}
+                             zIndex={15}
                          />
                      );
                  }

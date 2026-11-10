@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Settings, Image as ImageIcon, Upload, Trash2, Eye, EyeOff, Loader2, Plus, X, Check, AlertTriangle, Map, Layers, Info, Pencil } from 'lucide-react';
-import { listOrthofotos, uploadOrthofoto, registerTilesLayer, updateOrthofoto, deleteOrthofoto, uploadFileToStorage, deleteFileFromStorage } from '../../services/orthofotoService';
+import { ArrowLeft, Settings, Image as ImageIcon, Upload, Trash2, Eye, EyeOff, Loader2, Plus, X, Check, AlertTriangle, Map, Layers, Info, Pencil, Copy, RefreshCw, ExternalLink, Globe } from 'lucide-react';
+import { listOrthofotos, uploadOrthofoto, registerTilesLayer, updateOrthofoto, deleteOrthofoto, uploadFileToStorage, deleteFileFromStorage, ORTOFOTOS_API_URL } from '../../services/orthofotoService';
 import { toast } from '../../components/ToastNotification';
 import { compressImage } from '../../utils/imageOptimizer';
 import PizZip from 'pizzip';
@@ -502,9 +502,23 @@ const ConfiguracoesPage = () => {
             await updateOrthofoto(orto.id, { ativo: !orto.ativo });
             window.dispatchEvent(new CustomEvent('orthofotos-updated'));
             setOrthofotos(prev => prev.map(o => o.id === orto.id ? { ...o, ativo: !o.ativo } : o));
+            toast.info(orto.ativo ? 'Camada desativada' : 'Camada ativada nos mapas');
         } catch (e) {
             toast.error('Erro ao atualizar orthofoto.');
         }
+    };
+
+    const handleCopyTms = (url, nome) => {
+        if (!url) return;
+        navigator.clipboard.writeText(url);
+        toast.success('Link TMS Copiado!', `Link de "${nome}" copiado para a área de transferência. Cole no QGIS em XYZ Tiles.`);
+    };
+
+    const handleOpacityChange = async (orto, newOpacity) => {
+        const val = parseFloat(newOpacity);
+        setOrthofotos(prev => prev.map(o => o.id === orto.id ? { ...o, opacidade: val } : o));
+        await updateOrthofoto(orto.id, { opacidade: val });
+        window.dispatchEvent(new CustomEvent('orthofotos-updated'));
     };
 
     const handleDelete = async (orto) => {
@@ -566,22 +580,33 @@ const ConfiguracoesPage = () => {
                                 <p className="text-xs text-slate-400 font-bold">{orthofotos.length} arquivo(s) cadastrado(s)</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => {
-                                setShowForm(true);
-                                setInputType('file');
-                                setSelectedFile(null);
-                                setEditingOrto(null);
-                                setFormNome('');
-                                setFormDescricao('');
-                                setFormUrl('');
-                                setFormBounds({ s: '', w: '', n: '', e: '' });
-                                setFormTms(true);
-                            }}
-                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-emerald-200 dark:shadow-none"
-                        >
-                            <Plus size={14} /> Nova Orthofoto
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={loadOrthofotos}
+                                disabled={loading}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all active:scale-95"
+                                title="Recarregar catálogo da API de Ortofotos"
+                            >
+                                <RefreshCw size={14} className={loading ? 'animate-spin text-emerald-500' : ''} />
+                                <span className="hidden sm:inline">Sincronizar API</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowForm(true);
+                                    setInputType('tiles');
+                                    setSelectedFile(null);
+                                    setEditingOrto(null);
+                                    setFormNome('');
+                                    setFormDescricao('');
+                                    setFormUrl('');
+                                    setFormBounds({ s: '', w: '', n: '', e: '' });
+                                    setFormTms(true);
+                                }}
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-emerald-200 dark:shadow-none"
+                            >
+                                <Plus size={14} /> <span className="hidden sm:inline">Nova Camada</span><span className="sm:hidden">Nova</span>
+                            </button>
+                        </div>
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -741,80 +766,99 @@ const ConfiguracoesPage = () => {
                             </div>
                         ) : (
                             orthofotos.map(orto => (
-                                <div key={orto.id} className={`p-4 flex items-center gap-4 transition-colors ${!orto.ativo ? 'opacity-50' : ''}`}>
+                                <div key={orto.id} className={`p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors border-b border-slate-100 dark:border-slate-800/80 last:border-b-0 ${!orto.ativo ? 'opacity-60 bg-slate-50/50 dark:bg-slate-900/30' : ''}`}>
                                     {/* Preview thumb */}
-                                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-200 dark:border-slate-700 flex items-center justify-center">
-                                        {orto.tipo === 'TIFF' ? (
-                                            <div className="text-center p-1">
-                                                <Map size={20} className="text-blue-400 mx-auto" />
-                                                <p className="text-[8px] font-black text-blue-400 mt-0.5">TIFF</p>
-                                            </div>
-                                        ) : orto.tipo === 'GEOJSON' ? (
-                                            <div className="text-center p-1">
-                                                <Layers size={20} className="text-indigo-400 mx-auto" />
-                                                <p className="text-[8px] font-black text-indigo-400 mt-0.5">VETORIAL</p>
-                                            </div>
-                                        ) : orto.tipo === 'TILES' ? (
-                                            <div className="text-center p-1">
-                                                <Layers size={20} className="text-emerald-400 mx-auto" />
-                                                <p className="text-[8px] font-black text-emerald-400 mt-0.5">TILES</p>
-                                            </div>
-                                        ) : (
-                                            <img
-                                                src={orto.url}
-                                                alt={orto.nome}
-                                                className="w-full h-full object-cover"
-                                                onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                                            />
-                                        )}
-                                        <div className="w-full h-full hidden items-center justify-center">
-                                            <ImageIcon size={20} className="text-slate-400" />
-                                        </div>
+                                    <div className="w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                                        <Layers size={22} className="text-emerald-500" />
                                     </div>
 
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{orto.nome}</p>
-                                        {orto.descricao && <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">{orto.descricao}</p>}
-                                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${orto.ativo ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
-                                                {orto.ativo ? '● Ativa' : '○ Inativa'}
-                                            </span>
-                                            <span className="text-[9px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                                                {orto.tipo} · {Math.round((orto.opacidade ?? 0.7) * 100)}% opacidade
-                                            </span>
-                                            {orto.bounds && (
-                                                <span className="text-[9px] font-bold text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-2 py-0.5 rounded-full">
-                                                    Bounds definidos
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{orto.nome}</p>
+                                            {orto.ano_captura && (
+                                                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                                                    Ano {orto.ano_captura}
                                                 </span>
                                             )}
+                                            {orto.isApiLayer && (
+                                                <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:text-indigo-400 px-2 py-0.5 rounded-full">
+                                                    API Oficial
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {orto.descricao && (
+                                            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">{orto.descricao}</p>
+                                        )}
+
+                                        <div className="flex items-center gap-3 mt-2 flex-wrap text-xs">
+                                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${orto.ativo ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
+                                                {orto.ativo ? '● Ativa no Mapa' : '○ Desativada'}
+                                            </span>
+
+                                            {/* Slider de Opacidade Rápido */}
+                                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                                <span>Opacidade:</span>
+                                                <input
+                                                    type="range"
+                                                    min="0.1"
+                                                    max="1"
+                                                    step="0.05"
+                                                    value={orto.opacidade ?? 0.75}
+                                                    onChange={e => handleOpacityChange(orto, e.target.value)}
+                                                    className="w-16 h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                                                />
+                                                <span className="font-mono font-bold text-slate-600 dark:text-slate-300">
+                                                    {Math.round((orto.opacidade ?? 0.75) * 100)}%
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex items-center gap-2 shrink-0">
+                                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                        <button
+                                            onClick={() => handleCopyTms(orto.url, orto.nome)}
+                                            title="Copiar link TMS / XYZ para usar no QGIS"
+                                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95"
+                                        >
+                                            <Copy size={13} />
+                                            <span className="hidden md:inline">Copiar TMS (QGIS)</span>
+                                            <span className="md:hidden">QGIS</span>
+                                        </button>
+
                                         <button
                                             onClick={() => handleToggleAtivo(orto)}
-                                            title={orto.ativo ? 'Desativar' : 'Ativar'}
-                                            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500"
+                                            title={orto.ativo ? 'Desativar camada nos mapas' : 'Ativar camada nos mapas'}
+                                            className={`p-2 rounded-xl transition-all ${
+                                                orto.ativo 
+                                                    ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400' 
+                                                    : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800'
+                                            }`}
                                         >
-                                            {orto.ativo ? <Eye size={16} className="text-emerald-500" /> : <EyeOff size={16} />}
+                                            {orto.ativo ? <Eye size={16} /> : <EyeOff size={16} />}
                                         </button>
-                                        <button
-                                            onClick={() => handleEdit(orto)}
-                                            title="Editar"
-                                            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500"
-                                        >
-                                            <Pencil size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(orto)}
-                                            disabled={deletingId === orto.id}
-                                            title="Excluir"
-                                            className="p-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-rose-400"
-                                        >
-                                            {deletingId === orto.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                                        </button>
+
+                                        {!orto.isApiLayer && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleEdit(orto)}
+                                                    title="Editar"
+                                                    className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500"
+                                                >
+                                                    <Pencil size={15} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(orto)}
+                                                    disabled={deletingId === orto.id}
+                                                    title="Excluir"
+                                                    className="p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-rose-400"
+                                                >
+                                                    {deletingId === orto.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             ))
@@ -822,14 +866,21 @@ const ConfiguracoesPage = () => {
                     </div>
                 </div>
 
-                {/* Aviso SQL */}
-                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/20 rounded-2xl p-4 flex gap-3">
-                    <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-xs font-black text-amber-700 dark:text-amber-300 uppercase tracking-wider">Pré-requisito de Banco de Dados</p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 leading-relaxed font-medium">
-                            Execute a migration SQL <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded text-[10px]">create_orthofotos_table.sql</code> no Supabase antes de usar este módulo.
+                {/* Guia de Integração GIS */}
+                <div className="bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-5 flex gap-4">
+                    <Globe size={20} className="text-indigo-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1.5 text-xs text-indigo-900 dark:text-indigo-200">
+                        <p className="font-black uppercase tracking-wider text-indigo-950 dark:text-indigo-100">
+                            Uso em Softwares GIS (QGIS, ArcGIS, etc.)
                         </p>
+                        <p className="leading-relaxed text-indigo-700 dark:text-indigo-300">
+                            As ortofotos são distribuídas no padrão <strong>XYZ Tiles</strong> com alta resolução. Para carregar qualquer camada no <strong>QGIS</strong>:
+                        </p>
+                        <ol className="list-decimal list-inside space-y-1 text-indigo-800 dark:text-indigo-200 font-medium">
+                            <li>Clique no botão <strong>Copiar TMS (QGIS)</strong> da camada desejada acima.</li>
+                            <li>No QGIS, abra o painel <strong>Browser</strong> &gt; clique com o botão direito em <strong>XYZ Tiles</strong> &gt; <strong>New Connection...</strong></li>
+                            <li>Insira o nome da localidade e cole a URL copiada no campo <strong>URL</strong>.</li>
+                        </ol>
                     </div>
                 </div>
             </main>
