@@ -749,6 +749,7 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                                                 "não apresenta patologia",
                                                 "não observado",
                                                 "sem problemas",
+                                                "sem problema",
                                                 "não identificado",
                                                 "adequada",
                                                 "adequado",
@@ -763,7 +764,11 @@ const VistoriaPrint = ({ initialData = null, isDrawerMode = false, onClose = nul
                                             const isOptionOk = (val) => {
                                                 if (!val) return true;
                                                 const lowerVal = val.toLowerCase().trim();
-                                                return okOptions.some(ok => lowerVal.includes(ok) || ok.includes(lowerVal));
+                                                // Exige fronteira de palavra para evitar falsos positivos (ex.: "inadequada" casando com "adequada")
+                                                return okOptions.some(ok => {
+                                                    const escaped = ok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                                    return new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?:$|[^\\p{L}\\p{N}])`, 'u').test(lowerVal);
+                                                });
                                             };
 
                                             const allRows = [];
