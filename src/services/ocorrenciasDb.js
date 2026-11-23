@@ -291,7 +291,9 @@ export const getOcorrenciaById = async (id) => {
             solicitante_nome: r.solicitante_nome || r.solicitante || '',
             solicitante: r.solicitante || r.solicitante_nome || '',
             telefone: r.telefone || r.solicitante_telefone || '',
-            solicitante_telefone: r.solicitante_telefone || r.telefone || ''
+            solicitante_telefone: r.solicitante_telefone || r.telefone || '',
+            assinaturaAgente: r.assinaturaAgente || r.assinatura_agente || null,
+            assinatura_agente: r.assinatura_agente || r.assinaturaAgente || null
         };
     };
 

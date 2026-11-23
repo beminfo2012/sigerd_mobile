@@ -69,6 +69,7 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
     const id = isDrawerMode ? null : (params?.id || null);
     const [data, setData] = useState(initialData || null);
     const [loading, setLoading] = useState(!initialData);
+    const [agentProfile, setAgentProfile] = useState(null);
 
     useEffect(() => {
         if (initialData) {
@@ -98,6 +99,42 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
         };
         fetchData();
     }, [id, initialData]);
+
+    // Busca cargo e assinatura cadastrados no perfil do agente (mesma lógica das vistorias)
+    useEffect(() => {
+        if (!data || !navigator.onLine) return;
+        let cancelled = false;
+
+        const fetchAgentProfile = async () => {
+            try {
+                let profile = null;
+                if (data.matricula) {
+                    const { data: byMat } = await supabase
+                        .from('profiles')
+                        .select('full_name, cargo, signature, matricula')
+                        .eq('matricula', String(data.matricula))
+                        .maybeSingle();
+                    if (byMat) profile = byMat;
+                }
+                if (!profile && data.agente) {
+                    const { data: byName } = await supabase
+                        .from('profiles')
+                        .select('full_name, cargo, signature, matricula')
+                        .ilike('full_name', data.agente.trim())
+                        .maybeSingle();
+                    if (byName) profile = byName;
+                }
+                if (!cancelled && profile) {
+                    setAgentProfile(profile);
+                }
+            } catch (err) {
+                console.warn('[OcorrenciasPrint] Falha ao buscar perfil do agente:', err);
+            }
+        };
+
+        fetchAgentProfile();
+        return () => { cancelled = true; };
+    }, [data?.agente, data?.matricula]);
 
     const handlePrint = () => {
         window.dispatchEvent(new Event('trigger-map-print-resize'));
@@ -221,6 +258,14 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
 
     const showApoio = data.tem_apoio_tecnico || data.temApoioTecnico || (apoioTecnico && (apoioTecnico.nome || apoioTecnico.assinatura));
 
+    // Resolve assinatura e cargo do agente (evita exibir nome de perfil/role no lugar do cargo)
+    const PROFILE_ROLES = ['admin', 'administrador', 'operador', 'agente', 'redap_geral', 'redap_setorial', 'humanitario_leitura', 'humanitario_total'];
+    const rawCargo = (data.cargo || '').trim();
+    const isGenericProfileRole = !rawCargo || PROFILE_ROLES.includes(rawCargo.toLowerCase());
+    const resolvedAgenteNome = data.agente || agentProfile?.full_name || '---';
+    const resolvedAgenteCargo = (!isGenericProfileRole ? rawCargo : (agentProfile?.cargo || rawCargo)) || 'Agente de Proteção e Defesa Civil';
+    const resolvedAgenteAssinatura = data.assinaturaAgente || data.assinatura_agente || agentProfile?.signature || null;
+
 
     return (
         <PrintLayout
@@ -262,9 +307,9 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
                                         <th style={{ width: '45%' }}>Cargo / Função</th>
                                     </tr>
                                     <tr>
-                                        <td>{data.agente || '---'}</td>
-                                        <td>{data.matricula || '---'}</td>
-                                        <td>{data.cargo || 'Agente de Proteção e Defesa Civil'}</td>
+                                        <td>{resolvedAgenteNome}</td>
+                                        <td>{data.matricula || agentProfile?.matricula || '---'}</td>
+                                        <td>{resolvedAgenteCargo}</td>
                                     </tr>
                                     {showApoio && apoioTecnico && apoioTecnico.nome && (
                                         <>
@@ -589,35 +634,50 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
 
                     {/* Signatures & Footer info */}
                     <div className="mt-8 border-t border-slate-200 pt-6 avoid-break">
-                        <div className="flex justify-around items-end flex-wrap gap-8 mb-6">
-                            {/* Agente Signature */}
-                            <div className="flex flex-col items-center text-center min-w-[200px]">
-                                <div className="h-16 flex items-end justify-center mb-2">
-                                    {(data.assinaturaAgente || data.assinatura_agente) ? (
-                                        <img src={data.assinaturaAgente || data.assinatura_agente} alt="Assinatura Agente" className="max-h-full max-w-[180px]" />
-                                    ) : <div className="h-16 w-32 border-b border-dashed border-slate-300"></div>}
+                        {showApoio && apoioTecnico && apoioTecnico.nome && apoioTecnico.nome.trim() !== '' ? (
+                            <div className="grid grid-cols-2 gap-8 mb-6">
+                                {/* Agente Signature */}
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="h-16 flex items-end justify-center mb-2">
+                                        {resolvedAgenteAssinatura ? (
+                                            <img src={resolvedAgenteAssinatura} alt="Assinatura Agente" className="max-h-full max-w-[180px]" />
+                                        ) : <div className="h-16 w-32 border-b border-dashed border-slate-300"></div>}
+                                    </div>
+                                    <div className="w-48 border-b border-slate-400 mb-1"></div>
+                                    <p className="text-[10px] font-black text-slate-800 uppercase">{resolvedAgenteNome}</p>
+                                    <p className="text-[8px] font-bold text-slate-500 uppercase">{resolvedAgenteCargo}</p>
+                                    <p className="text-[8px] text-slate-400 uppercase">Assinado eletronicamente</p>
                                 </div>
-                                <div className="w-48 border-b border-slate-400 mb-1"></div>
-                                <p className="text-[10px] font-black text-slate-800 uppercase">{data.agente}</p>
-                                <p className="text-[8px] font-bold text-slate-500 uppercase">{data.cargo || 'Agente de Proteção e Defesa Civil'}</p>
-                                <p className="text-[8px] text-slate-400 uppercase">Responsável Técnico</p>
-                            </div>
 
-                            {/* Apoio Signature */}
-                            {showApoio && apoioTecnico && apoioTecnico.nome && (
-                                <div className="flex flex-col items-center text-center min-w-[200px]">
+                                {/* Apoio Signature */}
+                                <div className="flex flex-col items-center text-center">
                                     <div className="h-16 flex items-end justify-center mb-2">
                                         {apoioTecnico.assinatura ? (
-                                            <img src={apoioTecnico.assinatura} alt="Assinatura Apoio Técnico" className="max-h-full max-w-[180px]" />
+                                            <img src={apoioTecnico.assinatura} alt="Assinatura Engenheiro" className="max-h-full max-w-[180px]" />
                                         ) : <div className="h-16 w-32 border-b border-dashed border-slate-300"></div>}
                                     </div>
                                     <div className="w-48 border-b border-slate-400 mb-1"></div>
                                     <p className="text-[10px] font-black text-slate-800 uppercase">{apoioTecnico.nome}</p>
-                                    <p className="text-[8px] font-bold text-slate-500 uppercase">{apoioTecnico.cargo || 'Apoio Técnico Esp.'}</p>
-                                    <p className="text-[8px] text-slate-400 uppercase">Registro: {apoioTecnico.crea}</p>
+                                    <p className="text-[8px] font-bold text-slate-500 uppercase">{apoioTecnico.cargo || 'Engenheiro Civil'}</p>
+                                    <p className="text-[8px] text-slate-400 uppercase">Assinado eletronicamente</p>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="flex justify-center mb-6">
+                                {/* Agente Signature Centered */}
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="h-16 flex items-end justify-center mb-2">
+                                        {resolvedAgenteAssinatura ? (
+                                            <img src={resolvedAgenteAssinatura} alt="Assinatura Agente" className="max-h-full max-w-[180px]" />
+                                        ) : <div className="h-16 w-32 border-b border-dashed border-slate-300"></div>}
+                                    </div>
+                                    <div className="w-48 border-b border-slate-400 mb-1"></div>
+                                    <p className="text-[10px] font-black text-slate-800 uppercase">{resolvedAgenteNome}</p>
+                                    <p className="text-[8px] font-bold text-slate-500 uppercase">{resolvedAgenteCargo}</p>
+                                    <p className="text-[8px] text-slate-400 uppercase">Assinado eletronicamente</p>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Informações do Documento */}
                         <div className="bg-slate-50 border border-slate-200 rounded p-3 text-[8px] text-slate-500 leading-normal">

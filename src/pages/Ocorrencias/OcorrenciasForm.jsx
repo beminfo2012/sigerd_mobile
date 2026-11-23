@@ -457,16 +457,23 @@ export default function OcorrenciasForm() {
             if (id && id !== 'novo') {
                 const record = await getOcorrenciaById(id);
                 if (record) {
-                    setFormData({ ...INITIAL_OCORRENCIA_STATE, ...record });
+                    setFormData({
+                        ...INITIAL_OCORRENCIA_STATE,
+                        ...record,
+                        assinaturaAgente: record.assinaturaAgente || record.assinatura_agente || null,
+                        assinaturaAssistido: record.assinaturaAssistido || record.assinatura_assistido || null,
+                        apoioTecnico: record.apoioTecnico || record.apoio_tecnico || INITIAL_OCORRENCIA_STATE.apoioTecnico,
+                        cargo: record.cargo || userProfile?.cargo || localStorage.getItem('lastAgentCargo') || 'Agente de Proteção e Defesa Civil'
+                    });
                 }
             } else {
                 const now = new Date();
                 setFormData(prev => ({
                     ...prev,
                     data_chamado: now.toISOString(),
-                    agente: userProfile?.full_name || '',
-                    matricula: userProfile?.matricula || '',
-                    cargo: userProfile?.cargo || 'Agente'
+                    agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
+                    matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
+                    cargo: userProfile?.cargo || localStorage.getItem('lastAgentCargo') || 'Agente de Proteção e Defesa Civil'
                 }));
             }
             setLoading(false);
@@ -551,6 +558,8 @@ export default function OcorrenciasForm() {
                 solicitante_nome: formData.solicitante_nome || formData.solicitante || '',
                 telefone: formData.solicitante_telefone || formData.telefone || '',
                 solicitante_telefone: formData.solicitante_telefone || formData.telefone || '',
+                assinaturaAgente: formData.assinaturaAgente || formData.assinatura_agente || null,
+                assinatura_agente: formData.assinaturaAgente || formData.assinatura_agente || null,
                 status: isDraft ? 'Aberta' : 'Finalizada',
                 encaminhada: formData.orgao_solicitado !== formData.orgao_atendeu
             };
@@ -562,9 +571,9 @@ export default function OcorrenciasForm() {
                 setFormData({
                     ...INITIAL_OCORRENCIA_STATE,
                     data_chamado: new Date().toISOString(),
-                    agente: userProfile?.full_name || '',
-                    matricula: userProfile?.matricula || '',
-                    cargo: userProfile?.cargo || 'Agente'
+                    agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
+                    matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
+                    cargo: userProfile?.cargo || localStorage.getItem('lastAgentCargo') || 'Agente de Proteção e Defesa Civil'
                 });
                 window.scrollTo(0, 0);
             } else {
