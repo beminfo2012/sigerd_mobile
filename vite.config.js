@@ -18,10 +18,13 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//]
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'pwa-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
       manifest: {
+        id: '/',
         name: 'SIGERD - Defesa Civil',
         short_name: 'SIGERD',
         description: 'Sistema de Gerenciamento de Emergências e Riscos para Defesa Civil Municipal',
@@ -31,19 +34,24 @@ export default defineConfig({
         theme_color: '#2a5299',
         lang: 'pt-BR',
         scope: '/',
-        version: '2.29',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/pwa-maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ],
         shortcuts: [
@@ -52,14 +60,14 @@ export default defineConfig({
             short_name: 'Checklist',
             description: 'Verificar equipamentos antes de sair',
             url: '/checklist-saida',
-            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
           },
           {
             name: 'Nova Vistoria',
             short_name: 'Vistoria',
             description: 'Criar nova vistoria de campo',
             url: '/vistorias',
-            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }]
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
           }
         ]
       }
