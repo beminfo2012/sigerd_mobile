@@ -12,6 +12,7 @@ import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import OcorrenciaDrawer from './OcorrenciaDrawer';
 
 export const OCORRENCIA_STATUSES = {
     'Pendente': { label: 'Pendente', bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
@@ -34,8 +35,11 @@ const OcorrenciasDashboard = () => {
     const [recordToDelete, setRecordToDelete] = useState(null);
     const [statusModalRecord, setStatusModalRecord] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [selectedOcorrencia, setSelectedOcorrencia] = useState(null);
 
     useEffect(() => {
+        document.title = 'SIGERD WEB';
         loadRecords();
         window.addEventListener('sync-complete', loadRecords);
         return () => window.removeEventListener('sync-complete', loadRecords);
@@ -138,6 +142,11 @@ const OcorrenciasDashboard = () => {
         if (!recordToDelete) return;
         try {
             await deleteOcorrenciaLocal(recordToDelete.id);
+            if (selectedOcorrencia && (selectedOcorrencia.id === recordToDelete.id || (selectedOcorrencia.ocorrencia_id && selectedOcorrencia.ocorrencia_id === recordToDelete.ocorrencia_id))) {
+                setIsDrawerOpen(false);
+                setSelectedOcorrencia(null);
+                document.title = 'SIGERD WEB';
+            }
             toast.success('Registro removido.');
             loadRecords();
         } catch (error) {
@@ -207,44 +216,51 @@ const OcorrenciasDashboard = () => {
     }
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-900 min-h-screen pb-32 font-sans animate-in fade-in duration-500">
+        <div className="bg-slate-50 dark:bg-slate-900 h-[calc(100vh-40px)] font-sans animate-in fade-in duration-500 flex w-full overflow-hidden">
+            {/* Main panel - Painel de Cards (30% da largura em desktop quando relatório estiver aberto) */}
+            <div className={`h-full overflow-y-auto transition-all duration-300 ${isDrawerOpen ? 'hidden md:flex flex-col w-full md:w-[30%] min-w-[280px] shrink-0 border-r border-slate-200/60 dark:border-slate-800' : 'w-full'}`}>
             {/* Header */}
             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-20 border-b border-slate-100 dark:border-slate-700 shadow-sm">
-                <div className="w-full mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                <div className="w-full mx-auto flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
                         <button
                             onClick={() => navigate('/')}
-                            className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-95"
+                            className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-95 shrink-0"
                         >
                             <ArrowLeft size={24} />
                         </button>
-                        <div>
-                            <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">Ocorrências</h1>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Log de Atendimento Operacional</p>
+                        <div className="min-w-0">
+                            <h1 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight truncate">Ocorrências</h1>
+                            {!isDrawerOpen && (
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Log de Atendimento Operacional</p>
+                            )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <Button
                             onClick={handleGenerateDailyReport}
-                            className="bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 px-3 sm:px-4 h-10 sm:h-12"
+                            className={`bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 h-10 sm:h-12 ${isDrawerOpen ? 'px-3' : 'px-3 sm:px-4'}`}
                             title="Gerar Relatório Consolidado"
                         >
-                            <Printer size={18} className="sm:mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Relatório</span>
+                            <Printer size={18} className={isDrawerOpen ? '' : 'sm:mr-2'} />
+                            {!isDrawerOpen && <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Relatório</span>}
                         </Button>
                         <Button
                             onClick={() => navigate('/ocorrencias/novo')}
-                            className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20 px-4 sm:px-6 h-10 sm:h-12"
+                            className={`bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20 h-10 sm:h-12 ${isDrawerOpen ? 'px-3' : 'px-4 sm:px-6'}`}
+                            title="Nova Ocorrência"
                         >
-                            <Plus size={18} className="sm:mr-2" /> <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo</span>
+                            <Plus size={18} className={isDrawerOpen ? '' : 'sm:mr-2'} />
+                            {!isDrawerOpen && <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider">Novo</span>}
                         </Button>
                     </div>
                 </div>
             </div>
 
-            <main className="w-full mx-auto p-5 sm:p-8 space-y-8">
+            <main className={`w-full mx-auto pb-28 space-y-6 ${isDrawerOpen ? 'p-4' : 'p-5 sm:p-8 sm:space-y-8'}`}>
                 {/* Search and Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 w-full mx-auto">
-                    <div className="relative group md:col-span-8 lg:col-span-9">
+                <div className={`grid gap-4 w-full mx-auto ${isDrawerOpen ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12'}`}>
+                    <div className={`relative group ${isDrawerOpen ? '' : 'md:col-span-8 lg:col-span-9'}`}>
                         <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                         <input
                             type="text"
@@ -254,7 +270,7 @@ const OcorrenciasDashboard = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="relative md:col-span-4 lg:col-span-3">
+                    <div className={`relative ${isDrawerOpen ? '' : 'md:col-span-4 lg:col-span-3'}`}>
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={18} />
                         <input
                             type="date"
@@ -276,12 +292,14 @@ const OcorrenciasDashboard = () => {
                             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2 px-10">Tudo limpo por aqui. Nenhuma ocorrência nestes critérios.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filtered.map((record) => (
+                        <div className={`gap-4 sm:gap-6 ${isDrawerOpen ? 'grid grid-cols-1' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                            {filtered.map((record) => {
+                                const isSelected = isDrawerOpen && selectedOcorrencia && (selectedOcorrencia.id === record.id || (selectedOcorrencia.ocorrencia_id && selectedOcorrencia.ocorrencia_id === record.ocorrencia_id));
+                                return (
                                 <Card
                                     key={record.id}
-                                    className="group relative bg-white dark:bg-slate-800 p-6 flex flex-col justify-between hover:shadow-xl hover:translate-y-[-4px] active:scale-[0.98] transition-all cursor-pointer border-slate-100 dark:border-slate-700"
-                                    onClick={() => navigate(`/ocorrencias/editar/${record.id}`)}
+                                    className={`group relative bg-white dark:bg-slate-800 p-6 flex flex-col justify-between hover:shadow-xl hover:translate-y-[-4px] active:scale-[0.98] transition-all cursor-pointer ${isSelected ? 'ring-2 ring-blue-500 border-blue-500 dark:border-blue-400' : 'border-slate-100 dark:border-slate-700'}`}
+                                    onClick={() => { setSelectedOcorrencia(record); setIsDrawerOpen(true); }}
                                 >
                                     <div>
                                         <div className="flex justify-between items-start mb-4">
@@ -346,8 +364,8 @@ const OcorrenciasDashboard = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    const targetUuid = record.ocorrencia_id || (typeof record.id === 'string' && record.id.includes('-') ? record.id : (record.ocorrencia_id_format || record.id));
-                                                    window.open(`/ocorrencias/imprimir/${encodeURIComponent(targetUuid)}`, '_blank');
+                                                    setSelectedOcorrencia(record);
+                                                    setIsDrawerOpen(true);
                                                 }}
                                                 className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-2xl transition-all active:scale-95"
                                                 title="Visualizar Detalhes"
@@ -407,11 +425,14 @@ const OcorrenciasDashboard = () => {
                                         </div>
                                     </div>
                                 </Card>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
             </main>
+            </div>
+            {/* End main panel */}
 
             <ConfirmModal
                 isOpen={showDeleteModal}
@@ -460,6 +481,22 @@ const OcorrenciasDashboard = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Side Panel Drawer */}
+            {isDrawerOpen && (
+                <OcorrenciaDrawer
+                    ocorrencia={selectedOcorrencia}
+                    onClose={() => {
+                        setIsDrawerOpen(false);
+                        setSelectedOcorrencia(null);
+                        document.title = 'SIGERD WEB';
+                    }}
+                    onEdit={(ocorrencia) => {
+                        const targetId = ocorrencia.id || ocorrencia.ocorrencia_id;
+                        navigate(`/ocorrencias/editar/${targetId}`);
+                    }}
+                />
             )}
         </div>
     );

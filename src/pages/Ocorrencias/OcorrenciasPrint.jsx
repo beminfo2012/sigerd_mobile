@@ -64,11 +64,18 @@ const createCustomPin = (color) => {
     });
 };
 
-const OcorrenciasPrint = () => {
-    const { id } = useParams();
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
+const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = null, onEdit = null, externalZoom = null }) => {
+    const params = useParams();
+    const id = isDrawerMode ? null : (params?.id || null);
+    const [data, setData] = useState(initialData || null);
+    const [loading, setLoading] = useState(!initialData);
+
     useEffect(() => {
+        if (initialData) {
+            setData(initialData);
+            setLoading(false);
+            return;
+        }
         const fetchData = async () => {
             if (!id) return;
             try {
@@ -90,7 +97,7 @@ const OcorrenciasPrint = () => {
             }
         };
         fetchData();
-    }, [id]);
+    }, [id, initialData]);
 
     const handlePrint = () => {
         window.dispatchEvent(new Event('trigger-map-print-resize'));
@@ -217,6 +224,7 @@ const OcorrenciasPrint = () => {
 
     return (
         <PrintLayout
+            hideHeader={isDrawerMode}
             documentTitle={data.ocorrencia_id_format ? `Ocorrência nº ${data.ocorrencia_id_format.replace('/', '-')} - ${data.solicitante || 'Sem Nome'}` : 'Relatório de Ocorrência'}
             reportTitle="Relatório de Ocorrência"
             subtitle={
@@ -229,6 +237,17 @@ const OcorrenciasPrint = () => {
             isLoading={loading}
             onPrint={handlePrint}
         >
+            {externalZoom !== null && (
+                <style>{`
+                    @media screen and (min-width: 769px) {
+                        .print-container {
+                            transform: scale(${externalZoom}) !important;
+                            transform-origin: top center !important;
+                            margin-bottom: calc(-297mm * (1 - ${externalZoom}) + 20px) !important;
+                        }
+                    }
+                `}</style>
+            )}
                         {/* 1. Identificação do Responsável */}
                         <section className="mb-6 avoid-break">
                             <div className="section-header">
