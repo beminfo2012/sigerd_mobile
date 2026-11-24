@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { toast } from '../components/ToastNotification'
 
 const DB_NAME = 'defesa-civil-db'
-const DB_VERSION = 35
+const DB_VERSION = 36
 
 export const safeToIsoString = (dateVal) => {
     if (!dateVal) return new Date().toISOString();
@@ -81,7 +81,7 @@ export const initDB = async () => {
             }
 
             // Humanitarian / Shelter Module
-            const shelterStores = ['shelters', 'occupants', 'donations', 'inventory', 'distributions', 'shelter_history'];
+            const shelterStores = ['shelters', 'occupants', 'donations', 'inventory', 'distributions', 'shelter_history', 'desalojados'];
             shelterStores.forEach(name => {
                 if (!db.objectStoreNames.contains(name)) {
                     const store = db.createObjectStore(name, { keyPath: 'id', autoIncrement: true });
@@ -95,6 +95,11 @@ export const initDB = async () => {
                     }
                     if (name === 'shelters') {
                         store.createIndex('supabase_id', 'supabase_id', { unique: false });
+                    }
+                    if (name === 'desalojados') {
+                        store.createIndex('desalojado_id', 'desalojado_id', { unique: false });
+                        store.createIndex('status', 'status', { unique: false });
+                        store.createIndex('operacao_id', 'operacao_id', { unique: false });
                     }
                 } else {
                     ensureSyncedIndex(name);
@@ -115,6 +120,18 @@ export const initDB = async () => {
                         const store = transaction.objectStore(name);
                         if (!store.indexNames.contains('supabase_id')) {
                             store.createIndex('supabase_id', 'supabase_id', { unique: false });
+                        }
+                    }
+                    if (name === 'desalojados') {
+                        const store = transaction.objectStore(name);
+                        if (!store.indexNames.contains('desalojado_id')) {
+                            store.createIndex('desalojado_id', 'desalojado_id', { unique: false });
+                        }
+                        if (!store.indexNames.contains('status')) {
+                            store.createIndex('status', 'status', { unique: false });
+                        }
+                        if (!store.indexNames.contains('operacao_id')) {
+                            store.createIndex('operacao_id', 'operacao_id', { unique: false });
                         }
                     }
                 }

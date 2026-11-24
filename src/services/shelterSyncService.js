@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { initDB } from './db';
 
-const TABLES = ['shelters', 'occupants', 'donations', 'inventory', 'distributions', 'emergency_contracts', 'shelter_history'];
+const TABLES = ['shelters', 'occupants', 'donations', 'inventory', 'distributions', 'emergency_contracts', 'shelter_history', 'desalojados'];
 
 export const shelterSyncService = {
     /**
@@ -16,7 +16,8 @@ export const shelterSyncService = {
             'inventory': 'shelter_inventory',
             'distributions': 'shelter_distributions',
             'emergency_contracts': 'emergency_contracts',
-            'shelter_history': 'shelter_activation_history'
+            'shelter_history': 'shelter_activation_history',
+            'desalojados': 'desalojados'
         };
 
         const remoteTable = remoteTableMap[table] || table;
@@ -95,7 +96,8 @@ export const shelterSyncService = {
                     table === 'donations' ? 'donation_id' :
                         table === 'inventory' ? 'inventory_id' :
                             table === 'distributions' ? 'distribution_id' :
-                                table === 'emergency_contracts' ? 'contract_id' : 'id';
+                                table === 'emergency_contracts' ? 'contract_id' :
+                                    table === 'desalojados' ? 'desalojado_id' : 'id';
 
             const { error } = await supabase
                 .from(remoteTable)
@@ -168,7 +170,8 @@ export const shelterSyncService = {
             'inventory': 'shelter_inventory',
             'distributions': 'shelter_distributions',
             'emergency_contracts': 'emergency_contracts',
-            'shelter_history': 'shelter_activation_history'
+            'shelter_history': 'shelter_activation_history',
+            'desalojados': 'desalojados'
         };
 
         const db = await initDB();
@@ -196,7 +199,8 @@ export const shelterSyncService = {
                                 table === 'donations' ? 'donation_id' :
                                     table === 'inventory' ? 'inventory_id' :
                                         table === 'distributions' ? 'distribution_id' :
-                                            table === 'emergency_contracts' ? 'contract_id' : 'id';
+                                            table === 'emergency_contracts' ? 'contract_id' :
+                                                table === 'desalojados' ? 'desalojado_id' : 'id';
 
                         const uniqueId = item[uniqueIdField];
 
@@ -280,6 +284,7 @@ export const shelterSyncService = {
         let synced = 0;
 
         for (const table of TABLES) {
+            if (!db.objectStoreNames.contains(table)) continue;
             const tx = db.transaction(table, 'readonly');
             const store = tx.objectStore(table);
             const count = await store.count();

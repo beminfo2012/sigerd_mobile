@@ -1,45 +1,8 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Printer, X, Download, FileText, Calendar, MapPin, Wind, CloudRain, AlertTriangle, ChevronRight, Activity, ShieldCheck, Map as MapIcon, ZoomIn, ZoomOut } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import LimiteSMJLayer from '../../components/LimiteSMJLayer';
-import L from 'leaflet';
+import { Printer, X, FileText, Activity, ZoomIn, ZoomOut } from 'lucide-react';
 import { UserContext } from '../../App';
 const LOGO_DEFESA_CIVIL_SITUACIONAL = '/logo_defesa_civil.png';
 const LOGO_SIGERD_SITUACIONAL = '/logo_prefeitura.png';
-
-// Utility component to recalibrate map size and center
-const MapController = ({ center, markers }) => {
-    const map = useMap();
-    useEffect(() => {
-        const handleResize = () => {
-            map.invalidateSize();
-            if (markers && markers.length > 0) {
-                const group = new L.featureGroup(markers.map(m => L.marker([m.lat, m.lng])));
-                map.fitBounds(group.getBounds().pad(0.2));
-            } else if (center) {
-                map.setView(center, 13);
-            }
-        };
-        handleResize();
-        const timers = [100, 300, 500, 1000, 2000].map(t => setTimeout(handleResize, t));
-
-        window.addEventListener('beforeprint', handleResize);
-        return () => {
-            timers.forEach(clearTimeout);
-            window.removeEventListener('beforeprint', handleResize);
-        };
-    }, [map, center, markers]);
-    return null;
-};
-
-// Fix Leaflet icon
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-});
 
 const getNivelPerigoColor = (nivel) => {
     const val = String(nivel || '').toUpperCase();
@@ -98,6 +61,9 @@ const RelatorioSituacionalPrint = () => {
     // Humanitarian
     const [kpiAbrigos, setKpiAbrigos] = useState('0');
     const [kpiPessoas, setKpiPessoas] = useState('0');
+    const [kpiDesalojadosPessoas, setKpiDesalojadosPessoas] = useState('0');
+    const [kpiDesalojadosFamilias, setKpiDesalojadosFamilias] = useState(0);
+    const [desalojadosList, setDesalojadosList] = useState([]);
     const [kpiKits, setKpiKits] = useState('0');
     const [kpiLogisticaSocial, setKpiLogisticaSocial] = useState('');
 
@@ -110,18 +76,10 @@ const RelatorioSituacionalPrint = () => {
     const [forecastTemps, setForecastTemps] = useState([]);
     const [forecastProbs, setForecastProbs] = useState([]);
 
-    // Operational Protocol
-    const [protocolEstadoAtual, setProtocolEstadoAtual] = useState('');
-    const [protocolAcionamento, setProtocolAcionamento] = useState('');
-
-    // Section 8
-    const [activities, setActivities] = useState([]);
+    // Section 6
     const [vistoriasList, setVistoriasList] = useState([]);
     const [ocorrenciasList, setOcorrenciasList] = useState([]);
     const [interdicoesList, setInterdicoesList] = useState([]);
-
-    // Section 9
-    const [consideracoesFinais, setConsideracoesFinais] = useState('');
 
     const handleZoomIn = () => {
         setZoom(prev => Math.min(1.5, prev + 0.1));
@@ -232,13 +190,50 @@ const RelatorioSituacionalPrint = () => {
             const combinedAlerts = [inmetList, cemadenList].filter(Boolean).join('<br/>');
             setInmetAlertsText(combinedAlerts || 'Céu limpo e condições estáveis — 0 aviso(s) ativo(s)');
 
-            // Humanitarian Data
-            setKpiAbrigos(String(humanitarianData?.shelters?.length || 0));
-            setKpiPessoas(String(humanitarianData?.occupants?.length || 0));
-            
-            const kitsDist = (humanitarianData?.inventory || []).filter(item => String(item.item_name).toLowerCase().includes('kit')).length;
+            // Humanitarian Data (somente abrigos realmente ativos/lotados e ocupantes ativos)
+            const allShelters = humanitarianData?.shelters || [];
+            const activeShelters = allShelters.filter(s => s.status === 'active' || s.status === 'full');
+            const activeShelterIds = new Set();
+            activeShelters.forEach(s => {
+                if (s.id !== undefined && s.id !== null) activeShelterIds.add(String(s.id));
+                if (s.shelter_id) activeShelterIds.add(String(s.shelter_id));
+                if (s.supabase_id) activeShelterIds.add(String(s.supabase_id));
+            });
+
+            const activeOccupants = activeShelters.length > 0
+                ? (humanitarianData?.occupants || []).filter(o =>
+                    o.status === 'active' &&
+                    (!o.shelter_id || activeShelterIds.has(String(o.shelter_id)))
+                )
+                : [];
+
+            const activeDesalojados = (humanitarianData?.desalojados || []).filter(d => d.status === 'ativo');
+            const totalPessoasDesalojadas = activeDesalojados.reduce(
+                (acc, d) => acc + (parseInt(d.qtd_pessoas, 10) || 1),
+                0
+            );
+
+            setKpiAbrigos(String(activeShelters.length));
+            setKpiPessoas(String(activeOccupants.length));
+            setKpiDesalojadosPessoas(String(totalPessoasDesalojadas));
+            setKpiDesalojadosFamilias(activeDesalojados.length);
+            setDesalojadosList(activeDesalojados);
+
+            const distributions = humanitarianData?.distributions || [];
+            const kitsDist = distributions
+                .filter(item => item.status !== 'deleted' && String(item.item_name || '').toLowerCase().includes('kit'))
+                .reduce((acc, item) => acc + (parseFloat(item.quantity) || 1), 0);
             setKpiKits(String(kitsDist));
-            setKpiLogisticaSocial('Ativa — abrigos e famílias integrados no período');
+
+            if (activeShelters.length === 0 && totalPessoasDesalojadas === 0) {
+                setKpiLogisticaSocial('Inativa — nenhum abrigo ativo e sem desalojados registrados no período');
+            } else if (activeShelters.length === 0 && totalPessoasDesalojadas > 0) {
+                setKpiLogisticaSocial('Em acompanhamento — nenhum abrigo ativo; famílias desalojadas monitoradas em acolhimento externo');
+            } else if (activeShelters.length > 0 && totalPessoasDesalojadas > 0) {
+                setKpiLogisticaSocial('Ativa — abrigos em operação e famílias desalojadas acompanhadas no período');
+            } else {
+                setKpiLogisticaSocial('Ativa — abrigos em operação e famílias assistidas no período');
+            }
 
             // Weather
             setTempAtual(`${Math.round(weatherData?.current?.temp || 22)} °C`);
@@ -271,29 +266,14 @@ const RelatorioSituacionalPrint = () => {
             setForecastTemps(temps);
             setForecastProbs(probs);
 
-            // Operational Protocol
-            let defaultProtocolText = "Monitoramento contínuo ativo. Em cenários de incidentes geológicos ou hidrológicos, equipes permanecem em prontidão para acionamento imediato.";
-            if (currentStatus?.label === 'NORMAL') {
-                defaultProtocolText = "Monitoramento contínuo ativo. Condições de normalidade. Equipes em rotina de vigilância preventiva e atividades ordinárias.";
-            } else if (currentStatus?.label === 'ATENÇÃO') {
-                defaultProtocolText = "Vigilância de riscos. Possibilidade de ocorrências devido a condições meteorológicas adversas. Equipes em prontidão para pronta resposta.";
-            } else if (currentStatus?.label === 'PERIGO') {
-                defaultProtocolText = "Alerta de risco elevado. Risco de incidentes devido a chuvas intensas ou acumuladas. Equipes de prontidão e monitoramento intensificado.";
-            } else if (currentStatus?.label === 'G. PERIGO') {
-                defaultProtocolText = "Mobilização geral ativa. Alto risco de incidentes geológicos ou hidrológicos. Equipes em campo para atendimento emergencial imediato.";
-            }
-            setProtocolEstadoAtual(defaultProtocolText);
-            setProtocolAcionamento("Canal de emergência: 199 (Defesa Civil) / Outros canais aplicáveis");
-
-            // Section 8 - Combined and split activities
-            const combined = [];
+            // Section 6 - Split activities
             const vists = [];
             const ocos = [];
             const inters = [];
 
             if (dashboardData.vistorias?.locations) {
                 dashboardData.vistorias.locations.forEach(l => {
-                    const item = {
+                    vists.push({
                         type: 'Vistoria',
                         id: l.formattedId || l.id || '---',
                         date: l.date,
@@ -301,14 +281,12 @@ const RelatorioSituacionalPrint = () => {
                         details: l.details || l.subtype || '---',
                         lat: l.lat,
                         lng: l.lng
-                    };
-                    combined.push(item);
-                    vists.push(item);
+                    });
                 });
             }
             if (dashboardData.ocorrencias?.locations) {
                 dashboardData.ocorrencias.locations.forEach(l => {
-                    const item = {
+                    ocos.push({
                         type: 'Ocorrência',
                         id: l.formattedId || l.id || '---',
                         date: l.date,
@@ -316,14 +294,12 @@ const RelatorioSituacionalPrint = () => {
                         details: l.details || l.subtype || '---',
                         lat: l.lat,
                         lng: l.lng
-                    };
-                    combined.push(item);
-                    ocos.push(item);
+                    });
                 });
             }
             if (dashboardData.interdicoes?.locations) {
                 dashboardData.interdicoes.locations.forEach(l => {
-                    const item = {
+                    inters.push({
                         type: 'Interdição',
                         id: l.formattedId || l.id || '---',
                         date: l.date,
@@ -331,15 +307,9 @@ const RelatorioSituacionalPrint = () => {
                         details: l.medida_tipo || l.details || l.subtype || '---',
                         lat: l.lat,
                         lng: l.lng
-                    };
-                    combined.push(item);
-                    inters.push(item);
+                    });
                 });
             }
-
-            // Keep combined sorted by date for the Map markers/flow
-            combined.sort((a, b) => new Date(b.date) - new Date(a.date));
-            setActivities(combined);
 
             // Sort split lists by their formatted business ID in ascending order
             const sortByIdAsc = (a, b) => String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true, sensitivity: 'base' });
@@ -351,9 +321,6 @@ const RelatorioSituacionalPrint = () => {
             setVistoriasList(vists);
             setOcorrenciasList(ocos);
             setInterdicoesList(inters);
-
-            // Considerações Finais
-            setConsideracoesFinais("Síntese da situação geral do município no período: o monitoramento meteorológico e geológico indica estabilidade relativa nas últimas horas. Recomenda-se a manutenção da atenção por parte das equipes de plantão para o período subsequente, especialmente nas áreas de risco previamente mapeadas. Não há indicação de necessidade emergencial de reforço de pessoal ou suprimentos no momento, permanecendo o efetivo em escala de prontidão padrão.");
         }
     }, [reportData]);
 
@@ -683,32 +650,75 @@ const RelatorioSituacionalPrint = () => {
                         {/* 4. ASSISTÊNCIA HUMANITÁRIA */}
                         <div className="avoid-break">
                             <div className="section-title-new">4. Assistência Humanitária</div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid var(--border)', textAlign: 'center' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: desalojadosList.length > 0 ? '10px' : '20px', border: '1px solid var(--border)', textAlign: 'center' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--ice2)' }}>
-                                        <th style={{ width: '22%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>ABRIGOS ATIVOS</th>
-                                        <th style={{ width: '22%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>PESSOAS / FAMÍLIAS ASSISTIDAS</th>
-                                        <th style={{ width: '22%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>KITS DE EMERGÊNCIA DISTRIBUÍDOS</th>
-                                        <th style={{ width: '34%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>LOGÍSTICA SOCIAL</th>
+                                        <th style={{ width: '16%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 8px', fontSize: '10px' }}>ABRIGOS ATIVOS</th>
+                                        <th style={{ width: '18%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 8px', fontSize: '10px' }}>ABRIGADOS (EM ABRIGOS)</th>
+                                        <th style={{ width: '18%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 8px', fontSize: '10px' }}>DESALOJADOS</th>
+                                        <th style={{ width: '18%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 8px', fontSize: '10px' }}>KITS DISTRIBUÍDOS</th>
+                                        <th style={{ width: '30%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 8px', fontSize: '10px' }}>LOGÍSTICA SOCIAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 8px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
                                             <div>{kpiAbrigos}</div>
+                                            <div style={{ fontSize: '8px', fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 'normal', color: 'var(--text3)' }}>
+                                                {Number(kpiAbrigos) > 0 ? 'Em operação' : 'Nenhum ativo'}
+                                            </div>
                                         </td>
-                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 8px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
                                             <div>{kpiPessoas}</div>
+                                            <div style={{ fontSize: '8px', fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 'normal', color: 'var(--text3)' }}>
+                                                {Number(kpiPessoas) > 0 ? 'Pessoa(s)' : 'Nenhum'}
+                                            </div>
                                         </td>
-                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 8px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
+                                            <div>{kpiDesalojadosPessoas}</div>
+                                            <div style={{ fontSize: '8px', fontFamily: 'IBM Plex Sans, sans-serif', fontWeight: 'normal', color: 'var(--text3)' }}>
+                                                {kpiDesalojadosFamilias > 0 ? `${kpiDesalojadosFamilias} família(s)` : 'Nenhum registro'}
+                                            </div>
+                                        </td>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 8px', fontSize: '16px', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 'bold' }}>
                                             <div>{kpiKits}</div>
                                         </td>
-                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', color: 'var(--text)' }}>
+                                        <td style={{ border: '1px solid var(--border)', padding: '6px 8px', fontSize: '10px', color: 'var(--text)' }}>
                                             <div className="text-left">{kpiLogisticaSocial}</div>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
+
+                            {desalojadosList.length > 0 && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px' }}>
+                                        Detalhamento de Famílias / Pessoas Desalojadas Ativas
+                                    </div>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid var(--border)' }}>
+                                        <thead>
+                                            <tr style={{ background: 'var(--gray1)' }}>
+                                                <th style={{ width: '26%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px', textAlign: 'left' }}>RESPONSÁVEL / FAMÍLIA</th>
+                                                <th style={{ width: '10%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px', textAlign: 'center' }}>PESSOAS</th>
+                                                <th style={{ width: '22%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px', textAlign: 'left' }}>BAIRRO DE ORIGEM</th>
+                                                <th style={{ width: '24%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px', textAlign: 'left' }}>ACOLHIMENTO</th>
+                                                <th style={{ width: '18%', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px', textAlign: 'left' }}>MOTIVO</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {desalojadosList.map((d, i) => (
+                                                <tr key={d.id || d.desalojado_id || i} style={{ background: i % 2 === 0 ? 'var(--white)' : 'var(--gray1)' }}>
+                                                    <td style={{ border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px', fontWeight: 'bold' }}>{d.responsavel_nome || '---'}</td>
+                                                    <td style={{ border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px', fontFamily: 'IBM Plex Mono, monospace', textAlign: 'center', fontWeight: 'bold' }}>{d.qtd_pessoas || 1}</td>
+                                                    <td style={{ border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px' }}>{d.bairro_origem || '---'}</td>
+                                                    <td style={{ border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px' }}>{d.tipo_acolhimento || 'Casa de Parentes'}{d.local_acolhimento ? ` — ${d.local_acolhimento}` : ''}</td>
+                                                    <td style={{ border: '1px solid var(--border)', padding: '5px 8px', fontSize: '9px' }}>{d.motivo || '---'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
 
                         {/* 5. CONDIÇÕES E PREVISÃO METEOROLÓGICA */}
@@ -771,51 +781,15 @@ const RelatorioSituacionalPrint = () => {
                             </table>
                         </div>
 
-                        {/* PAGE BREAK BEFORE OPERATIONAL PROTOCOL TO FIT ON PAGE 2 */}
+                        {/* PAGE BREAK BEFORE DETAILED TABLES TO FIT ON PAGE 2 */}
                         <div className="page-break"></div>
 
-                        {/* 6. PROTOCOLO OPERACIONAL */}
+                        {/* 6. DETALHAMENTO DE VISTORIAS, OCORRÊNCIAS E INTERDIÇÕES */}
                         <div className="avoid-break">
-                            <div className="section-title-new">6. Protocolo Operacional</div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', border: '1px solid var(--border)' }}>
-                                <tbody>
-                                    <tr>
-                                        <td style={{ width: '20%', background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>ESTADO ATUAL</td>
-                                        <td style={{ width: '80%', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', lineHeight: '1.5' }}>
-                                            <div>{protocolEstadoAtual}</div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style={{ background: 'var(--gray1)', fontWeight: 'bold', color: 'var(--navy)', border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px' }}>ACIONAMENTO</td>
-                                        <td style={{ border: '1px solid var(--border)', padding: '6px 10px', fontSize: '10px', lineHeight: '1.5' }}>
-                                            <div>{protocolAcionamento}</div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* 7. DISTRIBUIÇÃO GEOGRÁFICA — SANTA MARIA DE JETIBÁ */}
-                        <div className="avoid-break">
-                            <div className="section-title-new">7. Distribuição Geográfica — Santa Maria de Jetibá</div>
-                            <div style={{ height: '320px', width: '100%', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border)', marginBottom: '24px', position: 'relative' }}>
-                                <MapContainer center={[-20.0246, -40.7464]} zoom={13} style={{ height: '100%', width: '100%', background: '#1C2D42' }} zoomControl={false} attributionControl={false} dragging={false} scrollWheelZoom={false} doubleClickZoom={false}>
-                                    <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-                                    {activities.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng)).map((l, i) => (
-                                        <Marker key={i} position={[l.lat, l.lng]} icon={L.divIcon({ className: 'custom-m', html: `<div style="background:#ef4444; width:8px; height:8px; border:2px solid white; border-radius:50%; box-shadow:0 0 5px rgba(0,0,0,0.5);"></div>`, iconSize:[8,8], iconAnchor:[4,4] })} />
-                                    ))}
-                                    <LimiteSMJLayer keyId="limite-smj-relatorioprint" />
-                                    <MapController center={[-20.0246, -40.7464]} markers={activities.filter(a => a.lat && a.lng && !isNaN(a.lat) && !isNaN(a.lng))} />
-                                </MapContainer>
-                            </div>
-                        </div>
-
-                        {/* 8. DETALHAMENTO DE VISTORIAS, OCORRÊNCIAS E INTERDIÇÕES */}
-                        <div className="avoid-break">
-                            <div className="section-title-new">8. Detalhamento de Vistorias, Ocorrências e Interdições</div>
+                            <div className="section-title-new">6. Detalhamento de Vistorias, Ocorrências e Interdições</div>
                             
-                            {/* 8.1. VISTORIAS */}
-                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px', marginTop: '12px' }}>8.1. Detalhamento de Vistorias</div>
+                            {/* 6.1. VISTORIAS */}
+                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px', marginTop: '12px' }}>6.1. Detalhamento de Vistorias</div>
                             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', border: '1px solid var(--border)' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--ice2)' }}>
@@ -861,8 +835,8 @@ const RelatorioSituacionalPrint = () => {
                                 </tbody>
                             </table>
 
-                            {/* 8.2. OCORRÊNCIAS */}
-                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px' }}>8.2. Detalhamento de Ocorrências</div>
+                            {/* 6.2. OCORRÊNCIAS */}
+                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px' }}>6.2. Detalhamento de Ocorrências</div>
                             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', border: '1px solid var(--border)' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--ice2)' }}>
@@ -908,8 +882,8 @@ const RelatorioSituacionalPrint = () => {
                                 </tbody>
                             </table>
 
-                            {/* 8.3. INTERDIÇÕES */}
-                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px' }}>8.3. Detalhamento de Interdições</div>
+                            {/* 6.3. INTERDIÇÕES */}
+                            <div style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--navy)', marginBottom: '6px' }}>6.3. Detalhamento de Interdições</div>
                             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', border: '1px solid var(--border)' }}>
                                 <thead>
                                     <tr style={{ background: 'var(--ice2)' }}>
@@ -954,16 +928,6 @@ const RelatorioSituacionalPrint = () => {
                                     )}
                                 </tbody>
                             </table>
-                        </div>
-
-                        {/* 9. CONSIDERAÇÕES FINAIS */}
-                        <div className="avoid-break">
-                            <div className="section-title-new">9. Considerações Finais</div>
-                            <div style={{ fontSize: '10px', lineHeight: '1.5', background: 'var(--white)', minHeight: '60px', marginBottom: '24px' }}>
-                                <div style={{ outline: 'none', padding: '4px 0' }}>
-                                    {consideracoesFinais}
-                                </div>
-                            </div>
                         </div>
                     </div>
 

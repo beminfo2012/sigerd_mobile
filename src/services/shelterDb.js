@@ -34,7 +34,8 @@ const _performPull = async () => {
         { table: 'shelter_occupants', store: 'occupants', key: 'occupant_id' },
         { table: 'shelter_donations', store: 'donations', key: 'donation_id' },
         { table: 'shelter_inventory', store: 'inventory', key: 'inventory_id' },
-        { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' }
+        { table: 'shelter_distributions', store: 'distributions', key: 'distribution_id' },
+        { table: 'desalojados', store: 'desalojados', key: 'desalojado_id' }
     ];
 
     const db = await initDB();
@@ -1107,4 +1108,91 @@ export const getItemMovementHistory = async (itemName, shelterId) => {
     });
 
     return movements.sort((a, b) => new Date(b.date) - new Date(a.date));
+};
+
+// --- DESALOJADOS (Pessoas/Famílias fora de abrigos públicos) ---
+
+export const getDesalojados = async () => {
+    await safePullShelterModuleFromCloud();
+    const db = await initDB();
+    if (!db.objectStoreNames.contains('desalojados')) return [];
+    const all = await db.getAll('desalojados');
+
+    const dedupMap = new Map();
+    all.sort((a, b) => {
+        const scoreA = (a.supabase_id ? 2 : 0) + (a.synced ? 1 : 0);
+        const scoreB = (b.supabase_id ? 2 : 0) + (b.synced ? 1 : 0);
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+    }).forEach(item => {
+        const key = item.desalojado_id || item.supabase_id || item.id;
+        dedupMap.set(key, item);
+    });
+
+    return Array.from(dedupMap.values())
+        .filter(d => d.status !== 'deleted')
+        .sort((a, b) => new Date(b.data_registro || b.created_at || 0) - new Date(a.data_registro || a.created_at || 0));
+};
+
+export const addDesalojado = async (desalojadoData) => {
+    const db = await initDB();
+    const nowIso = new Date().toISOString();
+    const newRecord = {
+        ...desalojadoData,
+        desalojado_id: generateId('DES'),
+        operacao_id: desalojadoData.operacao_id || getOperacaoId(),
+        qtd_pessoas: Math.max(1, parseInt(desalojadoData.qtd_pessoas, 10) || 1),
+        qtd_adultos: parseInt(desalojadoData.qtd_adultos, 10) || 0,
+        qtd_criancas: parseInt(desalojadoData.qtd_criancas, 10) || 0,
+        qtd_idosos: parseInt(desalojadoData.qtd_idosos, 10) || 0,
+        qtd_pcd: parseInt(desalojadoData.qtd_pcd, 10) || 0,
+        status: desalojadoData.status || 'ativo',
+        data_registro: desalojadoData.data_registro || nowIso,
+        created_at: nowIso,
+        updated_at: nowIso,
+        synced: false
+    };
+
+    const id = await db.add('desalojados', newRecord);
+    triggerSync();
+    return { ...newRecord, id };
+};
+
+export const updateDesalojado = async (id, changes) => {
+    const db = await initDB();
+    const all = await db.getAll('desalojados');
+    const existing = all.find(
+        d => String(d.id) === String(id) || String(d.desalojado_id) === String(id) || String(d.supabase_id) === String(id)
+    );
+    if (!existing) return null;
+
+    const updated = {
+        ...existing,
+        ...changes,
+        qtd_pessoas: changes.qtd_pessoas !== undefined ? Math.max(1, parseInt(changes.qtd_pessoas, 10) || 1) : existing.qtd_pessoas,
+        updated_at: new Date().toISOString(),
+        synced: false
+    };
+
+    await db.put('desalojados', updated);
+    triggerSync();
+    return updated;
+};
+
+export const deleteDesalojado = async (id) => {
+    const db = await initDB();
+    const all = await db.getAll('desalojados');
+    const existing = all.find(
+        d => String(d.id) === String(id) || String(d.desalojado_id) === String(id) || String(d.supabase_id) === String(id)
+    );
+    if (!existing) return;
+
+    const updated = {
+        ...existing,
+        status: 'deleted',
+        updated_at: new Date().toISOString(),
+        synced: false
+    };
+    await db.put('desalojados', updated);
+    triggerSync();
 };

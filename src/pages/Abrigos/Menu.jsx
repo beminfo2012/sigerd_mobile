@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import HumanitarianIcon from '../../components/HumanitarianIcon';
 import { UserContext } from '../../App';
-import { getShelters, getOccupants, getDonations, getDistributions, getGlobalInventory, getDataConsistencyReport } from '../../services/shelterDb.js';
+import { getShelters, getOccupants, getDonations, getDistributions, getGlobalInventory, getDataConsistencyReport, getDesalojados } from '../../services/shelterDb.js';
 import { shelterSyncService } from '../../services/shelterSyncService';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
@@ -34,7 +34,9 @@ export default function ShelterMenu() {
         totalDistributions: 0,
         itemsCount: 0,
         occupancyRate: 0,
-        totalCapacity: 0
+        totalCapacity: 0,
+        desalojadosPessoas: 0,
+        desalojadosFamilias: 0
     });
     const [shelterOccupancy, setShelterOccupancy] = useState([]);
     const [lowStockAlerts, setLowStockAlerts] = useState([]);
@@ -96,6 +98,8 @@ export default function ShelterMenu() {
             let inventory = await getGlobalInventory() || [];
             let allDistributions = [];
             try { allDistributions = await getDistributions() || []; } catch (e) { /* distributions store may not exist yet */ }
+            let desalojados = [];
+            try { desalojados = await getDesalojados() || []; } catch (e) { /* desalojados store may not exist yet */ }
 
             console.log("[Menu] Raw Data BEFORE Filter:", {
                 shelters,
@@ -113,10 +117,14 @@ export default function ShelterMenu() {
                 occupants = occupants.filter(o => !o.operacao_id || o.operacao_id === operacaoAtiva.id);
                 donations = donations.filter(d => !d.operacao_id || d.operacao_id === operacaoAtiva.id);
                 allDistributions = allDistributions.filter(d => !d.operacao_id || d.operacao_id === operacaoAtiva.id);
+                desalojados = desalojados.filter(d => !d.operacao_id || d.operacao_id === operacaoAtiva.id);
             }
 
             // Calculate KPIs
-            const activeShelters = shelters.filter(s => s.status === 'active');
+            const activeShelters = shelters.filter(s => s.status === 'active' || s.status === 'full');
+            const activeDesalojados = desalojados.filter(d => d.status === 'ativo');
+            const desalojadosPessoas = activeDesalojados.reduce((acc, d) => acc + (parseInt(d.qtd_pessoas, 10) || 1), 0);
+            const desalojadosFamilias = activeDesalojados.length;
             const totalCapacity = shelters.reduce((acc, s) => acc + parseInt(s.capacity || 0), 0);
             const totalOccupancy = shelters.reduce((acc, s) => acc + parseInt(s.current_occupancy || 0), 0);
             const totalItemsQty = inventory.reduce((acc, i) => acc + (parseFloat(i.quantity) || 0), 0);
@@ -135,7 +143,9 @@ export default function ShelterMenu() {
                 itemsCount: inventory.length,
                 totalItemsQty,
                 totalCapacity,
-                occupancyRate: totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0
+                occupancyRate: totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0,
+                desalojadosPessoas,
+                desalojadosFamilias
             });
 
             // === Per-Shelter Occupancy Bars ===
@@ -258,6 +268,15 @@ export default function ShelterMenu() {
             path: '/assisthumanitaria/lista',
             color: 'bg-blue-50 dark:bg-blue-900/20 text-[#2a5299]',
             allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total']
+        },
+        {
+            title: 'Gestão de Desalojados',
+            category: 'Abrigamento e Pessoas',
+            description: 'Cadastre famílias e pessoas desalojadas em casas de parentes ou amigos.',
+            icon: Home,
+            path: '/assisthumanitaria/desalojados',
+            color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600',
+            allowedRoles: ['agente de defesa civil', 'técnico em edificações', 'admin', 'administrador', 'assistente social', 'coordenador', 'coordenador de proteção e defesa civil', 'secretário', 'humanitario_total', 'humanitario_leitura']
         },
         {
             title: 'Estoque Municipal',
@@ -413,7 +432,7 @@ export default function ShelterMenu() {
                         )}
 
                         {/* Summary KPI Cards */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
                             {/* Gradient Card - Active Shelters */}
                             <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-[28px] shadow-lg border border-blue-400/20 dark:border-blue-500/30 relative overflow-hidden group">
                                 <div className="flex justify-between items-start mb-2 relative z-10">
@@ -456,6 +475,21 @@ export default function ShelterMenu() {
                                     <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold">{stats.totalOccupants} atual</span>
                                     <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold">{stats.totalCapacity} máx</span>
                                 </div>
+                            </div>
+
+                            {/* Desalojados */}
+                            <div
+                                onClick={() => navigate('/assisthumanitaria/desalojados')}
+                                className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-amber-100 dark:border-amber-900/40 shadow-sm relative overflow-hidden group cursor-pointer hover:shadow-md transition-all"
+                            >
+                                <div className="flex justify-between items-start mb-2">
+                                    <Home className="text-amber-500" size={20} />
+                                    <div className="text-[9px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
+                                        {stats.desalojadosFamilias} {stats.desalojadosFamilias === 1 ? 'família' : 'famílias'}
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{stats.desalojadosPessoas}</div>
+                                <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Desalojados Ativos</div>
                             </div>
 
                             {/* Donations */}

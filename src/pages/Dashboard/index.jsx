@@ -188,7 +188,7 @@ import {
     getAllInterdicoesLocal, getAllAgendaLocal
 } from '../../services/db'
 import { getOcorrenciasLocal } from '../../services/ocorrenciasDb'
-import { getShelters, getOccupants, getInventory } from '../../services/shelterDb'
+import { getShelters, getOccupants, getInventory, getDistributions, getDesalojados } from '../../services/shelterDb'
 import { generateSituationalReport } from '../../utils/situationalReportGenerator'
 import { cemadenService, STATION_METADATA } from '../../services/cemaden'
 import { getAlertasCemaden } from '../../services/alertasCemadenService'
@@ -3628,12 +3628,14 @@ const Dashboard = () => {
                 weather: weather // Pass full weather object
             };
 
-            const [shelters, occupants, inventory] = await Promise.all([
+            const [shelters, occupants, inventory, distributions, desalojados] = await Promise.all([
                 getShelters().catch(() => []),
                 getOccupants().catch(() => []),
-                getInventory().catch(() => [])
+                getInventory().catch(() => []),
+                getDistributions().catch(() => []),
+                getDesalojados().catch(() => [])
             ]);
-            const humanitarianData = { shelters, occupants, inventory };
+            const humanitarianData = { shelters, occupants, inventory, distributions, desalojados };
 
             // Logic shared with the new preview page
             const now = new Date();

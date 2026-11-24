@@ -48,6 +48,7 @@ const OcorrenciasPrint = lazy(() => import('./pages/Ocorrencias/OcorrenciasPrint
 const ShelterMenu = lazy(() => import('./pages/Abrigos/Menu'))
 const ShelterList = lazy(() => import('./pages/Abrigos/ShelterList'))
 const ShelterDetail = lazy(() => import('./pages/Abrigos/ShelterDetail'))
+const Desalojados = lazy(() => import('./pages/Abrigos/Desalojados'))
 
 // Animais Module (Lazy)
 const PontosApoioAnimal = lazy(() => import('./pages/Animais/PontosApoio'))
@@ -390,6 +391,11 @@ const AppContent = ({
                                 <Route path="/assisthumanitaria/lista" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_FULL_ROLES}>
                                         <ShelterList />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/assisthumanitaria/desalojados" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={HUMANITARIAN_ROLES}>
+                                        <Desalojados />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/assisthumanitaria/estoque" element={
