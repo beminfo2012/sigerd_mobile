@@ -247,7 +247,6 @@ const ProfileForm = ({ profile, onClose }) => {
         const newErrors = {}
         if (!formData.label.trim()) newErrors.label = 'Nome do perfil é obrigatório'
         if (!formData.role_key.trim()) newErrors.role_key = 'Chave do perfil (role_key) é obrigatória'
-        else if (formData.role_key.includes(' ')) newErrors.role_key = 'A chave do perfil não deve conter espaços'
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
     }
@@ -257,7 +256,11 @@ const ProfileForm = ({ profile, onClose }) => {
         setLoading(true)
         try {
             const { error } = await saveProfile({
+                id: profile?.id,
+                original_role_key: profile?.role_key,
                 ...formData,
+                label: formData.label.trim(),
+                role_key: formData.role_key.trim(),
                 permissions
             })
 

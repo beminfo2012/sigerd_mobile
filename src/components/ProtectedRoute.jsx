@@ -10,6 +10,29 @@ import { Navigate, useLocation } from 'react-router-dom';
  * @param {Array<string>} props.allowedRoles - List of roles permitted to access this route
  * @param {string} props.fallbackPath - Path to redirect to if authorization fails (defaults to /assisthumanitaria for limited roles)
  */
+const getModuleForPath = (pathname) => {
+    if (pathname === '/') return 'dashboard';
+    if (pathname.startsWith('/ocorrencias')) return 'ocorrencias';
+    if (pathname.startsWith('/vistorias')) return 'vistorias';
+    if (pathname.startsWith('/interdicao') || pathname.startsWith('/interdicoes') || pathname.startsWith('/desinterdicao')) return 'interdicoes';
+    if (pathname.startsWith('/redap')) return 'redap';
+    if (pathname.startsWith('/assisthumanitaria') || pathname.startsWith('/pontos-apoio')) return 'humanitaria';
+    if (pathname.startsWith('/voluntarios')) return 'voluntarios';
+    if (pathname.startsWith('/mci')) return 'mci';
+    if (pathname.startsWith('/contingencia') || pathname.startsWith('/plano-contingencia')) return 'contingencia';
+    if (pathname.startsWith('/usuarios') || pathname.startsWith('/perfis')) return 'usuarios';
+    if (pathname.startsWith('/noprer')) return 'noprer';
+    if (pathname.startsWith('/nortis')) return 'nortis';
+    if (pathname.startsWith('/mrcr')) return 'mrcr';
+    if (pathname.startsWith('/agenda')) return 'agenda';
+    if (pathname.startsWith('/pluviometros') || pathname.startsWith('/monitoramento')) return 'pluviometros';
+    if (pathname.startsWith('/checklist-saida')) return 'checklist_saida';
+    if (pathname.startsWith('/georescue')) return 'georescue';
+    if (pathname.startsWith('/alerts') || pathname.startsWith('/alertas')) return 'alertas';
+    if (pathname.startsWith('/relatorio-situacional')) return 'dashboard';
+    return null;
+};
+
 const ProtectedRoute = ({ children, user, allowedRoles, fallbackPath }) => {
     const location = useLocation();
 
@@ -24,10 +47,11 @@ const ProtectedRoute = ({ children, user, allowedRoles, fallbackPath }) => {
     }
 
     const userRole = user.role || '';
-    const userEmail = user.email || '';
+    const moduleId = getModuleForPath(location.pathname);
+    const hasDynamicPermission = !!(moduleId && user.permissions?.[moduleId]?.ver === true);
 
-    // Authorization check: Allow if no specific roles required, OR if role matches
-    const isAuthorized = !allowedRoles || allowedRoles.includes(userRole);
+    // Authorization check: Allow if no specific roles required, role matches, OR dynamic role_definitions permission grants access
+    const isAuthorized = !allowedRoles || allowedRoles.includes(userRole) || hasDynamicPermission;
 
     if (!isAuthorized) {
         // If not authorized, redirect to the assigned fallback or a default safe zone

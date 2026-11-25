@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { ArrowLeft, Save, Eye, EyeOff, Shield, User, Mail, Lock, Hash, ToggleLeft, ToggleRight } from 'lucide-react'
 import { createUser, updateUser, deactivateUser, reactivateUser, updateUserPassword } from '../../services/userService'
+import { listProfiles } from '../../services/profileService'
 import { useToast } from '../../components/ToastNotification'
 
 // ─── Grupos de perfil base para seleção visual ───────────────────────────────
@@ -78,6 +79,92 @@ const UserForm = ({ user, onClose }) => {
     })
 
     const [errors, setErrors] = useState({})
+    const [dbProfiles, setDbProfiles] = useState([])
+    const [loadingProfiles, setLoadingProfiles] = useState(true)
+
+    useEffect(() => {
+        let mounted = true
+        listProfiles().then(({ data }) => {
+            if (mounted && Array.isArray(data)) {
+                setDbProfiles(data)
+            }
+        }).finally(() => {
+            if (mounted) setLoadingProfiles(false)
+        })
+        return () => { mounted = false }
+    }, [])
+
+    const dynamicRoleGroups = useMemo(() => {
+        const dbByKey = new Map(dbProfiles.map(p => [p.role_key, p]))
+        const knownKeys = new Set()
+
+        const enrichedGroups = ROLE_GROUPS.map(group => {
+            const roles = group.roles
+                .map(r => {
+                    knownKeys.add(r.value)
+                    const dbMatch = dbByKey.get(r.value)
+                    if (dbMatch && dbMatch.is_active === false && formData.role !== r.value) {
+                        return null
+                    }
+                    return {
+                        value: r.value,
+                        label: dbMatch?.label || r.label,
+                        desc: dbMatch?.description || r.desc,
+                    }
+                })
+                .filter(Boolean)
+
+            return { ...group, roles }
+        }).filter(g => g.roles.length > 0)
+
+        const customRoles = dbProfiles
+            .filter(p => {
+                if (!p.role_key) return false
+                if (knownKeys.has(p.role_key)) return false
+                if (p.role_key.startsWith('Redap_')) return false
+                if (p.is_active === false && formData.role !== p.role_key) return false
+                return true
+            })
+            .map(p => ({
+                value: p.role_key,
+                label: p.label || p.role_key,
+                desc: p.description || 'Perfil personalizado',
+            }))
+
+        if (customRoles.length > 0) {
+            enrichedGroups.push({
+                group: 'Perfis Personalizados',
+                roles: customRoles,
+            })
+        }
+
+        const allListedKeys = new Set(enrichedGroups.flatMap(g => g.roles.map(r => r.value)))
+        if (
+            formData.role &&
+            !allListedKeys.has(formData.role) &&
+            !formData.role.startsWith('Redap_') &&
+            formData.role !== 'Redap'
+        ) {
+            enrichedGroups.push({
+                group: 'Perfil Atual do Usuário',
+                roles: [{ value: formData.role, label: formData.role, desc: 'Vinculado atualmente' }],
+            })
+        }
+
+        return enrichedGroups
+    }, [dbProfiles, formData.role])
+
+    const dynamicRedapSecretarias = useMemo(() => {
+        const baseMap = new Map(REDAP_SECRETARIAS.map(s => [s.value, s]))
+        dbProfiles
+            .filter(p => p.role_key && p.role_key.startsWith('Redap_') && (p.is_active !== false || formData.role === p.role_key))
+            .forEach(p => {
+                if (!baseMap.has(p.role_key)) {
+                    baseMap.set(p.role_key, { value: p.role_key, label: p.label || p.role_key })
+                }
+            })
+        return Array.from(baseMap.values())
+    }, [dbProfiles, formData.role])
 
     const validateForm = () => {
         const newErrors = {}
@@ -234,7 +321,12 @@ const UserForm = ({ user, onClose }) => {
                         As permissões de cada perfil são gerenciadas em <strong>Gestão de Perfis</strong>.
                     </p>
                     <div className="space-y-5">
-                        {ROLE_GROUPS.map(group => (
+                        {loadingProfiles && (
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                                Carregando perfis cadastrados...
+                            </p>
+                        )}
+                        {dynamicRoleGroups.map(group => (
                             <div key={group.group}>
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">{group.group}</p>
                                 <div className="flex flex-wrap gap-2">
@@ -281,7 +373,7 @@ const UserForm = ({ user, onClose }) => {
                                 onChange={(e) => setFormData(p => ({ ...p, role: e.target.value }))}
                                 className="w-full bg-white p-3 rounded-xl border border-slate-200 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20"
                             >
-                                {REDAP_SECRETARIAS.map(sec => (
+                                {dynamicRedapSecretarias.map(sec => (
                                     <option key={sec.value} value={sec.value}>
                                         {sec.label}
                                     </option>

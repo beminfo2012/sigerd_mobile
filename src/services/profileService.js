@@ -37,31 +37,57 @@ export const getProfileByKey = async (roleKey) => {
 }
 
 /**
- * Cria ou atualiza a definição de um perfil (upsert por role_key).
+ * Cria ou atualiza a definição de um perfil.
+ * Se possuir `id`, atualiza pelo ID e migra usuários vinculados caso a `role_key` tenha sido alterada.
  */
 export const saveProfile = async (profileData) => {
     try {
         const admin = await isAdmin()
         if (!admin) return { data: null, error: { message: 'Acesso negado.' } }
 
-        const { role_key, label, description, permissions, is_system, is_active } = profileData
+        const { id, original_role_key, role_key, label, description, permissions, is_system, is_active } = profileData
+        const cleanRoleKey = String(role_key || '').trim()
+        const cleanLabel = String(label || '').trim()
 
-        const { data, error } = await supabase
-            .from('role_definitions')
-            .upsert(
-                {
-                    role_key,
-                    label,
-                    description: description || null,
-                    permissions: permissions || {},
-                    is_system: is_system || false,
-                    is_active: is_active !== false,
-                    updated_at: new Date().toISOString(),
-                },
-                { onConflict: 'role_key' }
-            )
-            .select()
-            .single()
+        const payload = {
+            role_key: cleanRoleKey,
+            label: cleanLabel,
+            description: description || null,
+            permissions: permissions || {},
+            is_system: is_system || false,
+            is_active: is_active !== false,
+            updated_at: new Date().toISOString(),
+        }
+
+        let data, error
+        if (id) {
+            const res = await supabase
+                .from('role_definitions')
+                .update(payload)
+                .eq('id', id)
+                .select()
+                .single()
+            data = res.data
+            error = res.error
+
+            if (!error && original_role_key && original_role_key !== cleanRoleKey) {
+                const { error: migrateErr } = await supabase
+                    .from('profiles')
+                    .update({ role: cleanRoleKey, updated_at: new Date().toISOString() })
+                    .eq('role', original_role_key)
+                if (migrateErr) {
+                    console.warn('[profileService] Aviso ao migrar role dos usuários:', migrateErr)
+                }
+            }
+        } else {
+            const res = await supabase
+                .from('role_definitions')
+                .upsert(payload, { onConflict: 'role_key' })
+                .select()
+                .single()
+            data = res.data
+            error = res.error
+        }
 
         if (error) throw error
         return { data, error: null }

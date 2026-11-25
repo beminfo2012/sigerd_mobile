@@ -121,48 +121,56 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'Dashboard',
             icon: Home,
             path: '/',
+            moduleId: 'dashboard',
             roles: AGENT_ROLES
         },
         {
             label: 'Monitoramento',
             icon: BarChart3,
             path: '/monitoramento',
+            moduleId: 'pluviometros',
             roles: AGENT_ROLES
         },
         {
             label: 'Business Intelligence',
             icon: Activity,
             path: '/bi',
+            moduleId: 'dashboard',
             roles: AGENT_ROLES
         },
         {
             label: 'GeoRescue',
             icon: Map,
             path: '/georescue',
+            moduleId: 'georescue',
             roles: AGENT_ROLES.filter(r => r !== 'Operador')
         },
         {
             label: 'Ocorrências',
             icon: AlertTriangle,
             path: '/ocorrencias',
+            moduleId: 'ocorrencias',
             roles: AGENT_ROLES
         },
         {
             label: 'Vistorias',
             icon: ClipboardList,
             path: '/vistorias',
+            moduleId: 'vistorias',
             roles: AGENT_ROLES
         },
         {
             label: 'NOPRER',
             icon: Shield,
             path: '/noprer',
+            moduleId: 'noprer',
             roles: AGENT_ROLES
         },
         {
             label: 'Interdições',
             icon: AlertOctagon,
             path: '/interdicao',
+            moduleId: 'interdicoes',
             roles: AGENT_ROLES
         },
 
@@ -170,42 +178,49 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
             label: 'Plano de Contingência',
             icon: Shield,
             path: '/contingencia',
+            moduleId: 'contingencia',
             roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Agente de Defesa Civil', 'admin']
         },
         {
             label: 'NORTIS',
             icon: () => <img src="/nortis_icon_white.png" className="w-5 h-5 object-contain" alt="Nortis" />,
             path: '/nortis',
+            moduleId: 'nortis',
             roles: AGENT_ROLES
         },
         {
             label: 'REDAP',
             icon: ClipboardCheck,
             path: '/redap',
+            moduleId: 'redap',
             roles: REDAP_ROLES
         },
         {
             label: 'Assist. Humanitária',
             icon: HumanitarianIcon,
             path: '/assisthumanitaria',
+            moduleId: 'humanitaria',
             roles: HUMANITARIAN_ROLES
         },
         {
             label: 'Voluntários',
             icon: HeartHandshake,
             path: '/voluntarios',
+            moduleId: 'voluntarios',
             roles: AGENT_ROLES
         },
         {
             label: 'MCI - Recursos',
             icon: ClipboardList,
             path: '/mci',
+            moduleId: 'mci',
             roles: [...AGENT_ROLES, ...REDAP_ROLES]
         },
         {
             label: 'Acervo Legado',
             icon: History,
             path: '/legado/vistorias',
+            moduleId: 'vistorias',
             roles: ['Admin', 'Coordenador', 'Coordenador de Proteção e Defesa Civil', 'Secretário', 'admin', 'Agente de Defesa Civil', 'Técnico em Edificações', 'Operador', ...AGENT_ROLES, ...REDAP_ROLES, ...HUMANITARIAN_ROLES]
         },
         {
@@ -217,7 +232,10 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
     ];
 
     const filteredItems = navItems.filter(item =>
-        item.roles.includes(userProfile?.role) || userProfile?.role === 'Admin'
+        item.roles.includes(userProfile?.role) ||
+        userProfile?.role === 'Admin' ||
+        (item.moduleId && userProfile?.permissions?.[item.moduleId]?.ver === true) ||
+        item.path === '/menu'
     );
     return (
         <div className="hidden md:block w-16 h-full shrink-0 relative z-[3000]">
