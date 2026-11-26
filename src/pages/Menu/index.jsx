@@ -6,6 +6,7 @@ import SignaturePadComp from '../../components/SignaturePad'
 import ConfirmModal from '../../components/ConfirmModal'
 import { toast } from '../../components/ToastNotification'
 import { useNavigate } from 'react-router-dom'
+import { openRedapPortal } from '../../utils/redapDomain'
 
 const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode }) => {
     const navigate = useNavigate()
@@ -466,7 +467,7 @@ const Menu = ({ userProfile, onLogout, setUserProfile, isDarkMode, setIsDarkMode
                             'S2id_EsporteTurismo', 'S2id_ServicosUrbanos', 'S2id_Transportes'
                         ].includes(userProfile?.role)) && (
                             <button
-                                onClick={() => navigate('/redap')}
+                                onClick={() => openRedapPortal(navigate, '/redap')}
                                 className="w-full p-5 flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50"
                             >
                                 <div className="flex items-center">

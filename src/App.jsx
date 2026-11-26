@@ -21,6 +21,7 @@ import MobileNavigation from './components/MobileNavigation'
 import { ativarSincronizacaoOfflineAutomatica } from './services/SincronizacaoVistorias'
 import { OperacaoProvider } from './contexts/OperacaoContext'
 import { NotificationProvider } from './contexts/NotificationContext'
+import { isRedapSubdomain, isRedapStandalonePath } from './utils/redapDomain'
 
 
 // Lazy loaded components
@@ -83,8 +84,17 @@ const MrcrPage = lazy(() => import('./pages/Mrcr'))
 const GeoRescueAdminPage = lazy(() => import('./pages/GeoRescue/GeoRescueAdminPage'))
 
 // Redap Module (Lazy)
-const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
+const RedapLayout = lazy(() => import('./pages/Redap/RedapLayout'))
+const RedapPortalDashboard = lazy(() => import('./pages/Redap/RedapPortalDashboard'))
+const RedapEventPanel = lazy(() => import('./pages/Redap/RedapEventPanel'))
+const RedapReportWizard = lazy(() => import('./pages/Redap/RedapReportWizard'))
+const RedapReviewPanel = lazy(() => import('./pages/Redap/RedapReviewPanel'))
+const RedapModelsPage = lazy(() => import('./pages/Redap/RedapModelsPage'))
+const RedapIndicatorsPage = lazy(() => import('./pages/Redap/RedapIndicatorsPage'))
+const RedapSectorPrint = lazy(() => import('./pages/Redap/RedapSectorPrint'))
+const RedapConsolidatedPrint = lazy(() => import('./pages/Redap/RedapConsolidatedPrint'))
 
+const RedapDashboard = lazy(() => import('./pages/Redap/RedapDashboard'))
 const RedapForm = lazy(() => import('./pages/Redap/RedapForm'))
 const RedapEventDetails = lazy(() => import('./pages/Redap/RedapEventDetails'))
 const RedapSectorForm = lazy(() => import('./pages/Redap/RedapSectorForm'))
@@ -136,14 +146,17 @@ const AppContent = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const isPrintPage = location.pathname.includes('/imprimir') || location.pathname.includes('/relatorio-') || location.pathname.includes('/termo/') || location.search.includes('fullscreen=true');
+    const isPrintPage = location.pathname.includes('/imprimir') || location.pathname.includes('/consolidado') || location.pathname.includes('/relatorio-') || location.pathname.includes('/termo/') || location.search.includes('fullscreen=true');
     const isTvMode = location.search.includes('tvMode=true');
+    const isRedapHost = isRedapSubdomain();
+    const isRedapPortal = isRedapStandalonePath(location.pathname);
+    const hideMainChrome = isPrintPage || isTvMode || isRedapPortal;
 
     useEffect(() => {
         if (!isPrintPage) {
-            document.title = 'SIGERD WEB';
+            document.title = isRedapPortal ? 'SIGERD • REDAP' : 'SIGERD WEB';
         }
-    }, [location.pathname, isPrintPage]);
+    }, [location.pathname, isPrintPage, isRedapPortal]);
 
     useEffect(() => {
         const checkRedirect = async () => {
@@ -205,12 +218,12 @@ const AppContent = ({
             <SyncBackground />
             <PWAUpdater />
 
-            {/* Desktop Header - Hide on print, mobile, and TV mode */}
-            {!isPrintPage && !isTvMode && <DesktopHeader userProfile={userProfile} />}
+            {/* Desktop Header - Hide on print, mobile, TV mode and standalone REDAP */}
+            {!hideMainChrome && <DesktopHeader userProfile={userProfile} />}
 
             <div className={`flex flex-1 ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
                 {/* Sidebar - Desktop Only */}
-                {!isPrintPage && !isTvMode && (
+                {!hideMainChrome && (
                     <Sidebar
                         userProfile={userProfile}
                         setUserProfile={setUserProfile}
@@ -226,13 +239,13 @@ const AppContent = ({
 
 
                 <div className={`flex flex-col flex-1 relative ${isPrintPage ? '!overflow-visible h-auto' : 'overflow-hidden'}`}>
-                    {/* Mobile Header - Hide on print, desktop, and TV mode */}
-                    {!isPrintPage && !isTvMode && (
+                    {/* Mobile Header - Hide on print, desktop, TV mode and standalone REDAP */}
+                    {!hideMainChrome && (
                         <MobileHeader userProfile={userProfile} />
                     )}
 
                     {/* Main Content Area */}
-                    <main className={isPrintPage ? "" : "main-content"}>
+                    <main className={isPrintPage ? "" : isRedapPortal ? "flex-1 overflow-y-auto" : "main-content"}>
                         <Suspense fallback={
                             <div className="flex flex-col items-center justify-center p-20 gap-3">
                                 <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -241,9 +254,17 @@ const AppContent = ({
                         }>
                             <Routes>
                                 <Route path="/" element={
-                                    <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, 'Redap_Geral']}>
-                                        <Dashboard />
-                                    </ProtectedRoute>
+                                    isRedapHost ? (
+                                        <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                            <RedapLayout onLogout={handleLogout}>
+                                                <RedapPortalDashboard />
+                                            </RedapLayout>
+                                        </ProtectedRoute>
+                                    ) : (
+                                        <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, 'Redap_Geral']}>
+                                            <Dashboard />
+                                        </ProtectedRoute>
+                                    )
                                 } />
                                 <Route path="/georescue" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={[...AGENT_ROLES, 'Redap_Geral'].filter(r => r !== 'Operador')}>
@@ -524,30 +545,100 @@ const AppContent = ({
                                 <Route path="/legado/vistorias" element={<LegadoDashboard />} />
                                 <Route path="/legado/oficios" element={<LegadoDashboard />} />
 
-                                {/* REDAP Routes */}
+                                {/* REDAP Routes (Portal Dedicado Standalone - Anexo A Manual) */}
                                 <Route path="/redap" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
-                                        <RedapDashboard />
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapPortalDashboard />
+                                        </RedapLayout>
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/eventos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapPortalDashboard />
+                                        </RedapLayout>
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/eventos/:eventoId" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapEventPanel />
+                                        </RedapLayout>
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/redap/evento/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
-                                        <RedapEventDetails />
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapEventPanel />
+                                        </RedapLayout>
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/redap/evento-legado/:id" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapEventDetails />
+                                        </RedapLayout>
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/relatorios/:relatorioId/preencher" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapReportWizard />
+                                        </RedapLayout>
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/relatorios/:relatorioId/analise" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapReviewPanel />
+                                        </RedapLayout>
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/modelos" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapModelsPage />
+                                        </RedapLayout>
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/indicadores" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapIndicatorsPage />
+                                        </RedapLayout>
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/relatorios/:relatorioId/imprimir" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapSectorPrint />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/redap/eventos/:eventoId/consolidado" element={
+                                    <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
+                                        <RedapConsolidatedPrint />
+                                    </ProtectedRoute>
+                                } />
+                                {/* Rotas legadas mantidas para compatibilidade */}
                                 <Route path="/redap/registro/novo/:eventoId" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
-                                        <RedapSectorForm />
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapSectorForm />
+                                        </RedapLayout>
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/redap/registro/editar/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
-                                        <RedapSectorForm />
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapSectorForm />
+                                        </RedapLayout>
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/redap/evento/:eventoId/secao/:secaoId" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
-                                        <RedapSectorForm />
+                                        <RedapLayout onLogout={handleLogout}>
+                                            <RedapSectorForm />
+                                        </RedapLayout>
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/redap/evento/imprimir-secao/:id/:secaoId" element={
@@ -560,7 +651,6 @@ const AppContent = ({
                                         <RedapPrint />
                                     </ProtectedRoute>
                                 } />
-                                {/* Legado - To be removed later */}
                                 <Route path="/redap/v1/:id" element={
                                     <ProtectedRoute user={userProfile} allowedRoles={REDAP_ROLES}>
                                         <RedapForm />
@@ -668,8 +758,8 @@ const AppContent = ({
                         </Suspense>
                     </main>
 
-                    {/* Bottom Navigation - Hide on print, desktop, and TV mode */}
-                    {!isPrintPage && !isTvMode && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.role === 'Admin' || userProfile?.role === 'Redap_Geral') && (
+                    {/* Bottom Navigation - Hide on print, desktop, TV mode and standalone REDAP */}
+                    {!hideMainChrome && (AGENT_ROLES.includes(userProfile?.role) || userProfile?.role === 'Admin' || userProfile?.role === 'Redap_Geral') && (
                         <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
                     )}
                 </div>

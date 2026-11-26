@@ -38,6 +38,7 @@ import { syncPendingData, getPendingSyncCount, clearLocalData } from '../service
 import ProfileModal from './ProfileModal';
 import ConfirmModal from './ConfirmModal';
 import { toast } from './ToastNotification';
+import { openRedapPortal } from '../utils/redapDomain';
 
 const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP_ROLES, isDarkMode, setIsDarkMode, setUserProfile }) => {
     const location = useLocation();
@@ -258,6 +259,12 @@ const Sidebar = ({ userProfile, onLogout, AGENT_ROLES, HUMANITARIAN_ROLES, REDAP
                         <React.Fragment key={item.path}>
                             <Link
                                 to={item.path}
+                                onClick={(e) => {
+                                    if (item.path === '/redap') {
+                                        e.preventDefault();
+                                        openRedapPortal(navigate, '/redap');
+                                    }
+                                }}
                                 title={isCollapsed ? item.label : ''}
                                 className={`flex items-center rounded-xl transition-all duration-200 group relative ${isCollapsed ? 'justify-center py-3' : 'px-4 py-3 gap-3'} ${isActive(item.path)
                                     ? 'bg-white/20 text-white'
