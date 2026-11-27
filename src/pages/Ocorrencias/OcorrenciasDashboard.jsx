@@ -7,7 +7,7 @@ import {
     Eye, ShieldCheck, RefreshCw, Loader2, FileText, Calendar, Printer, X
 } from 'lucide-react';
 import { generateConsolidatedReport } from '../../utils/ocorrenciaConsolidadoGenerator';
-import { getOcorrenciasLocal, deleteOcorrenciaLocal, saveOcorrenciaLocal, OCORRENCIAS_SELECT_FIELDS } from '../../services/ocorrenciasDb';
+import { getOcorrenciasLocal, deleteOcorrenciaLocal, saveOcorrenciaLocal, OCORRENCIAS_SELECT_FIELDS, OCORRENCIAS_SELECT_FIELDS_LEGACY } from '../../services/ocorrenciasDb';
 import { useToast } from '../../components/ToastNotification';
 import ConfirmModal from '../../components/ConfirmModal';
 import { Button } from '../../components/ui/Button';
@@ -92,12 +92,19 @@ const OcorrenciasDashboard = () => {
                         setNoprers(formattedNoprers);
                     }
 
-                    // Fallback caso a query com order tenha sofrido statement timeout no Postgres
+                    // Fallback caso a query falhe por coluna ainda não migrada ou statement timeout no Postgres
                     let remoteData = remoteRes?.data;
-                    if (!remoteData && remoteRes?.error && (String(remoteRes.error.message || '').includes('timeout') || String(remoteRes.error.message || '').includes('canceling statement'))) {
-                        console.warn('[OcorrenciasDashboard] Timeout detectado no Postgres, tentando fallback sem ordenação...');
-                        const fallbackRes = await safeFetch(supabase.from('ocorrencias_operacionais').select(OCORRENCIAS_SELECT_FIELDS).limit(50));
-                        remoteData = fallbackRes?.data;
+                    if (!remoteData && remoteRes?.error) {
+                        const errMsg = String(remoteRes.error.message || '').toLowerCase();
+                        if (errMsg.includes('does not exist') || errMsg.includes('column')) {
+                            console.warn('[OcorrenciasDashboard] Coluna nova ausente no Supabase, usando fallback legado...');
+                            const legacyRes = await safeFetch(supabase.from('ocorrencias_operacionais').select(OCORRENCIAS_SELECT_FIELDS_LEGACY).order('created_at', { ascending: false }).limit(150));
+                            remoteData = legacyRes?.data;
+                        } else if (errMsg.includes('timeout') || errMsg.includes('canceling statement')) {
+                            console.warn('[OcorrenciasDashboard] Timeout detectado no Postgres, tentando fallback sem ordenação...');
+                            const fallbackRes = await safeFetch(supabase.from('ocorrencias_operacionais').select(OCORRENCIAS_SELECT_FIELDS).limit(50));
+                            remoteData = fallbackRes?.data;
+                        }
                     }
 
                     if (remoteData && remoteData.length > 0) {
@@ -175,23 +182,59 @@ const OcorrenciasDashboard = () => {
         }
     };
 
-    const getRecordDate = (r) => {
-        const raw = r.data_ocorrencia || r.created_at;
+    const parseDateToYmd = (raw) => {
         if (!raw) return null;
-        const str = String(raw);
-        const d = /^\d{4}-\d{2}-\d{2}$/.test(str) ? new Date(`${str}T12:00:00`) : new Date(str);
-        return isNaN(d.getTime()) ? null : d;
+        const str = String(raw).trim();
+        if (!str) return null;
+
+        // Formato ISO YYYY-MM-DD (com ou sem hora)
+        const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (isoMatch) {
+            // Se tiver timestamp com timezone (ex: 2026-11-27T01:00:00Z), converte para data local
+            if (str.includes('T')) {
+                const parsed = new Date(str);
+                if (!isNaN(parsed.getTime())) {
+                    const y = parsed.getFullYear();
+                    const m = String(parsed.getMonth() + 1).padStart(2, '0');
+                    const d = String(parsed.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+            }
+            return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+        }
+
+        // Formato brasileiro DD/MM/YYYY ou DD-MM-YYYY (com ou sem hora)
+        const brMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (brMatch) {
+            const d = brMatch[1].padStart(2, '0');
+            const m = brMatch[2].padStart(2, '0');
+            const y = brMatch[3];
+            return `${y}-${m}-${d}`;
+        }
+
+        const parsed = new Date(str);
+        if (!isNaN(parsed.getTime())) {
+            const y = parsed.getFullYear();
+            const m = String(parsed.getMonth() + 1).padStart(2, '0');
+            const d = String(parsed.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        return null;
     };
 
     const filterByPeriod = (list, ini, fim) => {
         if (!ini && !fim) return list;
-        const startObj = ini ? new Date(`${ini}T00:00:00`) : null;
-        const endObj = fim ? new Date(`${fim}T23:59:59.999`) : null;
         return list.filter(r => {
-            const d = getRecordDate(r);
-            if (!d) return false;
-            if (startObj && d < startObj) return false;
-            if (endObj && d > endObj) return false;
+            const recStartYmd =
+                parseDateToYmd(r.data_ocorrencia) ||
+                parseDateToYmd(r.data_chamado) ||
+                parseDateToYmd(r.created_at);
+            if (!recStartYmd) return false;
+            const recEndYmd = parseDateToYmd(r.data_fim_ocorrencia) || recStartYmd;
+
+            // Considera sobreposição de período (se ocorrência durar vários dias, aparece se interceptar o filtro)
+            if (fim && recStartYmd > fim) return false;
+            if (ini && recEndYmd < ini) return false;
             return true;
         });
     };

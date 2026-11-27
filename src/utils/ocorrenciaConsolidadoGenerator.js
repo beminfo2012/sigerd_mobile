@@ -24,8 +24,8 @@ export const generateConsolidatedReport = async (occurrences = [], options = 'To
 
         // Ordenar por data decrescente (mais recentes primeiro)
         const sortedOccurrences = [...occurrences].sort((a, b) => {
-            const da = new Date(a.data_ocorrencia || a.created_at || 0).getTime();
-            const db = new Date(b.data_ocorrencia || b.created_at || 0).getTime();
+            const da = parseFlexibleTimestamp(a.data_ocorrencia || a.data_chamado || a.created_at);
+            const db = parseFlexibleTimestamp(b.data_ocorrencia || b.data_chamado || b.created_at);
             return db - da;
         });
 
@@ -224,7 +224,7 @@ export const generateConsolidatedReport = async (occurrences = [], options = 'To
 
         const listRows = sortedOccurrences.map((occ, idx) => [
             getProtocolNumber(occ, idx),
-            formatDateTime(occ.data_ocorrencia || occ.created_at),
+            formatOccurrenceDatePeriod(occ),
             getOccurrenceType(occ),
             getLocalidade(occ),
             formatStatusLabel(occ.status),
@@ -368,16 +368,59 @@ const formatStatusLabel = (status) => {
     return s;
 };
 
-const formatDateTime = (dateValue) => {
-    if (!dateValue) return '—';
-    try {
-        const str = String(dateValue);
-        const date = /^\d{4}-\d{2}-\d{2}$/.test(str) ? new Date(`${str}T12:00:00`) : new Date(str);
-        if (isNaN(date.getTime())) return str;
-        const d = date.toLocaleDateString('pt-BR');
-        const t = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        return `${d} ${t}`;
-    } catch {
-        return '—';
+const parseFlexibleDate = (raw) => {
+    if (!raw) return null;
+    const str = String(raw).trim();
+    if (!str) return null;
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d, 12, 0, 0);
     }
+    const brMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if (brMatch) {
+        return new Date(Number(brMatch[3]), Number(brMatch[2]) - 1, Number(brMatch[1]), 12, 0, 0);
+    }
+    const parsed = new Date(str);
+    return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const parseFlexibleTimestamp = (raw) => {
+    const d = parseFlexibleDate(raw);
+    return d ? d.getTime() : 0;
+};
+
+const formatDateOnlyBR = (raw) => {
+    const d = parseFlexibleDate(raw);
+    return d ? d.toLocaleDateString('pt-BR') : (raw ? String(raw) : '—');
+};
+
+const formatOccurrenceDatePeriod = (occ) => {
+    const startRaw = occ.data_ocorrencia || occ.data_chamado || occ.created_at;
+    if (!startRaw) return '—';
+
+    const startDateStr = formatDateOnlyBR(startRaw);
+    let startTimeStr = occ.horario_ocorrencia ? String(occ.horario_ocorrencia).trim() : '';
+
+    // Se não houver horario_ocorrencia explícito e a data vier de created_at ISO com hora
+    if (!startTimeStr && !occ.data_ocorrencia && String(startRaw).includes('T')) {
+        const d = parseFlexibleDate(startRaw);
+        if (d) {
+            startTimeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+    }
+
+    const startFull = startTimeStr ? `${startDateStr} ${startTimeStr}` : startDateStr;
+
+    const endRaw = occ.data_fim_ocorrencia;
+    const endTimeStr = occ.horario_fim_ocorrencia ? String(occ.horario_fim_ocorrencia).trim() : '';
+    if (endRaw || endTimeStr) {
+        const endDateStr = endRaw ? formatDateOnlyBR(endRaw) : startDateStr;
+        if (endDateStr !== startDateStr || endTimeStr) {
+            const endFull = endTimeStr ? `${endDateStr} ${endTimeStr}` : endDateStr;
+            return `${startFull}\na ${endFull}`;
+        }
+    }
+
+    return startFull;
 };
