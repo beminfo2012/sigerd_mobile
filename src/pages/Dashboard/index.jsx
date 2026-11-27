@@ -3187,6 +3187,9 @@ const Dashboard = () => {
     const [syncing, setSyncing] = useState(false)
     const [showForecast, setShowForecast] = useState(false)
     const [showReportMenu, setShowReportMenu] = useState(false)
+    const [showCustomPeriodModal, setShowCustomPeriodModal] = useState(false)
+    const [customStartDate, setCustomStartDate] = useState(() => new Date().toISOString().split('T')[0])
+    const [customEndDate, setCustomEndDate] = useState(() => new Date().toISOString().split('T')[0])
     const [generatingReport, setGeneratingReport] = useState(false)
     const [cemadenAlerts, setCemadenAlerts] = useState([])
     const [viewMode, setViewMode] = useState('vistorias'); // 'vistorias' | 'ocorrencias' | 'interdicoes'
@@ -3545,7 +3548,7 @@ const Dashboard = () => {
         if (code <= 1) return '☀️'; if (code <= 3) return '⛅'; if (code <= 48) return '🌫️'; if (code <= 67) return '🌦️'; return '⛈️';
     }
 
-    const handleGenerateReport = async (hours = 0) => {
+    const handleGenerateReport = async (hours = 0, customRange = null) => {
         try {
             setGeneratingReport(true);
             const labels = {
@@ -3555,13 +3558,29 @@ const Dashboard = () => {
                 96: 'Últimas 96 Horas',
                 0: 'Todo o Período'
             }
-            const label = labels[hours] || 'Todo o Período';
 
-            const limitDate = hours > 0 ? new Date(Date.now() - hours * 60 * 60 * 1000) : null;
+            let label = labels[hours] || 'Todo o Período';
+            let limitDate = hours > 0 ? new Date(Date.now() - hours * 60 * 60 * 1000) : null;
+            let endLimitDate = null;
+
+            if (customRange?.startDate && customRange?.endDate) {
+                const fmtBR = (ymd) => new Date(`${ymd}T12:00:00`).toLocaleDateString('pt-BR');
+                label = `${fmtBR(customRange.startDate)} a ${fmtBR(customRange.endDate)}`;
+                limitDate = new Date(`${customRange.startDate}T00:00:00`);
+                endLimitDate = new Date(`${customRange.endDate}T23:59:59.999`);
+            }
 
             const filterByTime = (locations) => {
-                if (!limitDate || !locations) return locations || [];
-                return locations.filter(loc => loc.date && new Date(loc.date) >= limitDate);
+                if (!locations) return [];
+                if (!limitDate && !endLimitDate) return locations;
+                return locations.filter(loc => {
+                    if (!loc.date) return false;
+                    const d = new Date(loc.date);
+                    if (isNaN(d.getTime())) return false;
+                    if (limitDate && d < limitDate) return false;
+                    if (endLimitDate && d > endLimitDate) return false;
+                    return true;
+                });
             };
 
             // Filter ALL categories for the report
@@ -3660,8 +3679,8 @@ const Dashboard = () => {
             let reportCemadenAlerts = [];
 
             try {
-                const nowIso = new Date().toISOString();
-                // Default to last 7 days if hours === 0
+                const nowIso = endLimitDate ? endLimitDate.toISOString() : new Date().toISOString();
+                // Default to last 7 days if hours === 0 and no custom range
                 const limitIso = limitDate ? limitDate.toISOString() : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
                 // Fetch INMET alerts active during the period (overlapping)
@@ -3722,6 +3741,7 @@ const Dashboard = () => {
             window.open('/relatorio-situacional/imprimir', '_blank');
 
             setShowReportMenu(false);
+            setShowCustomPeriodModal(false);
             toast.success('Pronto!', 'Relatório carregado na nova aba.');
         } catch (error) {
             console.error('Error generating report:', error);
@@ -3815,6 +3835,85 @@ const Dashboard = () => {
                                     <FileText size={18} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>
                             ))}
+                            <button
+                                onClick={() => {
+                                    setShowReportMenu(false);
+                                    setShowCustomPeriodModal(true);
+                                }}
+                                className="w-full text-left px-5 py-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-2xl font-black transition-colors flex justify-between items-center border border-blue-200 dark:border-blue-800/60"
+                            >
+                                <span>Período Personalizado</span>
+                                <Clock size={18} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Período Personalizado — Relatório Situacional */}
+            {showCustomPeriodModal && (
+                <div onClick={() => setShowCustomPeriodModal(false)} className="fixed inset-0 z-[160] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div onClick={e => e.stopPropagation()} className="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h3 className="text-base font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Período Personalizado</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Relatório Situacional</p>
+                            </div>
+                            <button onClick={() => setShowCustomPeriodModal(false)} className="bg-slate-100 dark:bg-slate-700 p-2 rounded-full text-slate-500 hover:text-slate-800 transition-colors">
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                    Data Inicial *
+                                </label>
+                                <input
+                                    type="date"
+                                    value={customStartDate}
+                                    onChange={(e) => setCustomStartDate(e.target.value)}
+                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                    Data Final *
+                                </label>
+                                <input
+                                    type="date"
+                                    value={customEndDate}
+                                    onChange={(e) => setCustomEndDate(e.target.value)}
+                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowCustomPeriodModal(false)}
+                                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-black uppercase"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!customStartDate || !customEndDate) {
+                                        toast.warning('Período incompleto', 'Informe a data inicial e a data final.');
+                                        return;
+                                    }
+                                    if (customStartDate > customEndDate) {
+                                        toast.warning('Período inválido', 'A data inicial não pode ser posterior à data final.');
+                                        return;
+                                    }
+                                    handleGenerateReport(0, { startDate: customStartDate, endDate: customEndDate });
+                                }}
+                                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-wider shadow-md"
+                            >
+                                Emitir Relatório
+                            </button>
                         </div>
                     </div>
                 </div>

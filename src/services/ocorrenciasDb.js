@@ -1,4 +1,4 @@
-export const OCORRENCIAS_SELECT_FIELDS = 'id, ocorrencia_id, ocorrencia_id_format, created_at, updated_at, data_ocorrencia, horario_ocorrencia, solicitante, cpf, telefone, tem_solicitante_especifico, endereco, bairro, lat, lng, mortos, feridos, enfermos, desalojados, desabrigados, desaparecidos, outros_afetados, tem_danos_humanos, tipo_ocorrencia, nivel_gravidade, categoria_risco, nivel_risco, subtipos_risco, descricao_danos, observacoes, encaminhada, status, orgao_solicitado, orgao_atendeu, risco_pessoas_estruturas, horario_encaminhamento, numero_ocorrencia_externa, observacao_encaminhamento, historico_status, accuracy, gps_timestamp';
+export const OCORRENCIAS_SELECT_FIELDS = 'id, ocorrencia_id, ocorrencia_id_format, created_at, updated_at, data_ocorrencia, horario_ocorrencia, data_fim_ocorrencia, horario_fim_ocorrencia, solicitante, cpf, telefone, tem_solicitante_especifico, endereco, bairro, complemento, lat, lng, mortos, feridos, enfermos, desalojados, desabrigados, desaparecidos, outros_afetados, tem_danos_humanos, tipo_ocorrencia, nivel_gravidade, categoria_risco, nivel_risco, situacao_observada, area_estimada, subtipos_risco, descricao_danos, observacoes, encaminhada, status, orgao_solicitado, orgao_atendeu, risco_pessoas_estruturas, horario_encaminhamento, numero_ocorrencia_externa, observacao_encaminhamento, historico_status, accuracy, gps_timestamp';
 
 import { initDB, syncSingleItem } from './db'
 import { supabase } from './supabase'
@@ -39,8 +39,14 @@ export const INITIAL_OCORRENCIA_STATE = {
     numero_ocorrencia_externa: '',
     observacao_encaminhamento: '',
 
-    data_ocorrencia: new Date().toLocaleDateString('pt-BR'),
-    horario_ocorrencia: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    data_ocorrencia: new Date().toISOString().split('T')[0],
+    horario_ocorrencia: '',
+    data_fim_ocorrencia: '',
+    horario_fim_ocorrencia: '',
+    situacao_observada: 'Estabilizado',
+    area_estimada: '',
+    complemento: '',
+    tem_danos_humanos: false,
     data_chamado: new Date().toISOString(),
     data_atendimento: new Date().toISOString(),
 
@@ -467,13 +473,29 @@ export async function salvarOcorrenciaOperacional(ocorrencia) {
             assinatura_agente: ocorrenciaHigienizada.assinaturaAgente || ocorrenciaHigienizada.assinatura_agente,
             assinatura_assistido: ocorrenciaHigienizada.assinaturaAssistido || ocorrenciaHigienizada.assinatura_assistido,
             solicitante: ocorrenciaHigienizada.solicitante_nome || ocorrenciaHigienizada.solicitante,
-            telefone: ocorrenciaHigienizada.solicitante_telefone || ocorrenciaHigienizada.telefone
+            telefone: ocorrenciaHigienizada.solicitante_telefone || ocorrenciaHigienizada.telefone,
+            data_fim_ocorrencia: ocorrenciaHigienizada.data_fim_ocorrencia || null,
+            horario_ocorrencia: ocorrenciaHigienizada.horario_ocorrencia || null,
+            horario_fim_ocorrencia: ocorrenciaHigienizada.horario_fim_ocorrencia || null,
+            complemento: ocorrenciaHigienizada.complemento || null,
+            situacao_observada: ocorrenciaHigienizada.situacao_observada || 'Estabilizado',
+            area_estimada: ocorrenciaHigienizada.area_estimada || null,
+            tem_danos_humanos: Boolean(
+                ocorrenciaHigienizada.tem_danos_humanos ||
+                ocorrenciaHigienizada.mortos > 0 ||
+                ocorrenciaHigienizada.feridos > 0 ||
+                ocorrenciaHigienizada.enfermos > 0 ||
+                ocorrenciaHigienizada.desalojados > 0 ||
+                ocorrenciaHigienizada.desabrigados > 0 ||
+                ocorrenciaHigienizada.desaparecidos > 0 ||
+                ocorrenciaHigienizada.outros_afetados > 0
+            )
         };
         
         // Delete only frontend temporary keys (keep DB columns like tipo_ocorrencia, nivel_gravidade, descricao)
         const keysToDelete = [
             'categoriaRisco', 'subtiposRisco', 'subtipoRiscoOutros', 'nivelRisco', 'nivelGravidade', 'tipoOcorrencia',
-            'temApoioTecnico', 'apoioTecnico', 'temSolicitanteEspecifico', 
+            'temApoioTecnico', 'apoioTecnico', 'temSolicitanteEspecifico', 'tipo_periodo',
             'checklistRespostas', 'medidasTomadas', 'assinaturaAgente', 
             'assinaturaAssistido', 'id', 'synced', 'solicitante_nome', 'solicitante_telefone'
         ];

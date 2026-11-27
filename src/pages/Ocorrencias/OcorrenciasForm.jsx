@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowLeft, Save, MapPin, Share2, Camera, ShieldAlert,
     ChevronDown, ChevronUp, CheckCircle, Plus, Minus, FileText, Share,
-    Edit2, Trash2, ChevronLeft, ChevronRight, X, Download, Sparkles, Search, FileUp, AlertCircle, Printer
+    Edit2, Trash2, ChevronLeft, ChevronRight, X, Download, Sparkles, Search, FileUp, AlertCircle, Printer, Calendar, Clock
 } from 'lucide-react';
 import FileInput from '../../components/FileInput';
 import ImageEditor from '../../components/ImageEditor';
@@ -36,10 +36,29 @@ const TIPO_OCORRENCIA_OPTIONS = [
     'Desabamento de imóvel', 'Queda de muro', 'Interdição de via', 'Outros'
 ];
 const NIVEL_GRAVIDADE_OPTIONS = ['Baixo', 'Médio', 'Alto', 'Iminente'];
+const SITUACAO_OBSERVADA_OPTIONS = ['Estabilizado', 'Em Evolução', 'Ativo', 'Em Monitoramento'];
 const DESCRICAO_CHIPS = [
     'Sem risco aparente', 'Risco estrutural', 'Risco geológico', 'Área isolada',
     'Família desalojada', 'Família desabrigada', 'Lona fornecida', 'Cesta básica fornecida'
 ];
+
+const toInputDate = (val) => {
+    if (!val) return '';
+    const str = String(val).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+        const [d, m, y] = str.split('/');
+        return `${y}-${m}-${d}`;
+    }
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) {
+        const y = parsed.getFullYear();
+        const m = String(parsed.getMonth() + 1).padStart(2, '0');
+        const d = String(parsed.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+    return '';
+};
 
 const SearchableInput = ({
     label,
@@ -176,6 +195,7 @@ export default function OcorrenciasForm() {
     const [unrecognizedFields, setUnrecognizedFields] = useState({});
     const fileInputPdfRef = useRef(null);
     const [formData, setFormData] = useState(INITIAL_OCORRENCIA_STATE);
+    const [periodMode, setPeriodMode] = useState('unico'); // 'unico' | 'periodo'
     const [isNortisIAOpen, setIsNortisIAOpen] = useState(false);
     
     const [expandedCategory, setExpandedCategory] = useState(null);
@@ -457,9 +477,33 @@ export default function OcorrenciasForm() {
             if (id && id !== 'novo') {
                 const record = await getOcorrenciaById(id);
                 if (record) {
+                    const dataInicioNorm = toInputDate(record.data_ocorrencia || record.data_chamado || record.created_at);
+                    const dataFimNorm = toInputDate(record.data_fim_ocorrencia);
+                    const hasPeriod = Boolean(
+                        (dataFimNorm && dataFimNorm !== dataInicioNorm) ||
+                        record.horario_fim_ocorrencia
+                    );
+                    const hasDanos = Boolean(
+                        record.tem_danos_humanos ||
+                        Number(record.mortos) > 0 ||
+                        Number(record.feridos) > 0 ||
+                        Number(record.enfermos) > 0 ||
+                        Number(record.desalojados) > 0 ||
+                        Number(record.desabrigados) > 0 ||
+                        Number(record.desaparecidos) > 0 ||
+                        Number(record.outros_afetados) > 0
+                    );
+                    setPeriodMode(hasPeriod ? 'periodo' : 'unico');
                     setFormData({
                         ...INITIAL_OCORRENCIA_STATE,
                         ...record,
+                        data_ocorrencia: dataInicioNorm,
+                        data_fim_ocorrencia: dataFimNorm,
+                        horario_ocorrencia: record.horario_ocorrencia || '',
+                        horario_fim_ocorrencia: record.horario_fim_ocorrencia || '',
+                        situacao_observada: record.situacao_observada || 'Estabilizado',
+                        area_estimada: record.area_estimada || '',
+                        tem_danos_humanos: hasDanos,
                         assinaturaAgente: record.assinaturaAgente || record.assinatura_agente || null,
                         assinaturaAssistido: record.assinaturaAssistido || record.assinatura_assistido || null,
                         apoioTecnico: record.apoioTecnico || record.apoio_tecnico || INITIAL_OCORRENCIA_STATE.apoioTecnico,
@@ -468,9 +512,11 @@ export default function OcorrenciasForm() {
                 }
             } else {
                 const now = new Date();
+                setPeriodMode('unico');
                 setFormData(prev => ({
                     ...prev,
                     data_chamado: now.toISOString(),
+                    data_ocorrencia: prev.data_ocorrencia || toInputDate(now),
                     agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
                     matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
                     cargo: userProfile?.cargo || localStorage.getItem('lastAgentCargo') || 'Agente de Proteção e Defesa Civil'
@@ -530,6 +576,16 @@ export default function OcorrenciasForm() {
     const isValid = () => true;
 
     const saveRecord = async (isDraft, resetAfter = false) => {
+        if (
+            periodMode === 'periodo' &&
+            formData.data_ocorrencia &&
+            formData.data_fim_ocorrencia &&
+            formData.data_fim_ocorrencia < formData.data_ocorrencia
+        ) {
+            toast.error('A data final não pode ser anterior à data inicial.');
+            return;
+        }
+
         setSaving(true);
         try {
             const tipoVal = (formData.tipo_ocorrencia && formData.tipo_ocorrencia !== 'Outros') ? formData.tipo_ocorrencia :
@@ -541,9 +597,25 @@ export default function OcorrenciasForm() {
 
             const gravVal = formData.nivel_gravidade || formData.nivelGravidade || formData.nivel_risco || formData.nivelRisco || '';
             const descVal = formData.descricao || formData.observacoes || formData.informacoes_complementares || formData.descricao_danos || '';
-            
+            const temDanos = Boolean(formData.tem_danos_humanos);
+
             const finalData = {
                 ...formData,
+                data_ocorrencia: formData.data_ocorrencia || toInputDate(new Date()),
+                horario_ocorrencia: formData.horario_ocorrencia || '',
+                data_fim_ocorrencia: periodMode === 'periodo' ? (formData.data_fim_ocorrencia || '') : '',
+                horario_fim_ocorrencia: periodMode === 'periodo' ? (formData.horario_fim_ocorrencia || '') : '',
+                situacao_observada: formData.situacao_observada || 'Estabilizado',
+                area_estimada: formData.area_estimada || '',
+                complemento: formData.complemento || '',
+                tem_danos_humanos: temDanos,
+                mortos: temDanos ? (Number(formData.mortos) || 0) : 0,
+                feridos: temDanos ? (Number(formData.feridos) || 0) : 0,
+                enfermos: temDanos ? (Number(formData.enfermos) || 0) : 0,
+                desalojados: temDanos ? (Number(formData.desalojados) || 0) : 0,
+                desabrigados: temDanos ? (Number(formData.desabrigados) || 0) : 0,
+                desaparecidos: temDanos ? (Number(formData.desaparecidos) || 0) : 0,
+                outros_afetados: temDanos ? (Number(formData.outros_afetados) || 0) : 0,
                 tipo_ocorrencia: tipoVal,
                 tipoOcorrencia: tipoVal,
                 categoria_risco: tipoVal || 'Outros',
@@ -568,9 +640,12 @@ export default function OcorrenciasForm() {
             
             toast.success('Ocorrência salva!');
             if (resetAfter) {
+                const now = new Date();
+                setPeriodMode('unico');
                 setFormData({
                     ...INITIAL_OCORRENCIA_STATE,
-                    data_chamado: new Date().toISOString(),
+                    data_chamado: now.toISOString(),
+                    data_ocorrencia: toInputDate(now),
                     agente: userProfile?.full_name || localStorage.getItem('lastAgentName') || '',
                     matricula: userProfile?.matricula || localStorage.getItem('lastAgentMatricula') || '',
                     cargo: userProfile?.cargo || localStorage.getItem('lastAgentCargo') || 'Agente de Proteção e Defesa Civil'
@@ -626,6 +701,126 @@ export default function OcorrenciasForm() {
                         </div>
                     </div>
                 )}
+                {/* DATA / PERÍODO DA OCORRÊNCIA */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <Calendar size={14} className="text-blue-600" />
+                            Data / Período da Ocorrência
+                        </h2>
+                        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 w-fit">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setPeriodMode('unico');
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        data_fim_ocorrencia: '',
+                                        horario_fim_ocorrencia: ''
+                                    }));
+                                }}
+                                className={`text-[10px] px-3 py-1.5 rounded-lg font-black uppercase tracking-wider transition-all ${
+                                    periodMode === 'unico'
+                                        ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                            >
+                                Data Única (1 dia)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPeriodMode('periodo')}
+                                className={`text-[10px] px-3 py-1.5 rounded-lg font-black uppercase tracking-wider transition-all ${
+                                    periodMode === 'periodo'
+                                        ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                            >
+                                Período (Início e Fim)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className={labelClasses}>
+                                {periodMode === 'periodo' ? 'Data Inicial' : 'Data da Ocorrência'}
+                            </label>
+                            <input
+                                type="date"
+                                className={getInputClass('data_ocorrencia')}
+                                value={formData.data_ocorrencia || ''}
+                                onChange={e => setFormData(prev => ({ ...prev, data_ocorrencia: e.target.value }))}
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <label className={labelClasses}>
+                                    {periodMode === 'periodo' ? 'Horário Inicial (Opcional)' : 'Horário (Opcional)'}
+                                </label>
+                                {formData.horario_ocorrencia && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, horario_ocorrencia: '' }))}
+                                        className="text-[10px] font-bold text-slate-400 hover:text-red-500"
+                                    >
+                                        Limpar
+                                    </button>
+                                )}
+                            </div>
+                            <div className="relative">
+                                <Clock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                <input
+                                    type="time"
+                                    className={`${getInputClass('horario_ocorrencia')} pl-10`}
+                                    value={formData.horario_ocorrencia || ''}
+                                    onChange={e => setFormData(prev => ({ ...prev, horario_ocorrencia: e.target.value }))}
+                                />
+                            </div>
+                        </div>
+
+                        {periodMode === 'periodo' && (
+                            <>
+                                <div className="space-y-1.5">
+                                    <label className={labelClasses}>Data Final</label>
+                                    <input
+                                        type="date"
+                                        min={formData.data_ocorrencia || undefined}
+                                        className={getInputClass('data_fim_ocorrencia')}
+                                        value={formData.data_fim_ocorrencia || ''}
+                                        onChange={e => setFormData(prev => ({ ...prev, data_fim_ocorrencia: e.target.value }))}
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <label className={labelClasses}>Horário Final (Opcional)</label>
+                                        {formData.horario_fim_ocorrencia && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, horario_fim_ocorrencia: '' }))}
+                                                className="text-[10px] font-bold text-slate-400 hover:text-red-500"
+                                            >
+                                                Limpar
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="relative">
+                                        <Clock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                        <input
+                                            type="time"
+                                            className={`${getInputClass('horario_fim_ocorrencia')} pl-10`}
+                                            value={formData.horario_fim_ocorrencia || ''}
+                                            onChange={e => setFormData(prev => ({ ...prev, horario_fim_ocorrencia: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+
                 {/* SOLICITANTE */}
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                     <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Solicitante</h2>
@@ -887,6 +1082,109 @@ export default function OcorrenciasForm() {
                         <option value="">Tipo de Ocorrência...</option>
                         {TIPO_OCORRENCIA_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
+
+                    {/* Nível de Risco / Gravidade */}
+                    <div className="mb-4">
+                        <label className={labelClasses}>Nível de Risco / Gravidade</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {NIVEL_GRAVIDADE_OPTIONS.map(nivel => {
+                                const current = formData.nivel_gravidade || formData.nivel_risco || 'Baixo';
+                                const isSelected = current === nivel;
+                                const activeColor =
+                                    nivel === 'Iminente' ? 'bg-red-600 text-white border-red-600' :
+                                    nivel === 'Alto' ? 'bg-orange-500 text-white border-orange-500' :
+                                    nivel === 'Médio' ? 'bg-amber-500 text-white border-amber-500' :
+                                    'bg-emerald-600 text-white border-emerald-600';
+                                return (
+                                    <button
+                                        key={nivel}
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({
+                                            ...prev,
+                                            nivel_gravidade: nivel,
+                                            nivelGravidade: nivel,
+                                            nivel_risco: nivel,
+                                            nivelRisco: nivel
+                                        }))}
+                                        className={`py-2.5 px-3 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${
+                                            isSelected
+                                                ? `${activeColor} shadow-sm`
+                                                : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        {nivel}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Situação Observada e Área Estimada */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-1.5">
+                            <label className={labelClasses}>Situação Observada</label>
+                            <select
+                                value={formData.situacao_observada || 'Estabilizado'}
+                                onChange={e => setFormData(prev => ({ ...prev, situacao_observada: e.target.value }))}
+                                className={getInputClass('situacao_observada')}
+                            >
+                                {SITUACAO_OBSERVADA_OPTIONS.map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className={labelClasses}>Área Estimada Afetada (m² - Opcional)</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: 150"
+                                className={getInputClass('area_estimada')}
+                                value={formData.area_estimada || ''}
+                                onChange={e => setFormData(prev => ({ ...prev, area_estimada: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Danos Humanos / Vítimas */}
+                    <div className="mb-4 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/50">
+                        <label className="flex items-center justify-between cursor-pointer select-none">
+                            <div>
+                                <span className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
+                                    Danos Humanos / Vítimas
+                                </span>
+                                <span className="text-[11px] text-slate-500">
+                                    Marque se houve pessoas afetadas, desalojadas, desabrigadas ou feridas
+                                </span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                className="w-5 h-5 rounded accent-blue-600 cursor-pointer"
+                                checked={Boolean(formData.tem_danos_humanos)}
+                                onChange={e => setFormData(prev => ({ ...prev, tem_danos_humanos: e.target.checked }))}
+                            />
+                        </label>
+
+                        {formData.tem_danos_humanos && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                {[
+                                    { key: 'desalojados', label: 'Desalojados' },
+                                    { key: 'desabrigados', label: 'Desabrigados' },
+                                    { key: 'feridos', label: 'Feridos' },
+                                    { key: 'enfermos', label: 'Enfermos' },
+                                    { key: 'desaparecidos', label: 'Desaparecidos' },
+                                    { key: 'mortos', label: 'Mortos' },
+                                    { key: 'outros_afetados', label: 'Outros Afetados' }
+                                ].map(({ key, label }) => (
+                                    <StepperInput
+                                        key={key}
+                                        label={label}
+                                        value={Number(formData[key]) || 0}
+                                        onChange={val => setFormData(prev => ({ ...prev, [key]: val }))}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
 
                     <div className="mb-4">

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Plus, ArrowLeft, Search, Clock, CheckCircle,
     AlertTriangle, ShieldAlert, ChevronRight, MapPin, Trash2,
-    Eye, ShieldCheck, RefreshCw, Loader2, FileText, Calendar, Printer
+    Eye, ShieldCheck, RefreshCw, Loader2, FileText, Calendar, Printer, X
 } from 'lucide-react';
 import { generateConsolidatedReport } from '../../utils/ocorrenciaConsolidadoGenerator';
 import { getOcorrenciasLocal, deleteOcorrenciaLocal, saveOcorrenciaLocal, OCORRENCIAS_SELECT_FIELDS } from '../../services/ocorrenciasDb';
@@ -34,7 +34,13 @@ const OcorrenciasDashboard = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
     const [statusModalRecord, setStatusModalRecord] = useState(null);
-    const [selectedDate, setSelectedDate] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportMode, setReportMode] = useState('periodo'); // 'periodo' | 'todos'
+    const [reportStartDate, setReportStartDate] = useState('');
+    const [reportEndDate, setReportEndDate] = useState('');
+    const [generatingConsolidated, setGeneratingConsolidated] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedOcorrencia, setSelectedOcorrencia] = useState(null);
 
@@ -169,39 +175,96 @@ const OcorrenciasDashboard = () => {
         }
     };
 
-    const filtered = records.filter(r => {
+    const getRecordDate = (r) => {
+        const raw = r.data_ocorrencia || r.created_at;
+        if (!raw) return null;
+        const str = String(raw);
+        const d = /^\d{4}-\d{2}-\d{2}$/.test(str) ? new Date(`${str}T12:00:00`) : new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+    };
+
+    const filterByPeriod = (list, ini, fim) => {
+        if (!ini && !fim) return list;
+        const startObj = ini ? new Date(`${ini}T00:00:00`) : null;
+        const endObj = fim ? new Date(`${fim}T23:59:59.999`) : null;
+        return list.filter(r => {
+            const d = getRecordDate(r);
+            if (!d) return false;
+            if (startObj && d < startObj) return false;
+            if (endObj && d > endObj) return false;
+            return true;
+        });
+    };
+
+    const filtered = filterByPeriod(records, startDate, endDate).filter(r => {
         const search = searchTerm.toLowerCase();
-        const matchesSearch = (
-            (r.categoriaRisco || r.categoria_risco || r.tipo_info || r.riscoTipo || '').toLowerCase().includes(search) ||
+        if (!search) return true;
+        return (
+            (r.categoriaRisco || r.categoria_risco || r.tipo_ocorrencia || r.tipoOcorrencia || r.tipo_info || r.riscoTipo || '').toLowerCase().includes(search) ||
             (r.bairro || '').toLowerCase().includes(search) ||
             (r.endereco || '').toLowerCase().includes(search) ||
             (r.solicitante || '').toLowerCase().includes(search) ||
             (r.ocorrencia_id_format || '').toLowerCase().includes(search)
         );
-        let matchesDate = true;
-        if (selectedDate) {
-            try {
-                const recordDate = new Date(r.created_at).toISOString().split('T')[0];
-                matchesDate = recordDate === selectedDate;
-            } catch (e) {
-                matchesDate = false;
-            }
-        }
-        return matchesSearch && matchesDate;
     });
 
-    const handleGenerateDailyReport = async () => {
-        if (filtered.length === 0) {
-            toast.error('Nenhum registro para exportar.');
+    const openReportModal = () => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (startDate || endDate) {
+            setReportMode('periodo');
+            setReportStartDate(startDate || endDate || todayStr);
+            setReportEndDate(endDate || startDate || todayStr);
+        } else {
+            setReportMode('periodo');
+            setReportStartDate(todayStr);
+            setReportEndDate(todayStr);
+        }
+        setShowReportModal(true);
+    };
+
+    const reportPreviewRecords = reportMode === 'todos'
+        ? records
+        : filterByPeriod(records, reportStartDate, reportEndDate);
+
+    const handleEmitConsolidatedReport = async () => {
+        if (reportMode === 'periodo') {
+            if (!reportStartDate || !reportEndDate) {
+                toast.warning('Período incompleto', 'Informe a data inicial e a data final.');
+                return;
+            }
+            if (reportStartDate > reportEndDate) {
+                toast.warning('Período inválido', 'A data inicial não pode ser posterior à data final.');
+                return;
+            }
+        }
+
+        if (reportPreviewRecords.length === 0) {
+            toast.warning('Sem registros', 'Nenhuma ocorrência encontrada para o período selecionado.');
             return;
         }
-        toast.info('Gerando relatório consolidado...');
-        const dateFilename = selectedDate ? new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR') : 'Geral';
-        const success = await generateConsolidatedReport(filtered, dateFilename);
-        if (success) {
-            toast.success('Relatório gerado com sucesso!');
-        } else {
-            toast.error('Erro ao gerar relatório.');
+
+        setGeneratingConsolidated(true);
+        try {
+            const formatBR = (ymd) => new Date(`${ymd}T12:00:00`).toLocaleDateString('pt-BR');
+            const periodoLabel = reportMode === 'todos'
+                ? 'Todo o Período'
+                : `${formatBR(reportStartDate)} a ${formatBR(reportEndDate)}`;
+            const filtrosLabel = reportMode === 'todos'
+                ? 'Geral (Todas as ocorrências)'
+                : `Período personalizado (${periodoLabel})`;
+
+            const success = await generateConsolidatedReport(reportPreviewRecords, {
+                periodoLabel,
+                filtrosLabel,
+            });
+            if (success) {
+                toast.success('Relatório gerado com sucesso!');
+                setShowReportModal(false);
+            } else {
+                toast.error('Erro ao gerar relatório consolidado.');
+            }
+        } finally {
+            setGeneratingConsolidated(false);
         }
     };
 
@@ -238,7 +301,7 @@ const OcorrenciasDashboard = () => {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <Button
-                            onClick={handleGenerateDailyReport}
+                            onClick={openReportModal}
                             className={`bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 h-10 sm:h-12 ${isDrawerOpen ? 'px-3' : 'px-3 sm:px-4'}`}
                             title="Gerar Relatório Consolidado"
                         >
@@ -258,26 +321,53 @@ const OcorrenciasDashboard = () => {
             </div>
 
             <main className={`w-full mx-auto pb-28 space-y-6 ${isDrawerOpen ? 'p-4' : 'p-5 sm:p-8 sm:space-y-8'}`}>
-                {/* Search and Filters */}
-                <div className={`grid gap-4 w-full mx-auto ${isDrawerOpen ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12'}`}>
-                    <div className={`relative group ${isDrawerOpen ? '' : 'md:col-span-8 lg:col-span-9'}`}>
+                {/* Search and Period Filters */}
+                <div className={`grid gap-3 w-full mx-auto ${isDrawerOpen ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12'}`}>
+                    <div className={`relative group ${isDrawerOpen ? '' : 'md:col-span-6 lg:col-span-6'}`}>
                         <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={20} />
                         <input
                             type="text"
                             placeholder="Buscar por nome, endereço ou ID..."
-                            className="w-full pl-12 sm:pl-14 pr-6 py-4 sm:py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300"
+                            className="w-full pl-12 sm:pl-14 pr-6 py-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white placeholder:text-slate-300 min-h-[56px]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className={`relative ${isDrawerOpen ? '' : 'md:col-span-4 lg:col-span-3'}`}>
-                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={18} />
-                        <input
-                            type="date"
-                            className="w-full pl-12 pr-4 py-4 sm:py-5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500/50 outline-none transition-all font-bold text-sm dark:text-white appearance-none min-h-[56px]"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                        />
+                    <div className={`grid grid-cols-2 gap-2.5 items-center ${isDrawerOpen ? '' : 'md:col-span-6 lg:col-span-6'}`}>
+                        <div className="relative">
+                            <span className="absolute left-3.5 top-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 pointer-events-none">
+                                Data Inicial
+                            </span>
+                            <input
+                                type="date"
+                                className="w-full px-3.5 pt-5 pb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-bold text-xs dark:text-white min-h-[56px]"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="relative flex items-center gap-1.5">
+                            <div className="relative flex-1">
+                                <span className="absolute left-3.5 top-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 pointer-events-none">
+                                    Data Final
+                                </span>
+                                <input
+                                    type="date"
+                                    className="w-full px-3.5 pt-5 pb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-bold text-xs dark:text-white min-h-[56px]"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                            </div>
+                            {(startDate || endDate) && (
+                                <button
+                                    type="button"
+                                    onClick={() => { setStartDate(''); setEndDate(''); }}
+                                    className="p-2.5 rounded-xl bg-slate-200/70 dark:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white shrink-0"
+                                    title="Limpar período"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -478,6 +568,125 @@ const OcorrenciasDashboard = () => {
                                     </button>
                                 );
                             })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Emissão do Relatório Consolidado de Ocorrências */}
+            {showReportModal && (
+                <div
+                    onClick={() => setShowReportModal(false)}
+                    className="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        className="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+                    >
+                        <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                                    <Printer size={18} />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-slate-800 dark:text-white text-sm uppercase tracking-wider">
+                                        Relatório Consolidado
+                                    </h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                        Defina o período para emissão
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowReportModal(false)}
+                                className="p-2 rounded-full bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-4">
+                            {/* Seletor de Modo */}
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setReportMode('periodo')}
+                                    className={`p-3.5 rounded-2xl border-2 text-left transition-all ${
+                                        reportMode === 'periodo'
+                                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <div className="text-xs font-black uppercase">Período</div>
+                                    <div className="text-[10px] font-semibold opacity-75 mt-0.5">Definir data inicial e final</div>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setReportMode('todos')}
+                                    className={`p-3.5 rounded-2xl border-2 text-left transition-all ${
+                                        reportMode === 'todos'
+                                            ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <div className="text-xs font-black uppercase">Todo o Período</div>
+                                    <div className="text-[10px] font-semibold opacity-75 mt-0.5">Relatório completo</div>
+                                </button>
+                            </div>
+
+                            {reportMode === 'periodo' && (
+                                <div className="grid grid-cols-2 gap-3 pt-1">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                            Data Inicial *
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={reportStartDate}
+                                            onChange={(e) => setReportStartDate(e.target.value)}
+                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                            Data Final *
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={reportEndDate}
+                                            onChange={(e) => setReportEndDate(e.target.value)}
+                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Prévia da contagem */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
+                                <span className="font-bold text-slate-500 dark:text-slate-400">Ocorrências no período:</span>
+                                <span className="font-black text-blue-600 dark:text-blue-400 text-sm">
+                                    {reportPreviewRecords.length} registro(s)
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-2 bg-slate-50/50 dark:bg-slate-900/30">
+                            <button
+                                type="button"
+                                onClick={() => setShowReportModal(false)}
+                                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-black uppercase"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                disabled={generatingConsolidated}
+                                onClick={handleEmitConsolidatedReport}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-wider shadow-md disabled:opacity-50"
+                            >
+                                <Printer size={15} />
+                                {generatingConsolidated ? 'Gerando...' : 'Emitir Relatório'}
+                            </button>
                         </div>
                     </div>
                 </div>

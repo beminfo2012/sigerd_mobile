@@ -3,143 +3,381 @@ import autoTable from 'jspdf-autotable';
 import { LOGO_BASE64 } from './logoBase64';
 
 /**
- * Gera um relatório PDF consolidado de ocorrências formatado para impressão.
- * @param {Array} occurrences - Lista de ocorrências filtradas.
- * @param {string} dateRange - Período ou data selecionada para exibição no título.
+ * Gera o Relatório Consolidado de Ocorrências em PDF conforme o modelo oficial SIGERD:
+ * - Cabeçalho institucional (Santa Maria de Jetibá – ES) + Metadados (Período, Filtros, Emissão, Origem)
+ * - Resumo Operacional (Total, Pendentes, Em Atendimento, Encerradas)
+ * - Distribuição por Tipo de Ocorrência (Tipo, Quantidade, Participação %)
+ * - Relação de Ocorrências (Nº / Protocolo, Data/Hora, Tipo de Ocorrência, Localidade, Situação)
+ * - Cabeçalho de continuação automático nas páginas subsequentes
  */
-export const generateConsolidatedReport = async (occurrences, dateRange = 'Geral') => {
+export const generateConsolidatedReport = async (occurrences = [], options = 'Todo o Período') => {
     try {
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pageWidth = pdf.internal.pageSize.width;
+        const opts = typeof options === 'string'
+            ? { periodoLabel: options, filtrosLabel: 'Geral' }
+            : (options || {});
 
-        // Configurações de cores (Paleta Profissional)
+        const periodoLabel = opts.periodoLabel || 'Todo o Período';
+        const filtrosLabel = opts.filtrosLabel || 'Geral';
+        const now = new Date();
+        const emitidoEm = `${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        const consultaId = `CON-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+
+        // Ordenar por data decrescente (mais recentes primeiro)
+        const sortedOccurrences = [...occurrences].sort((a, b) => {
+            const da = new Date(a.data_ocorrencia || a.created_at || 0).getTime();
+            const db = new Date(b.data_ocorrencia || b.created_at || 0).getTime();
+            return db - da;
+        });
+
+        // Contadores do Resumo Operacional
+        const total = sortedOccurrences.length;
+        let pendentes = 0;
+        let emAtendimento = 0;
+        let encerradas = 0;
+
+        sortedOccurrences.forEach(occ => {
+            const s = normalizeStatusKey(occ.status);
+            if (s === 'encerrada') encerradas += 1;
+            else if (s === 'em_atendimento') emAtendimento += 1;
+            else pendentes += 1;
+        });
+
+        // Distribuição por Tipo de Ocorrência
+        const typeCounts = new Map();
+        sortedOccurrences.forEach(occ => {
+            const tipo = getOccurrenceType(occ);
+            typeCounts.set(tipo, (typeCounts.get(tipo) || 0) + 1);
+        });
+        const typeRows = Array.from(typeCounts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([tipo, qtd]) => {
+                const pct = total > 0 ? ((qtd / total) * 100).toFixed(1).replace('.', ',') : '0,0';
+                return [tipo, String(qtd).padStart(2, '0'), `${pct}%`];
+            });
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const marginX = 14;
+        const contentWidth = pageWidth - marginX * 2;
+
         const colors = {
-            primary: [0, 51, 102], // Marinho
-            secondary: [240, 240, 240], // Cinza Claro
-            accent: [255, 102, 0], // Laranja Defesa Civil
-            text: [60, 60, 60],
-            tableHead: [0, 64, 128]
+            navy: [11, 31, 58],       // #0B1F3A
+            blue: [26, 111, 191],     // #1A6FBF
+            ice: [232, 241, 250],     // #E8F1FA
+            ice2: [212, 229, 245],    // #D4E5F5
+            grayBg: [244, 246, 249],  // #F4F6F9
+            border: [200, 208, 220],  // #C8D0DC
+            text: [26, 35, 50],       // #1A2332
+            muted: [90, 102, 120],
+            red: [184, 50, 50],
+            amber: [180, 110, 10],
+            green: [26, 122, 72],
         };
 
-        // --- CABEÇALHO ---
-        // Logo (usando Base64 local para evitar erros de rede/CORS)
+        // --- CABEÇALHO (PÁGINA 1) ---
         try {
-            pdf.addImage(LOGO_BASE64, 'PNG', 15, 10, 25, 25);
+            pdf.addImage(LOGO_BASE64, 'PNG', marginX, 10, 18, 18);
         } catch (e) {
-            console.error('Erro ao carregar logo no PDF:', e);
+            console.warn('Logo não carregado no PDF:', e);
         }
 
-        // Títulos
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(16);
-        pdf.setTextColor(...colors.primary);
-        pdf.text('DEFESA CIVIL', 45, 18);
-
-        pdf.setFontSize(10);
-        pdf.setTextColor(100, 100, 100);
-        pdf.text('SISTEMA DE GESTÃO DE RISCOS E DESASTRES - SIGERD', 45, 24);
-
         pdf.setFontSize(14);
-        pdf.setTextColor(...colors.text);
-        pdf.text('Relatório Consolidado de Ocorrências', 45, 32);
+        pdf.setTextColor(...colors.navy);
+        pdf.text('RELATÓRIO CONSOLIDADO DE OCORRÊNCIAS', marginX + 22, 17);
 
-        // Linha divisória
-        pdf.setDrawColor(...colors.primary);
-        pdf.setLineWidth(0.5);
-        pdf.line(15, 38, pageWidth - 15, 38);
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(...colors.blue);
+        pdf.text('SANTA MARIA DE JETIBÁ – ES', marginX + 22, 22.5);
 
-        // Informações do Relatório
-        pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(80, 80, 80);
-        pdf.text(`Filtro aplicado: ${dateRange}`, 15, 45);
-        pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth - 15, 45, { align: 'right' });
-        pdf.text(`Total de registros: ${occurrences.length}`, 15, 50);
+        pdf.setFontSize(8);
+        pdf.setTextColor(...colors.muted);
+        pdf.text('Coordenadoria Municipal de Proteção e Defesa Civil • COMPDEC', marginX + 22, 27);
 
-        // --- CORPO DO RELATÓRIO (TABELA) ---
-        const tableColumn = ["Protocolo", "Data/Hora", "Tipo", "Natureza", "Bairro", "Status"];
-        const tableRows = occurrences.map(occ => [
-            String(occ.numero_protocolo || occ.numero_ocorrencia || 'S/N').toUpperCase(),
-            formatDate(occ.data_ocorrencia || occ.data_cadastro || occ.created_at),
-            String(occ.tipo || occ.tipo_ocorrencia || 'N/I'),
-            String(occ.natureza || 'N/I'),
-            String(occ.bairro || 'N/I'),
-            translateStatus(occ.status)
-        ]);
+        pdf.setDrawColor(...colors.navy);
+        pdf.setLineWidth(0.7);
+        pdf.line(marginX, 31, pageWidth - marginX, 31);
+
+        // --- GRADE DE METADADOS (2x2) ---
+        autoTable(pdf, {
+            startY: 34,
+            theme: 'grid',
+            margin: { left: marginX, right: marginX },
+            styles: {
+                fontSize: 8,
+                cellPadding: 2.5,
+                lineColor: colors.border,
+                lineWidth: 0.25,
+                textColor: colors.text,
+            },
+            body: [
+                [
+                    { content: `PERÍODO CONSULTADO\n${periodoLabel}`, styles: { fontStyle: 'bold' } },
+                    { content: `FILTROS APLICADOS\n${filtrosLabel}`, styles: { fontStyle: 'bold' } },
+                ],
+                [
+                    { content: `EMITIDO EM\n${emitidoEm}`, styles: { fillColor: colors.grayBg } },
+                    { content: `ORIGEM\nSistema SIGERD – Módulo de Ocorrências`, styles: { fillColor: colors.grayBg } },
+                ],
+            ],
+            columnStyles: {
+                0: { cellWidth: contentWidth / 2 },
+                1: { cellWidth: contentWidth / 2 },
+            },
+        });
+
+        let cursorY = pdf.lastAutoTable.finalY + 6;
+
+        // --- RESUMO OPERACIONAL (4 CARDS KPI) ---
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(...colors.navy);
+        pdf.text('RESUMO OPERACIONAL', marginX, cursorY);
+        pdf.setDrawColor(...colors.navy);
+        pdf.setLineWidth(0.4);
+        pdf.line(marginX, cursorY + 1.5, pageWidth - marginX, cursorY + 1.5);
+
+        cursorY += 4;
+        const cardGap = 3;
+        const cardW = (contentWidth - cardGap * 3) / 4;
+        const cardH = 18;
+        const kpiCards = [
+            { value: String(total).padStart(3, '0'), label: 'TOTAL DE OCORRÊNCIAS', color: colors.navy, bg: colors.ice },
+            { value: String(pendentes).padStart(3, '0'), label: 'PENDENTES', color: colors.red, bg: [253, 234, 234] },
+            { value: String(emAtendimento).padStart(3, '0'), label: 'EM ATENDIMENTO', color: colors.amber, bg: [254, 245, 224] },
+            { value: String(encerradas).padStart(3, '0'), label: 'ENCERRADAS', color: colors.green, bg: [234, 247, 239] },
+        ];
+
+        kpiCards.forEach((card, idx) => {
+            const x = marginX + idx * (cardW + cardGap);
+            pdf.setFillColor(...card.bg);
+            pdf.setDrawColor(...colors.border);
+            pdf.setLineWidth(0.25);
+            pdf.roundedRect(x, cursorY, cardW, cardH, 2, 2, 'FD');
+
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(14);
+            pdf.setTextColor(...card.color);
+            pdf.text(card.value, x + cardW / 2, cursorY + 9, { align: 'center' });
+
+            pdf.setFontSize(6.5);
+            pdf.setTextColor(...colors.text);
+            pdf.text(card.label, x + cardW / 2, cursorY + 14.5, { align: 'center' });
+        });
+
+        cursorY += cardH + 7;
+
+        // --- DISTRIBUIÇÃO POR TIPO DE OCORRÊNCIA ---
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(...colors.navy);
+        pdf.text('DISTRIBUIÇÃO POR TIPO DE OCORRÊNCIA', marginX, cursorY);
+        pdf.setDrawColor(...colors.navy);
+        pdf.setLineWidth(0.4);
+        pdf.line(marginX, cursorY + 1.5, pageWidth - marginX, cursorY + 1.5);
 
         autoTable(pdf, {
-            head: [tableColumn],
-            body: tableRows,
-            startY: 55,
+            startY: cursorY + 3.5,
             theme: 'grid',
+            margin: { left: marginX, right: marginX },
+            head: [['TIPO DE OCORRÊNCIA', 'QUANTIDADE', 'PARTICIPAÇÃO']],
+            body: typeRows.length > 0 ? typeRows : [['Nenhuma ocorrência registrada no período', '00', '0,0%']],
             headStyles: {
-                fillColor: colors.tableHead,
-                textColor: [255, 255, 255],
-                fontSize: 9,
-                halign: 'center',
-                fontStyle: 'bold'
+                fillColor: colors.ice2,
+                textColor: colors.navy,
+                fontSize: 8,
+                fontStyle: 'bold',
+                halign: 'left',
             },
             styles: {
                 fontSize: 8,
-                cellPadding: 3,
-                overflow: 'linebreak'
+                cellPadding: 2.2,
+                lineColor: colors.border,
+                lineWidth: 0.25,
+                textColor: colors.text,
             },
             columnStyles: {
-                0: { cellWidth: 25 }, // Protocolo
-                1: { cellWidth: 35 }, // Data
-                2: { cellWidth: 25 }, // Tipo
-                3: { cellWidth: 40 }, // Natureza
-                4: { cellWidth: 35 }, // Bairro
-                5: { cellWidth: 25, halign: 'center' } // Status
+                0: { cellWidth: contentWidth * 0.62 },
+                1: { cellWidth: contentWidth * 0.19, halign: 'center', fontStyle: 'bold' },
+                2: { cellWidth: contentWidth * 0.19, halign: 'center' },
             },
-            alternateRowStyles: {
-                fillColor: colors.secondary
-            },
-            margin: { left: 15, right: 15, bottom: 20 }
+            alternateRowStyles: { fillColor: colors.grayBg },
         });
 
-        // --- RODAPÉ ---
+        cursorY = pdf.lastAutoTable.finalY + 7;
+
+        // --- RELAÇÃO DE OCORRÊNCIAS ---
+        if (cursorY > pageHeight - 40) {
+            pdf.addPage();
+            cursorY = 20;
+        }
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(...colors.navy);
+        pdf.text('RELAÇÃO DE OCORRÊNCIAS', marginX, cursorY);
+        pdf.setDrawColor(...colors.navy);
+        pdf.setLineWidth(0.4);
+        pdf.line(marginX, cursorY + 1.5, pageWidth - marginX, cursorY + 1.5);
+
+        const listRows = sortedOccurrences.map((occ, idx) => [
+            getProtocolNumber(occ, idx),
+            formatDateTime(occ.data_ocorrencia || occ.created_at),
+            getOccurrenceType(occ),
+            getLocalidade(occ),
+            formatStatusLabel(occ.status),
+        ]);
+
+        const firstListPage = pdf.internal.getNumberOfPages();
+
+        autoTable(pdf, {
+            startY: cursorY + 3.5,
+            theme: 'grid',
+            margin: { top: 24, left: marginX, right: marginX, bottom: 18 },
+            head: [['Nº / PROTOCOLO', 'DATA/HORA', 'TIPO DE OCORRÊNCIA', 'LOCALIDADE', 'SITUAÇÃO']],
+            body: listRows.length > 0 ? listRows : [['—', '—', 'Nenhuma ocorrência encontrada no período consultado', '—', '—']],
+            headStyles: {
+                fillColor: colors.navy,
+                textColor: [255, 255, 255],
+                fontSize: 7.5,
+                fontStyle: 'bold',
+                halign: 'center',
+            },
+            styles: {
+                fontSize: 7.5,
+                cellPadding: 2.3,
+                lineColor: colors.border,
+                lineWidth: 0.25,
+                textColor: colors.text,
+                overflow: 'linebreak',
+            },
+            columnStyles: {
+                0: { cellWidth: 26, halign: 'center', fontStyle: 'bold' },
+                1: { cellWidth: 28, halign: 'center' },
+                2: { cellWidth: 52 },
+                3: { cellWidth: 48 },
+                4: { cellWidth: 28, halign: 'center', fontStyle: 'bold' },
+            },
+            alternateRowStyles: { fillColor: colors.grayBg },
+            didDrawPage: (data) => {
+                // Cabeçalho de continuação nas páginas seguintes da tabela
+                if (data.pageNumber > firstListPage) {
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(9);
+                    pdf.setTextColor(...colors.navy);
+                    pdf.text('RELAÇÃO DE OCORRÊNCIAS — CONTINUAÇÃO', marginX, 12);
+
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setFontSize(7.5);
+                    pdf.setTextColor(...colors.muted);
+                    pdf.text(`Período: ${periodoLabel}  |  Protocolo/consulta: ${consultaId}`, marginX, 17);
+
+                    pdf.setDrawColor(...colors.navy);
+                    pdf.setLineWidth(0.35);
+                    pdf.line(marginX, 19.5, pageWidth - marginX, 19.5);
+                }
+            },
+        });
+
+        // --- RODAPÉ EM TODAS AS PÁGINAS ---
         const pageCount = pdf.internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             pdf.setPage(i);
-            pdf.setFontSize(8);
-            pdf.setTextColor(150, 150, 150);
-            const footerText = `Página ${i} de ${pageCount} | Documento emitido pelo Sistema SIGERD Mobile`;
-            pdf.text(footerText, pageWidth / 2, pdf.internal.pageSize.height - 10, { align: 'center' });
+            pdf.setDrawColor(...colors.border);
+            pdf.setLineWidth(0.25);
+            pdf.line(marginX, pageHeight - 13, pageWidth - marginX, pageHeight - 13);
+
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(7.5);
+            pdf.setTextColor(...colors.muted);
+            pdf.text(
+                `COMPDEC / SIGERD — Santa Maria de Jetibá/ES  |  Emitido em ${emitidoEm}`,
+                marginX,
+                pageHeight - 8
+            );
+            pdf.text(`Página ${i} de ${pageCount}`, pageWidth - marginX, pageHeight - 8, { align: 'right' });
         }
 
-        // --- SALVAMENTO ---
-        const safeDate = String(dateRange).replace(/\//g, '-').replace(/ /g, '_');
-        pdf.save(`Relatorio_Ocorrencias_${safeDate}.pdf`);
+        // Abre em nova aba ou baixa
+        const safePeriod = String(periodoLabel)
+            .replace(/\//g, '-')
+            .replace(/[^\w\-]+/g, '_')
+            .replace(/_+/g, '_');
+        const fileName = `Relatorio_Consolidado_Ocorrencias_${safePeriod}.pdf`;
+        const blob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(blob);
+        const viewer = window.open(blobUrl, '_blank');
+        if (!viewer || viewer.closed || typeof viewer.closed === 'undefined') {
+            pdf.save(fileName);
+        }
         return true;
     } catch (error) {
-        console.error('Erro ao gerar PDF consolidado:', error);
+        console.error('Erro ao gerar PDF consolidado de ocorrências:', error);
         return false;
     }
 };
 
-// Funções auxiliares sanitizadas
-const formatDate = (dateValue) => {
-    if (!dateValue) return 'N/I';
-    try {
-        const date = new Date(dateValue);
-        if (isNaN(date.getTime())) return String(dateValue);
-        return date.toLocaleString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (e) {
-        return 'N/I';
-    }
+const getProtocolNumber = (occ, idx) => {
+    const raw =
+        occ.ocorrencia_id_format ||
+        occ.numero_protocolo ||
+        occ.numero_ocorrencia ||
+        occ.ocorrencia_id ||
+        occ.id;
+    if (!raw) return String(idx + 1).padStart(5, '0');
+    const str = String(raw);
+    return str.length > 14 ? str.slice(0, 12).toUpperCase() : str.toUpperCase();
 };
 
-const translateStatus = (status) => {
-    const s = String(status || '').toLowerCase();
-    if (s === 'atendida' || s === 'concluida') return 'Concluída';
-    if (s === 'em_andamento' || s === 'em curso') return 'Em Curso';
-    if (s === 'pendente') return 'Pendente';
-    return status || 'Pendente';
+const getOccurrenceType = (occ) => {
+    return (
+        occ.tipo_ocorrencia ||
+        occ.tipoOcorrencia ||
+        occ.cobrade_subtipo ||
+        occ.categoriaRisco ||
+        occ.categoria_risco ||
+        occ.tipo ||
+        occ.tipo_info ||
+        'Outros'
+    );
+};
+
+const getLocalidade = (occ) => {
+    const parts = [occ.bairro, occ.endereco].filter(Boolean);
+    return parts.length > 0 ? parts.join(' — ') : 'Não informada';
+};
+
+const normalizeStatusKey = (status) => {
+    const s = String(status || '').toLowerCase().trim();
+    if (s.includes('finaliz') || s.includes('encerr') || s.includes('conclu') || s.includes('cancel')) {
+        return 'encerrada';
+    }
+    if (s.includes('atend') || s.includes('monitor') || s.includes('curso') || s.includes('andamento')) {
+        return 'em_atendimento';
+    }
+    return 'pendente';
+};
+
+const formatStatusLabel = (status) => {
+    const s = String(status || '').trim();
+    if (!s) return 'Pendente';
+    const low = s.toLowerCase();
+    if (low === 'finalizada' || low === 'concluida') return 'Encerrada';
+    return s;
+};
+
+const formatDateTime = (dateValue) => {
+    if (!dateValue) return '—';
+    try {
+        const str = String(dateValue);
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(str) ? new Date(`${str}T12:00:00`) : new Date(str);
+        if (isNaN(date.getTime())) return str;
+        const d = date.toLocaleDateString('pt-BR');
+        const t = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        return `${d} ${t}`;
+    } catch {
+        return '—';
+    }
 };

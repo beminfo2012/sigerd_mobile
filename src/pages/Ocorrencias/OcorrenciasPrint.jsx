@@ -6,6 +6,7 @@ import L from 'leaflet';
 import { Printer, Download, X, FileText, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { LOGO_DEFESA_CIVIL, LOGO_SIGERD } from '../../utils/reportLogos';
 import { getOcorrenciaById } from '../../services/ocorrenciasDb';
+import { getDespachosByVistoriaId } from '../../services/db';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import PdfToImages from '../../components/PdfToImages';
@@ -70,6 +71,7 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
     const [data, setData] = useState(initialData || null);
     const [loading, setLoading] = useState(!initialData);
     const [agentProfile, setAgentProfile] = useState(null);
+    const [despachos, setDespachos] = useState([]);
 
     useEffect(() => {
         if (initialData) {
@@ -136,6 +138,15 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
         return () => { cancelled = true; };
     }, [data?.agente, data?.matricula]);
 
+    useEffect(() => {
+        if (!data) return;
+        const docRef = data.ocorrencia_id_format || id || data.ocorrencia_id;
+        if (!docRef) return;
+        getDespachosByVistoriaId(docRef, data.numero_referencia)
+            .then(list => setDespachos(list || []))
+            .catch(() => setDespachos([]));
+    }, [data?.ocorrencia_id_format, data?.ocorrencia_id, id]);
+
     const handlePrint = () => {
         window.dispatchEvent(new Event('trigger-map-print-resize'));
         setTimeout(() => window.print(), 800);
@@ -154,13 +165,30 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
 
     const formatOcorrenciaDate = (dateStr) => {
         if (!dateStr) return '---';
-        if (dateStr.includes('/')) return dateStr;
-        const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return dateStr;
+        const str = String(dateStr).trim();
+        if (str.includes('/')) return str;
+        const d = /^\d{4}-\d{2}-\d{2}$/.test(str) ? new Date(`${str}T12:00:00`) : new Date(str);
+        if (isNaN(d.getTime())) return str;
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const year = d.getFullYear();
         return `${day}/${month}/${year}`;
+    };
+
+    const hasPeriodRange = Boolean(
+        (data.data_fim_ocorrencia && String(data.data_fim_ocorrencia).trim() !== '' && data.data_fim_ocorrencia !== data.data_ocorrencia) ||
+        (data.horario_fim_ocorrencia && String(data.horario_fim_ocorrencia).trim() !== '')
+    );
+
+    const formatPeriodoCompleto = () => {
+        const iniDate = formatOcorrenciaDate(data.data_ocorrencia);
+        const iniHora = data.horario_ocorrencia ? ` às ${data.horario_ocorrencia}` : '';
+        if (!hasPeriodRange) {
+            return `${iniDate}${iniHora}`;
+        }
+        const fimDate = data.data_fim_ocorrencia ? formatOcorrenciaDate(data.data_fim_ocorrencia) : iniDate;
+        const fimHora = data.horario_fim_ocorrencia ? ` às ${data.horario_fim_ocorrencia}` : '';
+        return `${iniDate}${iniHora} até ${fimDate}${fimHora}`;
     };
 
     // Calculate Lat/Lng
@@ -245,15 +273,30 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
     const descContent = data.descricao || data.observacoes || '';
     const hasObs = !!(descContent && descContent.trim() !== '' && descContent !== '---');
     const hasPhotos = photos.length > 0;
+    const hasDanosHumanos = Boolean(
+        data.tem_danos_humanos ||
+        Number(data.mortos || 0) > 0 ||
+        Number(data.feridos || 0) > 0 ||
+        Number(data.enfermos || 0) > 0 ||
+        Number(data.desalojados || 0) > 0 ||
+        Number(data.desabrigados || 0) > 0 ||
+        Number(data.desaparecidos || 0) > 0 ||
+        Number(data.outros_afetados || 0) > 0
+    );
+    const refNormativas = Array.isArray(data.referencias_normativas) ? data.referencias_normativas : [];
+    const hasRefNormativas = refNormativas.length > 0;
+    const resolvedRiskLevel = data.nivel_gravidade || data.nivelGravidade || data.nivelRisco || data.nivel_risco || 'Baixo';
 
     let secNum = 1;
     const numAgente = secNum++;
     const numSolicitacao = secNum++;
     const numDiagnostico = secNum++;
+    const numDanosHumanos = hasDanosHumanos ? secNum++ : null;
     const numDescricao = secNum++;
     const numChecklist = hasChecklist ? secNum++ : null;
     const numMedidas = secNum++;
     const numEncaj = secNum++;
+    const numRefs = hasRefNormativas ? secNum++ : null;
     const numFotos = hasPhotos ? secNum++ : null;
 
     const showApoio = data.tem_apoio_tecnico || data.temApoioTecnico || (apoioTecnico && (apoioTecnico.nome || apoioTecnico.assinatura));
@@ -365,14 +408,26 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
                                                 <td>Santa Maria de Jetibá / ES</td>
                                             </tr>
                                             <tr>
-                                                <th style={{ width: '40%' }}>Referência</th>
-                                                <th style={{ width: '30%' }}>Data da Ocorrência</th>
-                                                <th style={{ width: '30%' }}>Horário</th>
+                                                <th style={{ width: '40%' }}>Complemento / Referência</th>
+                                                {hasPeriodRange ? (
+                                                    <th colSpan="2" style={{ width: '60%' }}>Período da Ocorrência</th>
+                                                ) : (
+                                                    <>
+                                                        <th style={{ width: '30%' }}>Data da Ocorrência</th>
+                                                        <th style={{ width: '30%' }}>Horário</th>
+                                                    </>
+                                                )}
                                             </tr>
                                             <tr>
-                                                <td>{data.informacoes_complementares || data.informacoesComplementares || '---'}</td>
-                                                <td>{formatOcorrenciaDate(data.data_ocorrencia)}</td>
-                                                <td>{data.horario_ocorrencia || '---'}</td>
+                                                <td>{data.complemento || data.informacoes_complementares || data.informacoesComplementares || '---'}</td>
+                                                {hasPeriodRange ? (
+                                                    <td colSpan="2" className="font-bold">{formatPeriodoCompleto()}</td>
+                                                ) : (
+                                                    <>
+                                                        <td>{formatOcorrenciaDate(data.data_ocorrencia)}</td>
+                                                        <td>{data.horario_ocorrencia || 'Não informado'}</td>
+                                                    </>
+                                                )}
                                             </tr>
                                         </tbody>
                                     </table>
@@ -439,12 +494,12 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
                                     <tr>
                                         <td>{data.tipo_ocorrencia || data.tipoOcorrencia || data.cobrade_subtipo || data.categoriaRisco || data.categoria_risco || 'Não Classificado'}</td>
                                         <td className={`font-black text-center ${
-                                                (data.nivelRisco === 'Alto' || data.nivelRisco === 'Iminente' || data.nivel_risco === 'Alto' || data.nivel_risco === 'Iminente') ? 'badge-risk-alto' :
-                                                (data.nivelRisco === 'Médio' || data.nivel_risco === 'Médio') ? 'badge-risk-medio' : 'badge-risk-baixo'
+                                                (resolvedRiskLevel === 'Alto' || resolvedRiskLevel === 'Iminente') ? 'badge-risk-alto' :
+                                                (resolvedRiskLevel === 'Médio') ? 'badge-risk-medio' : 'badge-risk-baixo'
                                             }`} style={{ padding: '8px', fontSize: '10px' }}>
-                                                {(data.nivelRisco === 'Médio' || data.nivel_risco === 'Médio') ? '⚠️ MÉDIO' : 
-                                                 (data.nivelRisco === 'Alto' || data.nivelRisco === 'Iminente' || data.nivel_risco === 'Alto' || data.nivel_risco === 'Iminente') ? `⚠️ ${(data.nivelRisco || data.nivel_risco).toUpperCase()}` : 
-                                                 (data.nivelRisco || data.nivel_risco || 'BAIXO').toUpperCase()}
+                                                {resolvedRiskLevel === 'Médio' ? '⚠️ MÉDIO' : 
+                                                 (resolvedRiskLevel === 'Alto' || resolvedRiskLevel === 'Iminente') ? `⚠️ ${resolvedRiskLevel.toUpperCase()}` : 
+                                                 resolvedRiskLevel.toUpperCase()}
                                         </td>
                                         <td className={`font-black text-center ${
                                                 (data.situacaoObservada === 'Ativo' || data.situacaoObservada === 'Em evolução' || data.situacaoObservada === 'Em Evolução' || data.situacao_observada === 'Ativo' || data.situacao_observada === 'Em evolução' || data.situacao_observada === 'Em Evolução') 
@@ -453,37 +508,77 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
                                                 {(data.situacaoObservada || data.situacao_observada || 'Estabilizado').toUpperCase()}
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <th style={{ width: '40%' }}>Alertas e Danos Secundários</th>
-                                        <th style={{ width: '30%' }}>Área Estimada Afetada (m²)</th>
-                                        <th style={{ width: '30%' }}>Vítimas Humana</th>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div className="flex flex-wrap gap-1">
-                                                {(() => {
-                                                    let subtipos = data.subtiposRisco || data.subtipos_risco || [];
-                                                    if (typeof subtipos === 'string') {
-                                                        try { subtipos = JSON.parse(subtipos); } catch (e) { subtipos = [subtipos]; }
-                                                    }
-                                                    const outroTexto = data.subtipoRiscoOutros || data.subtipo_risco_outros;
-                                                    if (Array.isArray(subtipos) && subtipos.length > 0) {
-                                                        return subtipos.map((tag, i) => (
-                                                            <span key={i} className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-                                                                {tag === 'Outros' && outroTexto ? `Outros (${outroTexto})` : tag}
-                                                            </span>
-                                                        ));
-                                                    }
-                                                    return <span className="text-slate-400 italic">Nenhum subtipo listado.</span>;
-                                                })()}
-                                            </div>
-                                        </td>
-                                        <td>{data.area_estimada || data.areaEstimada || '---'} m²</td>
-                                        <td>{data.tem_danos_humanos ? 'Sim (Ver Seção)' : 'Não'}</td>
-                                    </tr>
+                                    {(() => {
+                                        let subtipos = data.subtiposRisco || data.subtipos_risco || [];
+                                        if (typeof subtipos === 'string') {
+                                            try { subtipos = JSON.parse(subtipos); } catch { subtipos = subtipos ? [subtipos] : []; }
+                                        }
+                                        const hasSubtipos = Array.isArray(subtipos) && subtipos.length > 0;
+                                        const outroTexto = data.subtipoRiscoOutros || data.subtipo_risco_outros;
+                                        const areaVal = data.area_estimada || data.areaEstimada;
+
+                                        return (
+                                            <>
+                                                <tr>
+                                                    {hasSubtipos && <th style={{ width: '40%' }}>Alertas e Danos Secundários</th>}
+                                                    <th style={{ width: hasSubtipos ? '30%' : '50%' }} colSpan={hasSubtipos ? 1 : 2}>Área Estimada Afetada (m²)</th>
+                                                    <th style={{ width: hasSubtipos ? '30%' : '50%' }}>Danos Humanos / Vítimas</th>
+                                                </tr>
+                                                <tr>
+                                                    {hasSubtipos && (
+                                                        <td>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {subtipos.map((tag, i) => (
+                                                                    <span key={i} className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                                                                        {tag === 'Outros' && outroTexto ? `Outros (${outroTexto})` : tag}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </td>
+                                                    )}
+                                                    <td colSpan={hasSubtipos ? 1 : 2}>{areaVal ? `${areaVal} m²` : 'Não informada'}</td>
+                                                    <td>{hasDanosHumanos ? 'Sim (Ver Seção de Danos Humanos)' : 'Não'}</td>
+                                                </tr>
+                                            </>
+                                        );
+                                    })()}
                                 </tbody>
                             </table>
                         </section>
+
+                        {/* Danos Humanos (quando houver) */}
+                        {hasDanosHumanos && (
+                            <section className="mb-6 avoid-break">
+                                <div className="section-header">
+                                    <span className="section-header-title">{numDanosHumanos}. Danos Humanos / Vítimas</span>
+                                    <div className="section-header-line"></div>
+                                </div>
+                                <table className="report-table text-center">
+                                    <thead>
+                                        <tr>
+                                            <th>Mortos</th>
+                                            <th>Feridos</th>
+                                            <th>Enfermos</th>
+                                            <th>Desalojados</th>
+                                            <th>Desabrigados</th>
+                                            <th>Desaparecidos</th>
+                                            <th>Outros Afetados</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className="font-black text-xs">
+                                            <td>{Number(data.mortos || 0)}</td>
+                                            <td>{Number(data.feridos || 0)}</td>
+                                            <td>{Number(data.enfermos || 0)}</td>
+                                            <td>{Number(data.desalojados || 0)}</td>
+                                            <td>{Number(data.desabrigados || 0)}</td>
+                                            <td>{Number(data.desaparecidos || 0)}</td>
+                                            <td>{Number(data.outros_afetados || 0)}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                        )}
 
                         {/* 4. Checklist Técnico */}
                         {hasChecklist && (
@@ -556,23 +651,36 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(data.encaminhamentos || []).length > 0 ? (
-                                        (data.encaminhamentos || []).map((e, i) => {
-                                            const parts = typeof e === 'string' ? e.split(':') : [];
-                                            const organ = parts[0]?.trim() || '';
-                                            const specDetail = parts.slice(1).join(':')?.trim();
+                                    {((data.encaminhamentos || []).length > 0 || despachos.length > 0) ? (
+                                        <>
+                                            {(data.encaminhamentos || []).map((e, i) => {
+                                                const parts = typeof e === 'string' ? e.split(':') : [];
+                                                const organ = parts[0]?.trim() || '';
+                                                const specDetail = parts.slice(1).join(':')?.trim();
 
-                                            const standard = getEncaminhamentoDetails(organ);
-                                            const finalAction = specDetail || standard.action;
-                                            const finalResponsible = standard.responsible;
+                                                const standard = getEncaminhamentoDetails(organ);
+                                                const finalAction = specDetail || standard.action;
+                                                const finalResponsible = standard.responsible;
 
-                                            return (
-                                                <tr key={i}>
-                                                    <td style={{ fontWeight: 'bold' }}>{finalResponsible}</td>
-                                                    <td>{finalAction}</td>
+                                                return (
+                                                    <tr key={`enc-${i}`}>
+                                                        <td style={{ fontWeight: 'bold' }}>{finalResponsible}</td>
+                                                        <td>{finalAction}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {despachos.map((d, i) => (
+                                                <tr key={`desp-${d.id || i}`}>
+                                                    <td style={{ fontWeight: 'bold' }}>
+                                                        {Array.isArray(d.destino) ? d.destino.join(', ') : (d.destino || 'Despacho Administrativo')}
+                                                        <span className="block text-[8px] font-normal text-slate-500">
+                                                            Despacho Nº {d.despacho_id || d.despachoId || '---'}
+                                                        </span>
+                                                    </td>
+                                                    <td>{d.conteudo || d.assunto || d.tipoDespacho || 'Encaminhamento administrativo emitido.'}</td>
                                                 </tr>
-                                            );
-                                        })
+                                            ))}
+                                        </>
                                     ) : (
                                         <tr>
                                             <td colSpan="2" className="text-slate-400 italic text-center py-4">Nenhum encaminhamento registrado para esta ocorrência.</td>
@@ -581,6 +689,25 @@ const OcorrenciasPrint = ({ initialData = null, isDrawerMode = false, onClose = 
                                 </tbody>
                             </table>
                         </section>
+
+                        {/* Referências Normativas (NORTIS) */}
+                        {hasRefNormativas && (
+                            <section className="mb-6 avoid-break">
+                                <div className="section-header">
+                                    <span className="section-header-title">{numRefs}. Referências Normativas</span>
+                                    <div className="section-header-line"></div>
+                                </div>
+                                <ul className="list-disc pl-5 text-xs text-slate-700 space-y-1">
+                                    {refNormativas.map((ref, idx) => (
+                                        <li key={idx}>
+                                            {typeof ref === 'string'
+                                                ? ref
+                                                : (ref.titulo || ref.norma || ref.referencia || JSON.stringify(ref))}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+                        )}
 
 
 
